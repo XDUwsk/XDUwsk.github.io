@@ -35,7 +35,7 @@
 <meta property="og:image" content="http://example.com/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301220020504.png">
 <meta property="og:image" content="http://example.com/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301220212706.png">
 <meta property="article:published_time" content="2022-03-03T02:22:35.000Z">
-<meta property="article:modified_time" content="2022-03-03T02:26:13.380Z">
+<meta property="article:modified_time" content="2022-03-03T02:47:32.636Z">
 <meta property="article:author" content="凯">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301215246204.png">
@@ -183,7 +183,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-03-03 10:22:35 / 修改时间：10:26:13" itemprop="dateCreated datePublished" datetime="2022-03-03T10:22:35+08:00">2022-03-03</time>
+              <time title="创建时间：2022-03-03 10:22:35 / 修改时间：10:47:32" itemprop="dateCreated datePublished" datetime="2022-03-03T10:22:35+08:00">2022-03-03</time>
             </span>
 
           
@@ -250,7 +250,7 @@ int main()
     return 0;
 &#125;
 </code></pre>
-<h4 id="fftw库使用相关"><a href="#fftw库使用相关" class="headerlink" title="fftw库使用相关"></a>fftw库使用相关</h4><p>基本使用可见下pdf <a href="c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8%5CFFTW%E4%BB%8B%E7%BB%8D%E5%8F%8AFFTW%E5%BA%93%E7%9A%84%E4%BD%BF%E7%94%A8.pdf">FFTW介绍及FFTW库的使用.pdf</a>  ，代码框架如下</p>
+<h4 id="fftw库使用相关"><a href="#fftw库使用相关" class="headerlink" title="fftw库使用相关"></a>fftw库使用相关</h4><p>基本使用可见下pdf <a href="c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/FFTW%E4%BB%8B%E7%BB%8D%E5%8F%8AFFTW%E5%BA%93%E7%9A%84%E4%BD%BF%E7%94%A8.pdf">FFTW介绍及FFTW库的使用.pdf</a>  ，代码框架如下</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//数据初始化及定义</span></span><br><span class="line">fftw_complex *in, *out;</span><br><span class="line">fftw_plan p;</span><br><span class="line"><span class="keyword">int</span> N ;</span><br><span class="line">in = (fftw_complex*)<span class="built_in">fftw_malloc</span>(<span class="built_in"><span class="keyword">sizeof</span></span>(fftw_complex) * N);</span><br><span class="line">out = (fftw_complex*)<span class="built_in">fftw_malloc</span>(<span class="built_in"><span class="keyword">sizeof</span></span>(fftw_complex) * N);</span><br><span class="line"><span class="comment">//对输入数据赋值</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//生成fftw的plan，fftw_forward为正变换，fftw_backward为逆变换</span></span><br><span class="line">p = <span class="built_in">fftw_plan_dft_1d</span>(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);</span><br><span class="line"><span class="built_in">fftw_execute</span>(p); <span class="comment">/* repeat as needed*/</span></span><br><span class="line"><span class="comment">//对输出数据进行处理</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//防止内存泄漏，释放内存</span></span><br><span class="line"><span class="built_in">fftw_destroy_plan</span>(p);</span><br><span class="line"><span class="built_in">fftw_free</span>(in);</span><br><span class="line"><span class="built_in">fftw_free</span>(out);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p>tips：</p>
