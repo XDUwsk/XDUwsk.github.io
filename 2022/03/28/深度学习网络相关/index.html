@@ -251,7 +251,7 @@
 <li>定义了卷积神经网络（Convolutional Neural Network, CNN）的基本框架：卷积层 + 池化层（Pooling Layer） + 全连接层</li>
 <li>定义了卷积层（Convolution Layer），与全连接层相比，卷积层的不同之处有两点：局部连接（引进“感受野”这一概念）、权值共享（减少参数数量）</li>
 <li>利用池化层进行下采样（Down sampooling），从而减少计算量</li>
-<li>用 Tanh 作为非线性激活函数（现在看到的都是改进过的 LeNet 了，用 ReLU 代替 Tanh。相较于 Sigmoid，Tanh 以原点对称（zero-centered），收敛速度会快。关于其解释，请看：<a href="https://link.zhihu.com/?target=https://liam.page/2018/04/17/zero-centered-active-function/">谈谈激活函数以零为中心的问题</a>）</li>
+<li>用 Tanh 作为非线性激活函数（现在看到的都是改进过的 LeNet 了，用 ReLU 代替 Tanh。相较于 Sigmoid，Tanh 以原点对称（zero-centered），收敛速度会快。关于其解释，请看：<a href="https://link.zhihu.com/?target=https%3A//liam.page/2018/04/17/zero-centered-active-function/">谈谈激活函数以零为中心的问题</a>）</li>
 </ul>
 <h3 id="AlexNet"><a href="#AlexNet" class="headerlink" title="AlexNet"></a>AlexNet</h3><p>可以视为更深更大的LeNet，主要改进：丢弃法，ReLu，MaxPooling：</p>
 <ul>
@@ -267,7 +267,7 @@
 <ul>
 <li>采用双 GPU 网络结构，从而可以设计出更“大”、更“深”的网络（相较于当时的算力来说）</li>
 <li>采用 ReLU 代替 Tanh，稍微解决梯度消失问题（Gradient Vanishing Problem），加快网络收敛速度。（关于常见激活函数的比较，可以看这篇：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32610035">常用激活函数的比较 - 徐小贱民的文章 - 知乎</a>）</li>
-<li>提出局部相应归一化（LRN, Local Response Normalization），据作者所言，该操作能减少指标 Top-1/Top-5 Error Rate 1.4%/1.2%。（我个人不喜欢 LRN，因为我觉得它的超参数太多了，不具备很好的泛化能力。关于 Normalization 的发展历程可以看这篇：[<a href="https://link.zhihu.com/?target=https://blog.csdn.net/Code_Mart/article/details/92715180">笔记] 神经网络中 Normalization 的发展历程</a>）</li>
+<li>提出局部相应归一化（LRN, Local Response Normalization），据作者所言，该操作能减少指标 Top-1/Top-5 Error Rate 1.4%/1.2%。（我个人不喜欢 LRN，因为我觉得它的超参数太多了，不具备很好的泛化能力。关于 Normalization 的发展历程可以看这篇：<a href="https://link.zhihu.com/?target=https%3A//blog.csdn.net/Code_Mart/article/details/92715180">[笔记] 神经网络中 Normalization 的发展历程</a>）</li>
 <li>令 Pooling 操作中的 stride 小于池化核的大小，从而使相邻的池化区域存在重叠部分，这一操作称为 Overlapping Pooling。据作者所言，这一操作能减少指标 Top-1/Top-5 Error Rate 0.4%/0.3%，并且减少过拟合现象。</li>
 <li>对训练数据进行随机裁剪（Random Crop），将训练图像由 256 × 256 裁剪为 224 × 224，并做随机的镜像翻转（Horizontal Reflection）。并在测试时，从图像的四个角以及中心进行裁剪，并进行镜像翻转，这样可以得到 10 个 Patch，将这些 Patch 的结果进行平均，从而得到最终预测结果。（之前在一个人脸识别比赛中，我师兄用这样的操作直接提高了４~5个点，算是一种简单的集成操作吧）</li>
 <li>对训练图像做 PCA（主成分分析），利用服从 (0,0.1) 的高斯分布的随机变量对主成分进行扰动。作者指出，这一操作能减少指标 Top-1 Error Rate 1%。</li>
@@ -288,7 +288,7 @@
 <p>用1*1卷积层代替全连接层的好处：</p>
 <ul>
 <li>不改变图像空间结构<br>全连接层会破坏图像的空间结构，而1*1卷积层不会破坏图像的空间结构。</li>
-<li> 输入可以是任意尺寸<br>全连接层的输入尺寸是固定的，因为全连接层的参数个数取决于图像大小。而卷积层的输入尺寸是任意的，因为卷积核的参数个数与图像大小无关。</li>
+<li>输入可以是任意尺寸<br>全连接层的输入尺寸是固定的，因为全连接层的参数个数取决于图像大小。而卷积层的输入尺寸是任意的，因为卷积核的参数个数与图像大小无关。</li>
 </ul>
 <h3 id="GoogLeNet-含并行连结的网络"><a href="#GoogLeNet-含并行连结的网络" class="headerlink" title="GoogLeNet 含并行连结的网络"></a>GoogLeNet 含并行连结的网络</h3><p> NiN严重影响了GoogLeNet的设计，GoogLeNet的核心观点为，不同大小的卷积核的组合是有利的，其最基本的卷积块为Inception块，其分为四个路径，由不同的卷积核在四个不同层面上抽取信息，最后在输出通道维进行合并。作者指出：提高模型表达能力的最直接的办法就是增加模型的“大小”，而这又会导致两个问题的产生：</p>
 <ul>
@@ -315,7 +315,6 @@
 <h2 id="数据增强相关"><a href="#数据增强相关" class="headerlink" title="数据增强相关"></a>数据增强相关</h2><p>在已有的数据集上增加数据，如增加背景噪声，改变图片的颜色和形状等方式，使得数据集具有更多的多样性，从而使模型的泛化性能更好。训练的时候每次从数据集中读取图片后进行在线的随机的生成，可以看作正则项。</p>
 <p>经常可以数据增强的项：旋转、切割、颜色。在实际使用中，torchvision.transforms中包含常用的变换。一般使用torchvision.transforms.Compose[]进行多种图像增广方法的结合，样例代码如下：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.ToPILImage(),</span><br><span class="line">    transforms.RandomHorizontalFlip(),  </span><br><span class="line">    transforms.RandomRotation(<span class="number">15</span>),  </span><br><span class="line">    transforms.ToTensor(),  </span><br><span class="line">])</span><br></pre></td></tr></table></figure>
-
 <p>在实际训练的时候，一般在自定义dataset的__getitem__的时候，将transform赋值给data，样例代码如下：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, x, y=<span class="literal">None</span>, transform=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.x = x</span><br><span class="line">        <span class="comment"># label is required to be a LongTensor</span></span><br><span class="line">        self.y = y</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            self.y = torch.LongTensor(y)</span><br><span class="line">        self.transform = transform</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.x)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.x[index]</span><br><span class="line">        <span class="keyword">if</span> self.transform <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            X = self.transform(X)</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br></pre></td></tr></table></figure>
 
@@ -499,6 +498,8 @@
 
 
 
+
+  
 
   
 
