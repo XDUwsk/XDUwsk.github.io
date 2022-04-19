@@ -148,6 +148,243 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">目标检测相关</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-04-19 10:53:23 / 修改时间：10:53:37" itemprop="dateCreated datePublished" datetime="2022-04-19T10:53:23+08:00">2022-04-19</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="目标检测相关算法"><a href="#目标检测相关算法" class="headerlink" title="目标检测相关算法"></a>目标检测相关算法</h1><p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAUmFuYWxkX1hpZQ==,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
+<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/v2-e0a477f5a1fb362f72123676ef403894_720w.jpg" alt="img" style="zoom:150%;">
+
+<p>传统的图片分类的深度学习的功能组成可以分为两个部分，一个为通过多重卷积层进行图片特征的学习，第二个为通过softmax进行图片的分类。</p>
+<h2 id="传统目标检测算法"><a href="#传统目标检测算法" class="headerlink" title="传统目标检测算法"></a>传统目标检测算法</h2><p>传统目标检测算法主要基于手工提取特征：算法流程如下：</p>
+<ol>
+<li>选取感兴趣的区域，选取可能包含物体的区域</li>
+<li>对可能包含物体的区域进行特征提取</li>
+<li>对提取的特征进行检测分类</li>
+</ol>
+<h3 id="Viola-Jones-Detector"><a href="#Viola-Jones-Detector" class="headerlink" title="Viola Jones Detector"></a>Viola Jones Detector</h3><p>VJ (Viola Jones)检测器采用滑动窗口的方式以检查目标是否存在窗口之中，该检测器看起来似乎很简单稳定，但由于计算量庞大导致时间复杂度极高，为了解决该项问题，VJ检测器通过合并三项技术极大提高了检测速度，这三项技术分别是：1)特征的快速计算方法-积分图，2)有效的分类器学习方法-AdaBoost，以及3)高效的分类策略-级联结构的设计。</p>
+<h3 id="HOG-Detector"><a href="#HOG-Detector" class="headerlink" title="HOG Detector"></a>HOG Detector</h3><p>HOG(Histogram of Oriented Gradients)检测器于2005年提出，是当时尺度特征不变性(Scale Invariant Feature Transform)和形状上下文(Shape Contexts)的重要改进，为了平衡特征不变性(包括平移，尺度，光照等)和非线性(区分不同的对象类别)，HOG通过在均匀间隔单元的密集网格上计算重叠的局部对比度归一化来提高检测准确性，因此HOG检测器是基于本地像素块进行特征直方图提取的一种算法，它在目标局部变形和受光照影响下都有很好的稳定性。HOG为后期很多检测方法奠定了重要基础，相关技术被广泛应用于计算机视觉各大应用。</p>
+<h3 id="DPM-Detector"><a href="#DPM-Detector" class="headerlink" title="DPM Detector"></a>DPM Detector</h3><p>作为VOC 2007-2009目标检测挑战赛的冠军，DPM(Deformable Parts Model)是目标检测传统算法中当之无愧的SOTA(State Of The Art)算法。DPM于2008年提出，相比于HOG，DPM作了很多改进，因此该算法可以看作HOG的延申算法。DPM算法由一个主过滤器(Root-filter)和多个辅过滤器(Part-filters)组成，通过硬负挖掘(Hard negative mining)，边框回归(Bounding box regression)和上下文启动(Context priming)技术改进检测精度。作为传统目标检测算法的SOTA，DPM方法运算速度快，能够适应物体形变，但它无法适应大幅度的旋转，因此稳定性差。</p>
+<h3 id="局限性"><a href="#局限性" class="headerlink" title="局限性"></a>局限性</h3><p>基于手工提取特征的传统目标检测算法主要有以下三个缺点：</p>
+<ol>
+<li>识别效果不够好，准确率不高</li>
+<li>计算量较大，运算速度慢</li>
+<li>可能产生多个正确识别的结果</li>
+</ol>
+<h2 id="深度学习目标检测算法"><a href="#深度学习目标检测算法" class="headerlink" title="深度学习目标检测算法"></a>深度学习目标检测算法</h2><p>算法大致性能可见<a target="_blank" rel="noopener" href="https://cv.gluon.ai/model_zoo/detection.html">链接</a></p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410144648473.png" alt="image-20220410144648473"></p>
+<p>Tips：Anchor的理解：anchor直译是锚，其在目标识别里面的本质即为一个多尺度的滑动窗口，在实际中大多为计算机随机生成的预测物体在哪的一个框。anchor boxes指预定义的框集合。</p>
+<h3 id="Anchor-Based"><a href="#Anchor-Based" class="headerlink" title="Anchor-Based"></a>Anchor-Based</h3><p>Tips：</p>
+<ul>
+<li>IoU-交并比，用来计算两个框之间的的相似度，0表示无重叠，1表示重合</li>
+</ul>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220409195243183.png" alt="image-20220409195243183"></p>
+<ul>
+<li>NMS-非极大值抑制输出，每个锚框预测一个边缘框，NMS可以合并相似的预测：选中非背景类的最大预测值，去掉所有其他和它IoU值大于阈值的预测，重复进行直到所有预测要么被选中，要么被去掉。</li>
+</ul>
+<h4 id="Two-state"><a href="#Two-state" class="headerlink" title="Two-state"></a>Two-state</h4><p>二阶段检测算法主要分为以下两个阶段<br><strong>Stage1</strong>：从图像中生成region proposals<br><strong>Stage2</strong>：从region proposals生成最终的物体边框。</p>
+<h5 id="RCNN"><a href="#RCNN" class="headerlink" title="RCNN"></a>RCNN</h5><p>RCNN算法流程如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- 一张图片生成1k-2k个候选区域(使用Selective Search方法)，其候选区域通常是在多个尺度下生成选取的，具有不同的形状和大小。</span><br><span class="line">- 对每个候选区域，使用深度网络提取特征</span><br><span class="line">- 特征送入每一类的SVM分类器，判别是否属于该类</span><br><span class="line">- 使用回归精细修正候选框位置</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410102221484.png" alt="image-20220410102221484"></p>
+<p>为了处理选取锚框大小不同的问题，使用兴趣区域（ROI）池化层，即将给定的任何一个锚框均匀分割成n*m块，输出每块中的最大值，不管锚框的大小，总是输出nm个值，样例如下：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/9d7d2cb8c875c42a1b87834fa38502f70d018a26.png" alt="img"></p>
+<p>兴趣区域汇聚层（RoI Pooing）与一般的汇聚层有什么不同：</p>
+<ul>
+<li>在一般的汇聚层中，通过设置汇聚窗口、填充和步幅的大小来间接控制输出形状</li>
+<li>在兴趣区域汇聚层中，对每个区域的输出形状是可以直接指定的 </li>
+</ul>
+<p>网络结构：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220328191033301.png" alt="image-20220328191033301"></p>
+<p>问题：计算量大，导致测试速度慢、训练速度慢、训练所需空间大</p>
+<h5 id="Fast-RCNN"><a href="#Fast-RCNN" class="headerlink" title="Fast-RCNN"></a>Fast-RCNN</h5><p>RCNN的主要性能瓶颈在于其对于每一个提议区域，其CNN的前向传播是独立的。anchor之间通常有重叠，存在重复计算的情况。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- 一张图片生成1k-2k个候选区域(使用Selective Search方法)</span><br><span class="line">- 将图片输入网络得到相应的特征图，将SS算法生成的候选框投影到特征图上获得相应的特征矩阵</span><br><span class="line">- 将每个特征矩阵通过ROI pooling缩放到7x7大小的特征图，接着将特征图展平通过一系列全连接层得到预测结果</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/66a6d7b1dc3414493a3e7114c12d31bc483a7539.png" alt="img"></p>
+<p>Faste R-CNN 的改进是：</p>
+<ul>
+<li>在拿到一张图片之后，首先使用 CNN 对图片进行特征提取（不是对图片中的锚框进行特征提取，而是对整张图片进行特征提取，仅在整张图像上执行卷积神经网络的前向传播），最终会得到一个 7 * 7 或者 14 * 14 的 feature map</li>
+<li>抽取完特征之后，再对图片进行锚框的选择（selective search），搜索到原始图片上的锚框之后将其（按照一定的比例）映射到 CNN 的输出上</li>
+<li>映射完锚框之后，再使用 RoI pooling 对 CNN 输出的 feature map 上的锚框进行特征抽取，生成固定长度的特征（将 n * m 的矩阵拉伸成为 nm 维的向量），之后再通过一个全连接层（这样就不需要使用SVM一个一个的操作，而是一次性操作了）对每个锚框进行预测：物体的类别和真实的边缘框的偏移</li>
+<li>Fast R-CNN 相对于 R-CNN 更快的原因是：Fast R-CNN 中的 CNN 不再对每个锚框抽取特征，而是对整个图片进行特征的提取（这样做的好处是：不同的锚框之间可能会有重叠的部分，如果对每个锚框都进行特征提取的话，可能会对重叠的区域进行多次重复的特征提取操作），然后再在整张图片的feature中找出原图中锚框对应的特征，最后一起做预测</li>
+</ul>
+<p>网络结构：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220328200535046.png" alt="image-20220328200535046"></p>
+<h5 id="Faster-RCNN"><a href="#Faster-RCNN" class="headerlink" title="Faster-RCNN"></a>Faster-RCNN</h5><p>使用一个区域提议网络（即RPN）来替代Selective Search算法来获得更好的锚框。模型的其余部分保持不变，从而减少区域的生成数量并且同时保证精度。</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410142553061.png" alt="image-20220410142553061"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- 将图片输入网络得到相应的特征图</span><br><span class="line">- 使用RPN结构生成候选框，将RPN生成的候选框投影到特征图上获得相应的特征矩阵，RPN可以看作一个小一点的，粗糙一点的目标检测算法，将提供给他的anchor box细化，生成数量较少的高质量的anchor。</span><br><span class="line">- 将每个特征矩阵通过ROI pooling缩放到7x7大小的特征图，接着将特征图展平通过一系列全连接层得到预测结果</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Faster R-CNN 的改进：使用 RPN 神经网络来替代 selective search </li>
+<li>RoI 的输入是CNN 输出的 feature map 和生成的锚框</li>
+<li>RPN 的输入是 CNN 输出的 feature map，输出是一些比较高质量的锚框（可以理解为一个比较小而且比较粗糙的目标检测算法： CNN 的输出进入到 RPN 之后再做一次卷积，然后生成一些锚框（可以是 selective search 或者其他方法来生成初始的锚框），再训练一个二分类问题：预测锚框是否框住了真实的物体以及锚框到真实的边缘框的偏移，最后使用 NMS 进行去重，使得锚框的数量变少）</li>
+<li>RPN 的作用是生成大量结果很差的锚框，然后进行预测，最终输出比较好的锚框供后面的网络使用（预测出来的比较好的锚框会进入 RoI pooling，后面的操作与 Fast R-CNN 类似）</li>
+<li>通常被称为两阶段的目标检测算法：RPN 做小的目标检测（粗糙），整个网络再做一次大的目标检测（精准）<br>Faster R-CNN 目前来说是用的比较多的算法，准确率比较高，但是速度比较慢。</li>
+</ul>
+<h5 id="Mask-R-CNN"><a href="#Mask-R-CNN" class="headerlink" title="Mask R-CNN"></a>Mask R-CNN</h5><p>如果有像素级别的标号，使用FCN来利用这些信息，并且利用这些信息进一步的提升目标检测的精度。</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410143209642.png" alt="image-20220410143209642"></p>
+<p>Mask R-CNN 是基于 Faster R-CNN 修改而来的，改进在于</p>
+<ul>
+<li>假设有每个像素的标号的话，就可以对每个像素做预测（FCN）</li>
+<li>将兴趣区域汇聚层替换成了兴趣区域对齐层（RoI pooling -&gt; RoI align），使用双线性插值（bilinear interpolation）保留特征图上的空间信息，进而更适于像素级预测：对于pooling来说，假如有一个3 * 3的区域，需要对它进行2 * 2的RoI pooling操作，那么会进行取整从而切割成为不均匀的四个部分，然后进行 pooling 操作，这样切割成为不均匀的四部分的做法对于目标检测来说没有太大的问题，因为目标检测不是像素级别的，偏移几个像素对结果没有太大的影响。但是对于像素级别的标号来说，会产生极大的误差；RoI align 不管能不能整除，如果不能整除的话，会直接将像素切开，切开后的每一部分是原像素的加权（它的值是原像素的一部分）</li>
+<li>兴趣区域对齐层的输出包含了所有与兴趣区域的形状相同的特征图，它们不仅被用于预测每个兴趣区域的类别和边界框，还通过额外的全卷积网络预测目标的像素级位置 </li>
+</ul>
+<p>RCNN大类的总结：</p>
+<ul>
+<li>R-CNN 是最早、也是最有名的一类基于锚框和 CNN 的目标检测算法（R-CNN 可以认为是使用神经网络来做目标检测工作的奠基工作之一），它对图像选取若干提议区域，使用卷积神经网络对每个提议区域执行前向传播以抽取其特征，然后再用这些特征来预测提议区域的类别和边框</li>
+<li>Fast/Faster R-CNN持续提升性能：Fast R-CNN 只对整个图像做卷积神经网络的前向传播，还引入了兴趣区域汇聚层（RoI pooling），从而为具有不同形状的兴趣区域抽取相同形状的特征</li>
+<li>Faster R-CNN 将 Fast R-CNN 中使用的选择性搜索替换为参与训练的区域提议网络，这样可以在减少提议区域数量的情况下仍然保持目标检测的精度</li>
+<li>Mask R-CNN 在 Faster R-CNN 的基础上引入了一个全卷积网络，从而借助目标的像素级位置进一步提升目标检测的精度</li>
+<li>Faster R-CNN 和 Mask R-CNN 是在追求高精度场景下的常用算法（Mask R-CNN 需要有像素级别的标号，所以相对来讲局限性会大一点，在无人车领域使用的比较多）</li>
+</ul>
+<h4 id="One-state"><a href="#One-state" class="headerlink" title="One-state"></a>One-state</h4><p>one-state算法的特点是一步到位，速度相对较快，仅需要送入网络一次就可以预测出所有的边界框，经典的one - state算法包括YOLO，SSD，SqueezeDet和DetectNet，其主要思想为：均匀的在图像的不同位置进行密集，不同长宽比的抽样，然后利用CNN提取特征后直接进行分类与回归。但其正样本与负样本数据不均衡，导致模型准确度偏低</p>
+<h5 id="SSD"><a href="#SSD" class="headerlink" title="SSD"></a>SSD</h5><ul>
+<li>将输入图片通过一个基础网络进行特征的抽取，然后对生成的图片生成锚框，然后对每个锚框进行种类的预测和与真实边框的回归。</li>
+<li>对输入，将其通过卷积层，使其高宽减半，并对减半之后的图像生成锚框，并对每个锚框进行种类的预测和与真是边框的回归。网络底层拟合小物体，顶层拟合大物体。</li>
+<li>重复该流程</li>
+</ul>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410153453938.png" alt="image-20220410153453938"></p>
+<p>详细解释如下：</p>
+<ul>
+<li><p>输入图像之后，首先进入一个基础网络来抽取特征，抽取完特征之后对每个像素生成大量的锚框（每个锚框就是一个样本，然后预测锚框的类别以及到真实边界框的偏移）</p>
+</li>
+<li><p>SSD 在给定锚框之后直接对锚框进行预测，而不需要做两阶段（为什么 Faster RCNN 需要做两次，而 SSD 只需要做一次？SSD 通过做不同分辨率下的预测来提升最终的效果，越到底层的 feature map，就越大，越往上，feature map 越少，因此底层更加有利于小物体的检测，而上层更有利于大物体的检测）</p>
+</li>
+<li><p>SSD 不再使用 RPN 网络，而是直接在生成的大量样本（锚框）上做预测，看是否包含目标物体；如果包含目标物体，再预测该样本到真实边缘框的偏移</p>
+</li>
+</ul>
+<h5 id="YOLO系列-YOLOv1"><a href="#YOLO系列-YOLOv1" class="headerlink" title="YOLO系列-YOLOv1"></a>YOLO系列-YOLOv1</h5><p>yolo将物体检测的问题处理成回归问题，相对于滑动窗口方法和RPN的方法，yolo在每一次训练和预测中都是使用了整张图片的信息进行预测，且是端到端的网络。yolo的泛化性能较好。yolo会同时预测所有的候选框和类别的概率。</p>
+<ul>
+<li><p>将一幅图片分成SxS个网格，如果某个物体的中心落在这个网格中，则这个网格就负责预测这个物体。</p>
+</li>
+<li><p>每一个网格要预测B个bounding box，每个bounding box除了要预测位置之外，还要附带预测一个confidence，每个网格还要预测C个类别的分数。</p>
+<p>样例如下：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411162751719.png" alt="image-20220411162751719"></p>
+<p>即，如果对于一幅图片，将其分为7x7个网格，取B=2,总共有20种物体的情况下，最后生成的数据为7x7x30的特征矩阵。其中有20个class scores，即每个7x7对应的网格对应于分类成为每种物体的概率，以及2个4+1，4即为坐标信息（x,y,w,h)，（x,y）为相对应于网格而言的中心坐标，(w,h)为相对于整张图片而言的宽和高，1为confidence，confidence定义为<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411163358736.png" alt="image-20220411163358736">，即预测的目标与真实的目标的IoU乘以是否存在物体的Pr（Object)，反映了这个框包含了一个物体的自信程度以及其预测的位置的准确程度。</p>
+</li>
+</ul>
+<p>YOLOv1网络结构示意图</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411163937265.png" alt="image-20220411163937265"></p>
+<p>24个卷积层+2个全连接层。在3x3的卷积层之前使用1x1的卷积层，这样会减少参数数量。</p>
+<p>训练相关：使用预训练，使用224x224的图片（在ImageNet中有上百万张）进行预训练。 </p>
+<p>激活函数的选用：最后一层使用线性变换，其他层使用的是leaky ReLu，公式如下：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412193906840.png" alt="image-20220412193906840"></p>
+<p>损失函数：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411164643885.png" alt="image-20220411164643885"></p>
+<p>tips:</p>
+<ul>
+<li>对于bounding box 损失：其中x，y为坐标，直接使用误差平方和，而w，h为对应于整张图片的宽和高，由于对于小目标和大目标而言，偏移相同的距离造成的影响是不一样的，所以不应该直接使用误差平方和，而是先开方，再使用误差平方和，这样可以使小目标在相较于大目标在偏移相同的距离的时候，其损失值更大。</li>
+<li>对于confidence损失和classes损失，分成正负样本分别使用误差平方和进行计算</li>
+<li><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412202919491.png" alt="image-20220412202919491">原文中参数设置如图，之所以$\lambda$<del>coord</del>会是$\lambda$<del>noobj</del>的十倍是因为我们更关心框选部分有物体的框，不那么关心没框到物体的框</li>
+<li><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412203615797.png" alt="image-20220412203615797">意为如果框是一个物体的时候为1，否则为0。</li>
+</ul>
+<p>在预测的时候，生成了SxSx（class num+B*（4+1））个框，过滤框的时候使用<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412214139769.png" alt="image-20220412214139769">，与设定的阈值进行对比并进行NMS，剩下来的就是我们最终获得的目标。</p>
+<p>yolov1存在的问题：</p>
+<ul>
+<li><p>对群体性的密集小目标的检测性能差（理由：对每个网格只预测2个bounding box，且属于同一个类）</p>
+</li>
+<li><p>当目标出现了新的尺寸和比例，预测效果较差（理由：主要错误原因为定位不准确，是因为使用了直接预测目标的位置信息，而不是使用anchor从而预测回归参数，所以从yolov2开始，重新使用anchor）</p>
+</li>
+<li><p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412162538084.png" alt="image-20220412162538084"></p>
+<p>由于类别的预测是针对于每个网格而言的，所以当多个物体的中心出现重叠的时候会出现错误。</p>
+</li>
+<li><p>在判断某些物体时，有时不需要最后的高阶的特征，只需要较为底层，或者中层的特征就可以对物体进行判断。而yolov1的结构则全部使用了最抽象的特征进行判断，反而容易引入错误。</p>
+</li>
+</ul>
+<h5 id="YOLO系列-YOLOv2"><a href="#YOLO系列-YOLOv2" class="headerlink" title="YOLO系列-YOLOv2"></a>YOLO系列-YOLOv2</h5><p>yolov1主要存在的问题：定位误差大，召回率差。yolov2中相较于yolov1的各种尝试：</p>
+<ul>
+<li>Batch Normalization</li>
+<li>High Resolution Classifier</li>
+<li>Convolutional With Anchor Boxes</li>
+<li>Dimension Clusters</li>
+<li>Direct location prediction</li>
+<li>Fine-Grained Features</li>
+<li>Multi-Scale Training</li>
+</ul>
+<p><strong>Batch Normalization</strong>：显著的提升了训练收敛的速度，减少了所需的正则化程度。通过在每个卷积层之后添加BN层，模型提高了2％的map，且可以丢弃dropout层。</p>
+<p><strong>High Resolution Classifier</strong>：因为使用了pre train技术，在yolov1中我们使用的是Image Net的224x224图像进行训练，在预测的时候将输入的分辨率调为448x448。在yolov2中，使用448x448的Image Net的图片进行预训练，使map提升4％。</p>
+<p><strong>Convolutional With Anchor Boxes</strong>：在yolov1中对边界框的预测是直接用全连接层来预测的，是不基于anchor的。而这样会导致边界框的定位误差较大。所以yolov2认为，预测基于anchor的偏移会使这个问题较为简化，并且让这个网络更加容易学习收敛。所以YOLOV2采用了Faster R-CNN的方法，引入了anchor，在网络结构方面将原来网络的全连接层和最后一个pooling层去掉，使得最后的卷积层能输出更高分辨率的特征图。我们还缩减了网络，用416x416分辨率大小作为输入，而不是448x448。这样做的原因是希望得到的特征图有着奇数的宽和高，这样特征图的中心就只有一个，因为大的目标一般会占据图像的中心，所以最好在中心有一个单一的位置来预测这些目标。网络会经过32倍下采样，最后输入13x13大小的特征图使用anchor，模型的mAP值从69.5降到了69.2，下降了一丢丢，而召回率却从81%提高到了88%，模型的提升空间有了较大的提升。</p>
+<p><strong>Dimension Clusters</strong>：使用了anchor的聚类。yolo网络是去学习bounding box的改变，而anchor的初始值的好坏会导致学习的速度以及学习的最终结果。如果最开始就选用了较好的anchor则会使网络效果更好。所以yolov2使用k-means聚类算法对训练集的boxes进行聚类，寻找合适的anchor。</p>
+<p><strong>Direct location prediction</strong>：模型在基于anchor的训练的早期的大部分的不稳定性是来自于预测box的中心坐标，faster RCNN公式如下$x=(t_x*w_a)+x_a$ </p>
+<p>$y=(t_y*h_a)+y_a$ 但这个公式没有对$t_x t_y$的值有所限制，会导致一次迭代更新之后的box中心值偏离网格，到其余网格去。我们更希望每个anchor仅能预测当前对应网格的物体，所以yolov2更新了迭代预测的公式，采用相对于网格的坐标位置进行预测，公式如下：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413110720861.png" alt="image-20220413110720861"></p>
+<p>其中参数定义如下图：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBA5L2V5aaC5Y2D5rO3,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center.png" alt="在这里插入图片描述"></p>
+<p><strong>Fine-Grained Features</strong>：由于最终的feature map是13x13，其对于小物体的识别方面能力有所不够，所以需要上一层的size较大的feature map同样进行训练。所以添加了Passthrough layer，作用为将最终层前面一层26x26的feature map与最终的13x13的feature map进行连接，类似于ResNet和FPN的思想。</p>
+<p>其中Passthrough layer的具体操作方式如下所示：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413112932061.png" alt="image-20220413112932061"></p>
+<p>将一个4x4x1的特征转化为2x2x4的特征。</p>
+<p><strong>Multi-Scale Training</strong>：为了提升yolov2系统的鲁棒性，将输入图片的图像进行动态的调整，以完成图片的多尺度训练。在实际的操作过程中，每隔10次迭代便随机的选择一个新图像大小进行输入，选择的大小为32的倍数。32为输入到输出的放缩倍数，从320到608进行选择。</p>
+<p>yolov2的backbone采用了darknet-19 其在ImageNet上用224x224进行训练，在top -5 accuracy取得了91.2％的准确率，其网络结构如下：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413113649802.png" alt="image-20220413113649802"></p>
+<p>yolov2的整个模型框架如下所示：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413113811030.png" alt="image-20220413113811030"></p>
+<p>B=5 ClassNum=20 </p>
+<p>关于网络训练细节：权重衰退weight decay设置0.0005，momentum设置为0.9，学习率在前160次设置为0.001，在60次和90次的时候，学习率减为原来的十分之一，采用了Faster RCNN和SSD的数据增强策略，如随机裁剪，颜色偏移，在COCO和VOC上的训练策略相同</p>
+<h5 id="YOLO系列-YOLOv3"><a href="#YOLO系列-YOLOv3" class="headerlink" title="YOLO系列-YOLOv3"></a>YOLO系列-YOLOv3</h5><p>YOLOv3放弃了YOLOv2的Darknet-19作为backbone，而采用了Darknet-53进行图片的特征提取。</p>
+<p>Darknet-53的网络结构如下所示：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/70.png" alt="img"></p>
+<p>YOLOv3的网络结构如下所示：</p>
+<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413193915663.png" alt="image-20220413193915663"></p>
+<p>YOLOv3在三个不同的尺度下对box进行预测，每个尺度上预测3个box，而box的先验信息由k-means算法进行计算，以COCO数据集为例，其预测出的bounding box priors的值为<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM3NTQxMDk3,size_16,color_FFFFFF,t_70.png" alt="img"></p>
+<p>predict one大小为13x13一般提取较大的物体特征，predict two大小为26x26一般提取中等的物体特征，predict three一般提取较小的物体特征。</p>
+<p>假设将一个图片分为NxN，则我们在一个scale的情况下，总共预测得到的参数为$N<em>N</em>3*(4+1+80)$，其中80是类别数，4是box偏移量，1是confidence，3是每一个scale预测3个bounding box。即在yolov3中，不是每个网格进行类别的预测，而是使用每个box进行类别的预测。</p>
+<p>yolo将最后的多分类任务转换为多个二分类的任务，并且损失函数使用二分类对应的交叉熵累计计算。</p>
+<p>YOLOv3使用上采样的方式，将图片更粗颗粒感的因素与更细颗粒感的因素相结合进行融合预测。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -171,10 +408,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-03-28 10:54:34 / 修改时间：10:54:50" itemprop="dateCreated datePublished" datetime="2022-03-28T10:54:34+08:00">2022-03-28</time>
+              <time title="创建时间：2022-03-28 10:54:34" itemprop="dateCreated datePublished" datetime="2022-03-28T10:54:34+08:00">2022-03-28</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-19 10:51:07" itemprop="dateModified" datetime="2022-04-19T10:51:07+08:00">2022-04-19</time>
+              </span>
 
           
 
@@ -188,7 +431,7 @@
 
       
           <h2 id="在pycharm中调用pytorch函数没有自动补全"><a href="#在pycharm中调用pytorch函数没有自动补全" class="headerlink" title="在pycharm中调用pytorch函数没有自动补全"></a>在pycharm中调用pytorch函数没有自动补全</h2><h3 id="问题原因："><a href="#问题原因：" class="headerlink" title="问题原因："></a>问题原因：</h3><p>pytorch的代码绝大部分由c++进行实现，不是原生的python代码，而pycharm的代码提示时通过<code>.pyi</code>类型的文件进行实现的。关于.pyi文件，在<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0484/">PEP484</a>中写到</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Stub files are files containing type hints that are only for use by the type checker, not at runtime. There are several use cases for stub files:</span><br><span class="line"></span><br><span class="line">Extension modules</span><br><span class="line">Third-party modules whose authors have not yet added type hints</span><br><span class="line">Standard library modules for which type hints have not yet been written</span><br><span class="line">Modules that must be compatible with Python 2 and 3</span><br><span class="line">Modules that use annotations for other purposes</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Stub files are files containing type hints that are only for use by the type checker, not at runtime. There are several use cases for stub files:</span><br><span class="line"></span><br><span class="line">Extension modules</span><br><span class="line">Third-party modules whose authors have not yet added type hints</span><br><span class="line">Standard library modules for which type hints have not yet been written</span><br><span class="line">Modules that must be compatible with Python 2 and 3</span><br><span class="line">Modules that use annotations for other purposes</span><br></pre></td></tr></table></figure>
 
 <p>即.pyi文件作为stub files，帮助添加type hint，从而帮助pycharm实现自动补全。</p>
 <h3 id="解决办法："><a href="#解决办法：" class="headerlink" title="解决办法："></a>解决办法：</h3><p>故可以通过手动添加_int.pyi的方式实现pycharm对pytorch的自动补全的实现。并且这样的.pyi文件的功能只有类型检查，对其余功能没有影响。写好的.pyi文件见以下链接：<a target="_blank" rel="noopener" href="https://gist.github.com/t-vi/0d0ae013072f96f50fa11fbc2287e33b">_int_.pyi</a></p>
@@ -232,7 +475,7 @@
 <ul>
 <li>__init__在执行父类的构造函数之后是该网络的部分网络结构的构造描述部分。在网络结构的构造部分常用的层有卷积层、批标准化层、激活函数、池化层、全连接层。网络模型的构造方法常见的有以下几种：<a target="_blank" rel="noopener" href="https://www.jb51.net/article/138245.htm">pytorch构造网络模型的方法</a></li>
 </ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">	在上述代码中，输入维度为[<span class="number">3</span>, <span class="number">128</span>, <span class="number">128</span>] 即RGB三色图像，长宽各<span class="number">128</span>。</span><br><span class="line">nn.Conv2d(in_channels, out_channels, kernel_size, stride=<span class="number">1</span>, padding=<span class="number">0</span>)</span><br><span class="line">	图片的channels是指图片的维数，即RGB图像为三维，黑白图像为一维。一般的channels是指每个卷积层中卷积核的数量。而上一次层的out_channels即为下一层的in_channels。out_channels数目即为卷积核的数目，每个卷积核提取之后的特征数目的确定由in_channels、kernel_size、stride、padding共同决定，具体公式见下面链接：步长、填充、卷积核大小与输入输出大小的关系。conv2d完成卷积操作，功能是特征提取。</span><br><span class="line">nn.BatchNorm2d(num_features, eps=<span class="number">1e-05</span>, momentum=<span class="number">0.1</span>, affine=<span class="literal">True</span>, track_running_stats=<span class="literal">True</span>)</span><br><span class="line">	其中的num_features一般设置为特征数，即Conv2d中的输出通道数。BN完成批标准化操作，功能是将每个特征对结果的影响因素设置到相同水平。</span><br><span class="line">nn.ReLU() </span><br><span class="line">	激活函数对输入信息进行非线性变换，使整个系统模拟所有的函数成为可能。</span><br><span class="line">nn.MaxPool2d(kernel_size, stride, padding)</span><br><span class="line">	最大池化的作用理论依据为下采样之后的图像不影响这个图像的辨识和分类，输出的特征维数与con2d的计算规则相同</span><br><span class="line">nn.Linear(in_features,out_features)</span><br><span class="line">	该函数用于网络中的全连接层，in_features指输入的二维张量的大小，out_features指输出的二维张量的大小，即全连接层的神经元个数。</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">	在上述代码中，输入维度为[<span class="number">3</span>, <span class="number">128</span>, <span class="number">128</span>] 即RGB三色图像，长宽各<span class="number">128</span>。</span><br><span class="line">nn.Conv2d(in_channels, out_channels, kernel_size, stride=<span class="number">1</span>, padding=<span class="number">0</span>)</span><br><span class="line">	图片的channels是指图片的维数，即RGB图像为三维，黑白图像为一维。一般的channels是指每个卷积层中卷积核的数量。而上一次层的out_channels即为下一层的in_channels。out_channels数目即为卷积核的数目，每个卷积核提取之后的特征数目的确定由in_channels、kernel_size、stride、padding共同决定，具体公式见下面链接：步长、填充、卷积核大小与输入输出大小的关系。conv2d完成卷积操作，功能是特征提取。</span><br><span class="line">nn.BatchNorm2d(num_features, eps=<span class="number">1e-05</span>, momentum=<span class="number">0.1</span>, affine=<span class="literal">True</span>, track_running_stats=<span class="literal">True</span>)</span><br><span class="line">	其中的num_features一般设置为特征数，即Conv2d中的输出通道数。BN完成批标准化操作，功能是将每个特征对结果的影响因素设置到相同水平。可以加快收敛速度。</span><br><span class="line">nn.ReLU() </span><br><span class="line">	激活函数对输入信息进行非线性变换，使整个系统模拟所有的函数成为可能。</span><br><span class="line">nn.MaxPool2d(kernel_size, stride, padding)</span><br><span class="line">	最大池化的作用理论依据为下采样之后的图像不影响这个图像的辨识和分类，输出的特征维数与con2d的计算规则相同，并且减少位置敏感性。</span><br><span class="line">nn.Linear(in_features,out_features)</span><br><span class="line">	该函数用于网络中的全连接层，in_features指输入的二维张量的大小，out_features指输出的二维张量的大小，即全连接层的神经元个数。全连接层的计算量巨大，为上一层的featuremap的通道数乘以高乘以宽再乘以out_features。</span><br></pre></td></tr></table></figure>
 
 <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_34243930/article/details/107231539">Conv2d参考链接</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_37665306/article/details/103939069">步长、填充、卷积核大小与输入输出大小的关系</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_39777550/article/details/108038677">BatchNorm2d参考链接</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/g11d111/article/details/82665265">MaxPool2d参考链接</a> </p>
 <ul>
@@ -253,17 +496,21 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">//选一个你心仪的优化器，并设置其所需要的参数</span><br><span class="line">optimizer = torch.optim.SGD(model.parameters(), lr = <span class="number">0.01</span>, momentum=<span class="number">0.9</span>)</span><br><span class="line">//代指每次训练的时候</span><br><span class="line"><span class="keyword">for</span> epoch......</span><br><span class="line">	<span class="keyword">for</span> data....</span><br><span class="line">    //每次计算之前应该使用optimizer将model的梯度清理，从而舍弃上一次BP计算得到的梯度，为新的一次前向+反向做好准备。</span><br><span class="line">	optimizer.zero_grad()</span><br><span class="line">	//训练</span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">    //在backward之后使用.step()完成参数的更新。</span><br><span class="line">   	optimizer.step()</span><br></pre></td></tr></table></figure>
 
 <p>实际代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epoch):</span><br><span class="line">    model.train()  <span class="comment"># 確保 model 是在 train model (開啟 Dropout 等...)</span></span><br><span class="line">    <span class="keyword">for</span> i, data <span class="keyword">in</span> <span class="built_in">enumerate</span>(train_loader):</span><br><span class="line">        optimizer.zero_grad()  <span class="comment"># 用 optimizer 將 model 參數的 gradient 歸零</span></span><br><span class="line">        train_pred = model(data[<span class="number">0</span>].cuda())  <span class="comment"># 利用 model 得到預測的機率分佈 這邊實際上就是去呼叫 model 的 forward 函數</span></span><br><span class="line">        batch_loss = loss(train_pred, data[<span class="number">1</span>].cuda())  <span class="comment"># 計算 loss （注意 prediction 跟 label 必須同時在 CPU 或是 GPU 上）</span></span><br><span class="line">        batch_loss.backward()  <span class="comment"># 利用 back propagation 算出每個參數的 gradient</span></span><br><span class="line">        optimizer.step()  <span class="comment"># 以 optimizer 用 gradient 更新參數值</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epoch):</span><br><span class="line">    model.train()  <span class="comment"># ensure model in train model ( Dropout etc...)</span></span><br><span class="line">    <span class="keyword">for</span> i, data <span class="keyword">in</span> <span class="built_in">enumerate</span>(train_loader):</span><br><span class="line">        optimizer.zero_grad()  <span class="comment"># use optimizer to set model gradient 0</span></span><br><span class="line">        train_pred = model(data[<span class="number">0</span>].cuda())  </span><br><span class="line">        batch_loss = loss(train_pred, data[<span class="number">1</span>].cuda())  <span class="comment"># 计算 loss （注意 prediction 跟 label 必须同时 CPU 或是 GPU 上）</span></span><br><span class="line">        batch_loss.backward()  <span class="comment"># 利用 back propagation 算出每个参数的 gradient</span></span><br><span class="line">        optimizer.step()  <span class="comment"># 以 optimizer 用 gradient 更新参数值</span></span><br></pre></td></tr></table></figure>
+
+<p>使用如下代码进行每层变换之后的feature map 的 size大小查看：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> layer <span class="keyword">in</span> net:</span><br><span class="line">    <span class="built_in">input</span>=layer(<span class="built_in">input</span>)</span><br><span class="line">    <span class="built_in">print</span>(layer.__class__.__name__, <span class="string">&#x27;output shape:\t&#x27;</span>, <span class="built_in">input</span>.shape)</span><br><span class="line">或者</span><br><span class="line"><span class="keyword">for</span> name,layer <span class="keyword">in</span> model._modules.items():</span><br><span class="line">    <span class="built_in">input</span>=layer(<span class="built_in">input</span>)</span><br><span class="line">    <span class="built_in">print</span>(layer.__class__.__name__, <span class="string">&#x27;output shape:\t&#x27;</span>, <span class="built_in">input</span>.shape)</span><br></pre></td></tr></table></figure>
 
 
 
-<h3 id="数据处理和加载"><a href="#数据处理和加载" class="headerlink" title="数据处理和加载"></a>数据处理和加载</h3><h3 id="训练模型（Train-and-Validate）"><a href="#训练模型（Train-and-Validate）" class="headerlink" title="训练模型（Train and Validate）"></a>训练模型（Train and Validate）</h3><h3 id="测试模型"><a href="#测试模型" class="headerlink" title="测试模型"></a>测试模型</h3><h3 id="训练过程可视化（可选）"><a href="#训练过程可视化（可选）" class="headerlink" title="训练过程可视化（可选）"></a>训练过程可视化（可选）</h3><p>使用matplotlib实现训练过程的可视化。</p>
-<h4 id="matplotlib的安装："><a href="#matplotlib的安装：" class="headerlink" title="matplotlib的安装："></a>matplotlib的安装：</h4><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install matplotlib</span><br></pre></td></tr></table></figure>
+<h3 id="数据处理和加载"><a href="#数据处理和加载" class="headerlink" title="数据处理和加载"></a>数据处理和加载</h3><p>数据的处理和加载通过写自己的dataset从而进行实现</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, img, y=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.img = img</span><br><span class="line">        self.y = y</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.img)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.img[index]</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br><span class="line"></span><br><span class="line">train_set = ImgDataset(train_data_img, train_data[<span class="string">&quot;label&quot;</span>])</span><br><span class="line">train_loader = DataLoader(train_set, batch_size=<span class="number">64</span>)</span><br></pre></td></tr></table></figure>
 
-<h4 id="visdom的使用："><a href="#visdom的使用：" class="headerlink" title="visdom的使用："></a>visdom的使用：</h4><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">visdom</span><br></pre></td></tr></table></figure>
 
-<p>在使用之前，cmd输入visdom运行visdom服务，并且在<a target="_blank" rel="noopener" href="http://localhost:8097/%E5%AE%9E%E6%97%B6%E6%9F%A5%E7%9C%8B%E7%BB%93%E6%9E%9C%E3%80%82">http://localhost:8097/实时查看结果。</a></p>
-<p>使用</p>
+
+
+
+
 
       
     </div>
@@ -306,10 +553,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-03-28 10:50:14 / 修改时间：10:51:55" itemprop="dateCreated datePublished" datetime="2022-03-28T10:50:14+08:00">2022-03-28</time>
+              <time title="创建时间：2022-03-28 10:50:14" itemprop="dateCreated datePublished" datetime="2022-03-28T10:50:14+08:00">2022-03-28</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-19 10:52:55" itemprop="dateModified" datetime="2022-04-19T10:52:55+08:00">2022-04-19</time>
+              </span>
 
           
 
@@ -351,6 +604,84 @@
 <p>基于以上三个假设，CNN的整体架构为：</p>
 <p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/CNN.png" alt="70"></p>
 <p>其中convolution即为假设一、二的具象化，max pooling为假设三的具象化，通过convolution和maxpooling即完成了一次特征提取的过程，得到一个较小的image。</p>
+<p>深度网络比人工特征提取+SVM效果好的原因：</p>
+<ul>
+<li>深度网络进行特征提取相较于人工特征提取，更加完善，不具有经验局限性。</li>
+<li>深度网络+softmax进行分类在训练的时候是一起训练的，而人工特征提取和SVM是分开进行的。</li>
+</ul>
+<h3 id="LeNet"><a href="#LeNet" class="headerlink" title="LeNet"></a>LeNet</h3><p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-e5539ed222a20cdb9c7ebfca5c640a5d_1440w.jpg" alt="img"></p>
+<p>第一次定义CNN网络结构，由两个卷积层，两个池化层，两个全连接层组成。卷积核都是5×5，stride=1，池化层使用maxpooling。为了构造高性能的卷积神经网络，我们通常对卷积层进行排列，逐渐降低其表示的空间分辨率，同时增加通道数。</p>
+<ul>
+<li>定义了卷积神经网络（Convolutional Neural Network, CNN）的基本框架：卷积层 + 池化层（Pooling Layer） + 全连接层</li>
+<li>定义了卷积层（Convolution Layer），与全连接层相比，卷积层的不同之处有两点：局部连接（引进“感受野”这一概念）、权值共享（减少参数数量）</li>
+<li>利用池化层进行下采样（Down sampooling），从而减少计算量</li>
+<li>用 Tanh 作为非线性激活函数（现在看到的都是改进过的 LeNet 了，用 ReLU 代替 Tanh。相较于 Sigmoid，Tanh 以原点对称（zero-centered），收敛速度会快。关于其解释，请看：<a href="https://link.zhihu.com/?target=https://liam.page/2018/04/17/zero-centered-active-function/">谈谈激活函数以零为中心的问题</a>）</li>
+</ul>
+<h3 id="AlexNet"><a href="#AlexNet" class="headerlink" title="AlexNet"></a>AlexNet</h3><p>可以视为更深更大的LeNet，主要改进：丢弃法，ReLu，MaxPooling：</p>
+<ul>
+<li><p>激活函数从sigmoid变为ReLu（减缓梯度消失）</p>
+</li>
+<li><p>隐藏全连接层后添加了丢弃曾</p>
+</li>
+<li><p>使用了数据增强</p>
+</li>
+</ul>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-fa3b7277f36b20f7ca623ad12fcdcfbe_720w.jpg" alt="img"></p>
+<p>模型共8层，包括5个卷积层和3个全连接层，最后一层使用softmax做分类输出。</p>
+<ul>
+<li>采用双 GPU 网络结构，从而可以设计出更“大”、更“深”的网络（相较于当时的算力来说）</li>
+<li>采用 ReLU 代替 Tanh，稍微解决梯度消失问题（Gradient Vanishing Problem），加快网络收敛速度。（关于常见激活函数的比较，可以看这篇：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32610035">常用激活函数的比较 - 徐小贱民的文章 - 知乎</a>）</li>
+<li>提出局部相应归一化（LRN, Local Response Normalization），据作者所言，该操作能减少指标 Top-1/Top-5 Error Rate 1.4%/1.2%。（我个人不喜欢 LRN，因为我觉得它的超参数太多了，不具备很好的泛化能力。关于 Normalization 的发展历程可以看这篇：[<a href="https://link.zhihu.com/?target=https://blog.csdn.net/Code_Mart/article/details/92715180">笔记] 神经网络中 Normalization 的发展历程</a>）</li>
+<li>令 Pooling 操作中的 stride 小于池化核的大小，从而使相邻的池化区域存在重叠部分，这一操作称为 Overlapping Pooling。据作者所言，这一操作能减少指标 Top-1/Top-5 Error Rate 0.4%/0.3%，并且减少过拟合现象。</li>
+<li>对训练数据进行随机裁剪（Random Crop），将训练图像由 256 × 256 裁剪为 224 × 224，并做随机的镜像翻转（Horizontal Reflection）。并在测试时，从图像的四个角以及中心进行裁剪，并进行镜像翻转，这样可以得到 10 个 Patch，将这些 Patch 的结果进行平均，从而得到最终预测结果。（之前在一个人脸识别比赛中，我师兄用这样的操作直接提高了４~5个点，算是一种简单的集成操作吧）</li>
+<li>对训练图像做 PCA（主成分分析），利用服从 (0,0.1) 的高斯分布的随机变量对主成分进行扰动。作者指出，这一操作能减少指标 Top-1 Error Rate 1%。</li>
+<li>利用 Dropout 避免网络过拟合。（我觉得这也算是集成操作的一种，因为随着模型的复杂度的提高，弱分类器也会越来越大，纯粹由弱分类器进行 Ensemble 应该不实际。最近谷歌对 Dropout 的专利貌似申请下来了，据说相关文档详细到可以作为 Dropout 的使用指南。）</li>
+</ul>
+<h3 id="VGG使用块的网络"><a href="#VGG使用块的网络" class="headerlink" title="VGG使用块的网络"></a>VGG使用块的网络</h3><p>针对于AlexNet比LeNet虽然复杂，效果好，但没有一个通用的模板来知道后续的研究人员设计新的网络，提出VGG即使用块的网络。</p>
+<p>使用（卷积核为3x3，填充为1的卷积层、激活函数）的叠加，加上2x2，步幅为2的池化层作为一个VGG块。超参数为n层m通道中的n和m。</p>
+<p>tips：为什么不使用5x5的卷积层，原因为：经过实验，发现在相同的计算量的前提下，3x3卷积核的效果比5x5卷积核的效果好。</p>
+<p>VGG使用可重复使用的VGG块来构建深度卷积神经网络，不同的卷积块个数和超参数可以得到不同复杂度的变种。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-27a13a7163bfe9bd6a10f5a086f01182_1440w.jpg" alt="img"></p>
+<h3 id="NIN-网络中的网络"><a href="#NIN-网络中的网络" class="headerlink" title="NIN 网络中的网络"></a>NIN 网络中的网络</h3><p>针对于VGG等较深的网络中第一个全连接层的计算量大，参数多的情况，提出NIN。</p>
+<p>NIN块：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220406221653574.png" alt="image-20220406221653574"></p>
+<p>其中1x1的卷积层的步幅为1，无填充，输入输出大小相同，可以看作全连接层，起到全连接层的作用。两个1x1的卷积层对每个像素都增加的非线性性。</p>
+<p>NIN架构：</p>
+<p>无全连接层，交替使用NIN块和步幅为2的最大池化层，从而逐步减小高宽和增大通道数，最后使用全局平均池化层得到输出，输出通道数为类别数。其不容易过拟合，参数数量更少。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220406222021914.png" alt="image-20220406222021914"></p>
+<p>用1*1卷积层代替全连接层的好处：</p>
+<ul>
+<li>不改变图像空间结构<br>全连接层会破坏图像的空间结构，而1*1卷积层不会破坏图像的空间结构。</li>
+<li> 输入可以是任意尺寸<br>全连接层的输入尺寸是固定的，因为全连接层的参数个数取决于图像大小。而卷积层的输入尺寸是任意的，因为卷积核的参数个数与图像大小无关。</li>
+</ul>
+<h3 id="GoogLeNet-含并行连结的网络"><a href="#GoogLeNet-含并行连结的网络" class="headerlink" title="GoogLeNet 含并行连结的网络"></a>GoogLeNet 含并行连结的网络</h3><p> NiN严重影响了GoogLeNet的设计，GoogLeNet的核心观点为，不同大小的卷积核的组合是有利的，其最基本的卷积块为Inception块，其分为四个路径，由不同的卷积核在四个不同层面上抽取信息，最后在输出通道维进行合并。作者指出：提高模型表达能力的最直接的办法就是增加模型的“大小”，而这又会导致两个问题的产生：</p>
+<ul>
+<li><p><strong>模型越大，其网络参数也就越大，就越容易产生过拟合现象，所以就需要更大的数据集，然而大型数据集的构建成本是很高昂的</strong></p>
+</li>
+<li><p><strong>模型越大，对于计算资源的需求就越大，这在现实任务中是难以接受的</strong>。</p>
+<p>作者认为解决这两个问题的基本方法是<strong>将全连接层，甚至是卷积层改为稀疏的网络结构</strong>。</p>
+</li>
+</ul>
+<p>Inception块的架构如下：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407095249641.png" alt="image-20220407095249641"></p>
+<p> GoogLeNet的网络架构如下：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407095639989.png" alt="image-20220407095639989"></p>
+<p>GoogLeNet的通道数为GoogLeNet的超参数。Inception块和单独的3x3或5x5卷积层比，Inception块拥有更少的参数个数和计算复杂度。其使用了九个inception块，是第一个达到上百层的网络。</p>
+<p>inception后续有很多变种，如v2 v3 等等，其主要的改变在于对inception块中卷积核的改变，并在v4中结合resnet的精神，引入残差进行计算。<br>Inception-v2<br>在v1的基础上加入batch normalization技术，在tensorflow中，使用BN在激活函数之前效果更好；将5×5卷积替换成两个连续的3×3卷积，使网络更深，参数更少<br>Inception-v3<br>核心思想是将卷积核分解成更小的卷积，如将7×7分解成1×7和7×1两个卷积核，使网络参数减少，深度加深<br>Inception-v4<br>引入了ResNet，使训练加速，性能提升。但是当滤波器的数目过大（&gt;1000）时，训练很不稳定，可以加入activate scaling因子来缓解</p>
+<h3 id="ResNet-残差网络"><a href="#ResNet-残差网络" class="headerlink" title="ResNet 残差网络"></a>ResNet 残差网络</h3><p>残差网络对随后的深层神经网络设计产生了深远的影响，其使得深层的网络更加容易训练。</p>
+<p>思想：使模型函数嵌套，即确保加了一层之后模型所覆盖的解释范围是大于之前的，而不是有所偏离。每个附加层都应该更容易的包含其原始函数作为其组成部分即可如下所示：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407143555719.png" alt="image-20220407143555719"></p>
+<p>残差块</p>
+<p>如图所示，即将原始输入作为输出的一部分直接传输使得原本所要拟合的函数 H（x） ，改为 F（x） ，其中，H（x）=F（x）+x。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-8cca8110539fbdea2a891bc990f6ac31_720w.jpg" alt="img"></p>
+<p>为什么resnet能避免梯度消失：将乘法变为加法</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407150021196.png" alt="image-20220407150021196"></p>
+<h2 id="数据增强相关"><a href="#数据增强相关" class="headerlink" title="数据增强相关"></a>数据增强相关</h2><p>在已有的数据集上增加数据，如增加背景噪声，改变图片的颜色和形状等方式，使得数据集具有更多的多样性，从而使模型的泛化性能更好。训练的时候每次从数据集中读取图片后进行在线的随机的生成，可以看作正则项。</p>
+<p>经常可以数据增强的项：旋转、切割、颜色。在实际使用中，torchvision.transforms中包含常用的变换。一般使用torchvision.transforms.Compose[]进行多种图像增广方法的结合，样例代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.ToPILImage(),</span><br><span class="line">    transforms.RandomHorizontalFlip(),  </span><br><span class="line">    transforms.RandomRotation(<span class="number">15</span>),  </span><br><span class="line">    transforms.ToTensor(),  </span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+<p>在实际训练的时候，一般在自定义dataset的__getitem__的时候，将transform赋值给data，样例代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, x, y=<span class="literal">None</span>, transform=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.x = x</span><br><span class="line">        <span class="comment"># label is required to be a LongTensor</span></span><br><span class="line">        self.y = y</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            self.y = torch.LongTensor(y)</span><br><span class="line">        self.transform = transform</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.x)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.x[index]</span><br><span class="line">        <span class="keyword">if</span> self.transform <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            X = self.transform(X)</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -704,7 +1035,7 @@ int main()
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
