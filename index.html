@@ -148,6 +148,181 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/" class="post-title-link" itemprop="url">目标检测经典论文阅读</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-07-26 22:26:51 / 修改时间：20:28:34" itemprop="dateCreated datePublished" datetime="2022-07-26T22:26:51+08:00">2022-07-26</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="SSD-Single-Shot-MultiBox-Detector"><a href="#SSD-Single-Shot-MultiBox-Detector" class="headerlink" title="(SSD) Single Shot MultiBox Detector"></a>(SSD) Single Shot MultiBox Detector</h2><h3 id="SSD主要有以下几个主要特点"><a href="#SSD主要有以下几个主要特点" class="headerlink" title="SSD主要有以下几个主要特点"></a>SSD主要有以下几个主要特点</h3><ul>
+<li>特征提取主干网络：VGG16，去除全连接层fc8，fc6 和 fc7层转换为卷积层，pool5不进行分辨率减小，在fc6上使用dilated convolution弥补损失的感受野；并且增加了一些分辨率递减的卷积层；</li>
+<li>SSD摈弃了proposal的生成阶段，使用anchor机制，这里的anchor就是位置和大小固定的box，可以理解成事先设置好的固定的proposal</li>
+<li>SSD使用不同深度的卷积层预测不同大小的目标，对于小目标使用分辨率较大的较低层，即在低层特征图上设置较小的anchor，高层的特征图上设置较大anchor</li>
+<li>预测模块：使用3x3的卷积对每个anchor的类别和位置直接进行回归</li>
+<li>SSD使用的data augmentation对效果影响很大</li>
+</ul>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/v2-6c94c262502872e9d667cd03959d1f2e_720w.jpg" alt="img"></p>
+<h3 id="SSD训练时的流程："><a href="#SSD训练时的流程：" class="headerlink" title="SSD训练时的流程："></a>SSD训练时的流程：</h3><ul>
+<li>生成初始框<ul>
+<li>SSD的初始框不是自适应的，是根据预先设置好的anchor生成规则进行生成的，其无需利用输入图像的信息进行生成，这也导致有一部分的先验信息没有被利用到。</li>
+</ul>
+</li>
+<li>先验框匹配<ul>
+<li>即label assignment ，即为判断训练图片中的目标真实框与哪个先验框来进行匹配，从而使匹配的框进行位置的预测。SSD中使用的先验框匹配的方法是IOU。</li>
+</ul>
+</li>
+<li>损失计算<ul>
+<li>$L(x,c,l,g) = \frac{1}{N}(L_{conf}(x,c)+\alpha{L_{loc}(x,l,g)}$ 其中$N$为正样本的个数</li>
+<li>位置损失计算：$L_{loc}(x,l,g) = \sum^{N}_{i\in{Pos}}\sum_{m\in{cx,cy,w,h}}{x^k_{ij}smooth_{L_1}(l^m_i - g^m_j)}$</li>
+<li>类别损失计算：$L_{conf}(x,c) = - \sum^N_{i\in{Pos}}{x^p_{ij}log(C^p_i)}- \sum_{i\in{Neg}}{log(C^o_{i})} \quad where \quad C^p_{i}=\frac{exp(c^p_{i})}{\sum_{p}{exp(c^p_i)}}$</li>
+<li>$\alpha$设置为1</li>
+</ul>
+</li>
+</ul>
+<h2 id="（FPN）Feature-Pyramid-Networks-for-Object-Detection"><a href="#（FPN）Feature-Pyramid-Networks-for-Object-Detection" class="headerlink" title="（FPN）Feature Pyramid Networks for Object Detection"></a>（FPN）Feature Pyramid Networks for Object Detection</h2><h3 id="FPN解决的问题："><a href="#FPN解决的问题：" class="headerlink" title="FPN解决的问题："></a>FPN解决的问题：</h3><p>FPN是目前较为先进的一种目标检测中的neck结构（即图片经过特征提取网络backbone进行图片特征提取之后以及检测头head进行物体检测之间的承上启下的部分），其主要的作用是对提取到的特征进行再加工和合理利用。</p>
+<h3 id="FPN的结构以及相对于以前结构的改进："><a href="#FPN的结构以及相对于以前结构的改进：" class="headerlink" title="FPN的结构以及相对于以前结构的改进："></a>FPN的结构以及相对于以前结构的改进：</h3><ul>
+<li>(a)图像金字塔，即将图像做成不同的scale，然后不同scale的图像生成对应的不同scale的特征。<ul>
+<li>优点：每一种尺度的图像进行特征提取，能够产生多尺度的特征表示，并且所有等级的特征图都具有较强的语义信息，甚至包括一些高分辨率的特征图。</li>
+<li>缺点：<ul>
+<li>增加了时间成本</li>
+<li>内存需求巨大，从而导致用图像金字塔的形式训练一个端到端的深度神经网络变得不可行</li>
+<li>如果只在测试阶段使用图像金字塔，那么会由于训练时网络只是针对于某一个特点的分辨率进行训练，推理时产生“矛盾”。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>(b)像SPP net，Fast RCNN，Faster RCNN是采用这种方式，即仅采用网络最后一层的特征，==特征利用不充分，没有利用到多尺度的特征==。</li>
+<li>(c)像<strong>SSD（Single Shot Detector）</strong>采用这种多尺度特征融合的方式，没有上采样过程，即从网络不同层抽取不同尺度的特征做预测，这种方式不会增加额外的计算量。作者认为==SSD算法中没有用到足够低层的特征，而在作者看来足够低层的特征对于检测小物体是很有帮助的==。</li>
+<li>(d)FPN这种网络结构，能够在增加较少计算量的前提下融合低分辨率语义信息较强的特征图和高分辨率语义信息较弱但空间信息丰富的特征图。本文作者是采用这种方式，顶层特征通过上采样和低层特征做融合，而且每层都是独立预测的。后续例如YOLOv3 4都采用了类似的结构。</li>
+</ul>
+<p>即如下图所示：</p>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/89b55dd2738f4f4c99fd315cd59304b3.png" alt="在这里插入图片描述"></p>
+<h3 id="FPN的主要组成部分及解析："><a href="#FPN的主要组成部分及解析：" class="headerlink" title="FPN的主要组成部分及解析："></a>FPN的主要组成部分及解析：</h3><p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/d12943d3e5da404b9fd07dad4617fb09.png" alt="在这里插入图片描述"></p>
+<p>FPN的主要由三部分组成：<strong>自底向上</strong>，<strong>自顶向下</strong>，<strong>横向连接</strong></p>
+<h4 id="自底向上"><a href="#自底向上" class="headerlink" title="自底向上"></a>自底向上</h4><p>自底向上的网络是前馈网络，即网络的backbone生成了feature map之后，通过step=2进行每一级的降采样。</p>
+<h4 id="自顶向下"><a href="#自顶向下" class="headerlink" title="自顶向下"></a>自顶向下</h4><p>自顶向下的过程是通过上采样的方式进行实现的，实现的方法为最近邻插值法，示意图如下：</p>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/b3b55c106933490ea832bfcbe4f9b6ee.png" alt="在这里插入图片描述"></p>
+<h4 id="横向连接"><a href="#横向连接" class="headerlink" title="横向连接"></a>横向连接</h4><p>横向连接的实现方式如figure 3所示，为：首先自底向上的过程中生成的feature map经过1x1的卷积层改变特征图的通道数然后与自顶向下过程生成的feature map进行直接元素与元素的相加。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>FPN（Feature Pyramid Network）算法同时利用低层特征高分辨率和高层特征的高语义信息，通过融合这些不同层的特征达到预测的效果。并且预测是在每个融合后的特征层上单独进行的，这和常规的特征融合方式不同。</p>
+<h2 id="Retina-Net-Focal-Loss-for-Dense-Object-Detection"><a href="#Retina-Net-Focal-Loss-for-Dense-Object-Detection" class="headerlink" title="(Retina Net)Focal Loss for Dense Object Detection"></a>(Retina Net)Focal Loss for Dense Object Detection</h2><p>RetinaNet 本篇论文的主要贡献来自于其所提出的Focal Loss和参数初始化的设置，其所提出的Retina Net相对来说贡献并没有那么关键。</p>
+<h3 id="稠密-dense-预测与稀疏-sparse-预测"><a href="#稠密-dense-预测与稀疏-sparse-预测" class="headerlink" title="稠密(dense)预测与稀疏(sparse)预测"></a>稠密(dense)预测与稀疏(sparse)预测</h3><p>在目前的目标检测的算法框架中，一般把所有的目标检测分为两个类别，two-stage和one-stage。</p>
+<p>其中，RCNN类的经典目标识别算法是属于two-stage的。其主要的识别流程可以看做：首先传入一张图片，依据算法中所提出的目标框算法，如faster-RCNN的RPN算法，例如RCNN的selective search算法在目标图片中预测出大量的bbox（100k的数量级），然后依据其算法从其中筛选出评价较好的目标框（1～2k的数量级），将其送入检测头中进行检测。在这个过程中，RPN和SS提取出大量的bbox的过程就是稠密预测，然后从其中提取出得分比较高的bbox的过程就是稀疏预测。</p>
+<p>在one-stage的经典算法中，以yolov3为例，其生成anchor的过程可以大致描述为在backbone生成feature map之后，以三个层级的feature map内的每个点为中心进行anchor的预测，最后生成的anchor的数量级大致为30～100k左右。</p>
+<h3 id="one-stage和two-stage效果差异分析"><a href="#one-stage和two-stage效果差异分析" class="headerlink" title="one-stage和two-stage效果差异分析"></a>one-stage和two-stage效果差异分析</h3><p>作者想分析one-stage的密集预测精度没有two-stage的高的原因，发现极度不平衡的前背景数量是导致精度下降的原因。因此作者想通过修改标准交叉熵损失函数去改善这种不平衡关系。Focal Loss用来通过一组难训练的稀疏预测框进行训练，防止简单大量的负样本对训练造成影响。</p>
+<p>训练效率低：大多数位置都是非常简单的负样本，对训练没有大的作用。<br>大量简单负样本甚至会损坏模型。(degenerate models)Focal Loss</p>
+<p>作者研究中发现，正负样本极度不均衡的问题会导致以下两个问题：</p>
+<ol>
+<li>训练效率低：大多数位置都是非常简单的负样本，对训练没有大的作用。</li>
+<li>大量简单负样本甚至会损坏模型。(degenerate models)</li>
+</ol>
+<h3 id="Focal-Loss"><a href="#Focal-Loss" class="headerlink" title="Focal Loss"></a>Focal Loss</h3><p>Focal Loss 是用于解决在训练过程中前景和背景之间极度不平衡的问题。</p>
+<p>Focal Loss是基于Cross Entropy，在Cross Entropy的基础上改进而来的。Cross Entropy的公式如下所示：</p>
+<script type="math/tex; mode=display">
+CE(p,y)=\left\{
+                            \begin{aligned}
+                                        -log(p)&&if\ y=1\\  
+                                         -log(1-p) && otherwise
+                             \end{aligned}
+\right.</script><p>其中$y=1$ 表示是前景，p为模型预测为前景的概率，对其进行简化可得：</p>
+<script type="math/tex; mode=display">
+p_t=\left\{
+                            \begin{aligned}
+                                        p&&if\ y=1\\  
+                                        1-p&& otherwise
+                             \end{aligned}
+\right.</script><p>所以我们可得：$CE(p, y) = CE(p t ) = − log(p t )$</p>
+<p>一种普遍的解决分类不平衡的方法为引入权重因子$\alpha$,让目标为前景时加$\alpha$,当目标是背景时加$1-\alpha$，可得引入权重因子之后的CE Loss可以写作：$CE(p_t ) = −α_t log(p_t )$。</p>
+<p>最终作者提出的Focal Loss的公式是在CE的基础上增加了一个调节因子$(1-p_t)^{\gamma}$,其中$\gamma$被称作可调节聚焦因子，Focal Loss公式如下所示：$FL(p_t ) = −(1 − p_t )^γ log(p_t )$，在不同的$\gamma$值的情况下，对应的Loss值与Ground Truth值如下图所示，其中当$\gamma=0$时，对应的是标准的CE曲线。</p>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/v2-6ec9b40f6d0d936735c1c5b000a11e6f_1440w.jpg" alt="CV论文精读系列之目标检测模型（六）RetinaNet (Focal Loss)"></p>
+<p>对上图进行分析可得，当正负样本极不平衡的时候，对于标准的CE而言，即使是预测为0.9的样本，其对应的loss也较高，数量积累之后对应的loss会占主导作用。为了减少这个情况，取$\gamma$值进行调节，当值越大的，容易样本就越不重要。实际使用过程中，引入权重因子$\alpha$，最终式为$FL(p_t ) = −α_t (1 − p_t )^γ log(p_t )$</p>
+<h2 id="EfficientDet-Scalable-and-Efficient-Object-Detection"><a href="#EfficientDet-Scalable-and-Efficient-Object-Detection" class="headerlink" title="(EfficientDet) Scalable and Efficient Object Detection"></a>(EfficientDet) Scalable and Efficient Object Detection</h2><p>EfficientDet以EfficientNet作为网络的backbone，因此，首先对EfficientNet做一个基本介绍</p>
+<h3 id="EfficientNet-Rethinking-Model-Scaling-for-Convolutional-Neural-Networks"><a href="#EfficientNet-Rethinking-Model-Scaling-for-Convolutional-Neural-Networks" class="headerlink" title="(EfficientNet)Rethinking Model Scaling for Convolutional Neural Networks"></a>(EfficientNet)Rethinking Model Scaling for Convolutional Neural Networks</h3><p>对于EfficientNet，该论文总共有两个较为重要的贡献点：</p>
+<ol>
+<li>提出了一种卷积神经网络的架构</li>
+<li>研究并提出了一种卷积神经网络的不需手动设定指标的模型缩放方法</li>
+</ol>
+<p>对于贡献点1而言，作者使用了NAS(神经架构搜索)的技术，设计了一个新的backbone，称为EfficientNet。其相对于以前的ConvNets实现了更好的准确性和效率。</p>
+<p><img src="/home/nvidia/.config/Typora/typora-user-images/image-20220726090247151.png" alt="image-20220726090247151"></p>
+<p>对于贡献点2而言，作者认为，网络深度的增加、网络宽度的增加以及图像分辨率的增加均会提升卷积神经网络的精度。但若只是单尺度的提升，网络的识别精度提升是有限的，应三个尺度同时进行放缩才能在确定的计算资源的情况下实现最好的识别精度。</p>
+<p>作者提出两点对于模型放缩的观察：</p>
+<ul>
+<li>放缩网络的任何一个维度（宽度、深度、图像分辨率）都可以提升准确性，但对于更大型的网络其准确性增益会降低</li>
+<li>为了追求更好的精度和效率，在卷积网络的缩放过程中平衡网络宽度、深度和分辨率的各个维度至关重要</li>
+</ul>
+<p>基于上述的两点观察，以及卷积神经网络中计算资源占比最多的是卷积操作这一点先验，作者将模型的放缩定义如下：</p>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/image-20220726091149041.png" alt="image-20220726091149041"></p>
+<p>且由于是卷积操作占所有操作中计算资源的大头，所以模型的深度对于计算而言大致为线性关系，而图像的分辨率和宽度对于计算而言为平方的关系，所以其定义中的约束条件如上所示。当满足$\alpha <em>\beta^2</em>\gamma^2 \approx2$的前提下，我们可以通过设定$\phi$来控制计算资源大致上扩充到之前的$2^\phi$倍。</p>
+<p>EfficientDet的主要贡献点有如下两个：</p>
+<ul>
+<li>提出了BiFPN，一种新的特征融合的方法，是FPN的加强版</li>
+<li>与EfficientNet相似的，提出了混合缩放。将EfficientNet中模型放缩的思维迁移到目标识别中。</li>
+</ul>
+<h4 id="BiFPN"><a href="#BiFPN" class="headerlink" title="BiFPN"></a>BiFPN</h4><p>常见的Neck阶段的特征融合方法如下所示：<img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3NhdHVyZGF5c3Vuc2V0,size_16,color_FFFFFF,t_70#pic_center.png" alt="在这里插入图片描述"></p>
+<p>作者认为，多尺度特征融合的存在存在如下问题：</p>
+<ul>
+<li>各个尺度的特征信息不一致，但在实践中却占有相同权重</li>
+<li>改进的特征融合算法的计算量过大且特征融合效果不算好</li>
+</ul>
+<p>所以基于以上两点，作者提出BiFPN，BiFPN相较于FPN而言有以下三点改进：</p>
+<ul>
+<li><strong>增加残差链接</strong>：意在通过简单的残差操作，增强特征的表示能力</li>
+<li><strong>移除单输入边的结点</strong>：因为但输入边的结点没有进行特征融合，故具有的信息比较少，对于最后的融合没有什么贡献度，相反，移除还能减少计算量。</li>
+<li><strong>权值融合：</strong>简单来说，就是针对融合的各个尺度特征增加一个权重，调节每个尺度的贡献度，其中，作者对比了Unbounded fusion、Softmax-based fusion和Fast normalized fusion，并最终选用了Fast-softmax.</li>
+</ul>
+<h4 id="混合缩放"><a href="#混合缩放" class="headerlink" title="混合缩放"></a>混合缩放</h4><p>本文还提出了一种混合缩放技术来全面地提升所有主干网络深度/宽度/分辨率、BiFPN和box/class检测网络，其思想与EfficientNet相同，不再赘述，其结果如下图所示：</p>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/v2-f59c80f65952ec08747236c0d6f509ce_720w.jpg" alt="img"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/25/Label%20Assignment/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1600,7 +1775,7 @@ int main()
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
