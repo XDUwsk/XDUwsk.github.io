@@ -173,7 +173,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-07-26 22:26:51 / 修改时间：20:28:34" itemprop="dateCreated datePublished" datetime="2022-07-26T22:26:51+08:00">2022-07-26</time>
+              <time title="创建时间：2022-07-26 22:26:51 / 修改时间：20:48:09" itemprop="dateCreated datePublished" datetime="2022-07-26T22:26:51+08:00">2022-07-26</time>
             </span>
 
           
@@ -275,7 +275,7 @@ p_t=\left\{
 <li>研究并提出了一种卷积神经网络的不需手动设定指标的模型缩放方法</li>
 </ol>
 <p>对于贡献点1而言，作者使用了NAS(神经架构搜索)的技术，设计了一个新的backbone，称为EfficientNet。其相对于以前的ConvNets实现了更好的准确性和效率。</p>
-<p><img src="/home/nvidia/.config/Typora/typora-user-images/image-20220726090247151.png" alt="image-20220726090247151"></p>
+<p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/image-20220726203542698.png" alt="image-20220726203542698"></p>
 <p>对于贡献点2而言，作者认为，网络深度的增加、网络宽度的增加以及图像分辨率的增加均会提升卷积神经网络的精度。但若只是单尺度的提升，网络的识别精度提升是有限的，应三个尺度同时进行放缩才能在确定的计算资源的情况下实现最好的识别精度。</p>
 <p>作者提出两点对于模型放缩的观察：</p>
 <ul>
@@ -284,13 +284,13 @@ p_t=\left\{
 </ul>
 <p>基于上述的两点观察，以及卷积神经网络中计算资源占比最多的是卷积操作这一点先验，作者将模型的放缩定义如下：</p>
 <p><img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/image-20220726091149041.png" alt="image-20220726091149041"></p>
-<p>且由于是卷积操作占所有操作中计算资源的大头，所以模型的深度对于计算而言大致为线性关系，而图像的分辨率和宽度对于计算而言为平方的关系，所以其定义中的约束条件如上所示。当满足$\alpha <em>\beta^2</em>\gamma^2 \approx2$的前提下，我们可以通过设定$\phi$来控制计算资源大致上扩充到之前的$2^\phi$倍。</p>
+<p>且由于是卷积操作占所有操作中计算资源的大头，所以模型的深度对于计算而言大致为线性关系，而图像的分辨率和宽度对于计算而言为平方的关系，所以其定义中的约束条件如上所示。当满足<script type="math/tex">\alpha*\beta^2*\gamma^2\approx2</script>的前提下，我们可以通过设定$\phi$来控制计算资源大致上扩充到之前的$2^\phi$倍。</p>
 <p>EfficientDet的主要贡献点有如下两个：</p>
 <ul>
 <li>提出了BiFPN，一种新的特征融合的方法，是FPN的加强版</li>
 <li>与EfficientNet相似的，提出了混合缩放。将EfficientNet中模型放缩的思维迁移到目标识别中。</li>
 </ul>
-<h4 id="BiFPN"><a href="#BiFPN" class="headerlink" title="BiFPN"></a>BiFPN</h4><p>常见的Neck阶段的特征融合方法如下所示：<img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3NhdHVyZGF5c3Vuc2V0,size_16,color_FFFFFF,t_70#pic_center.png" alt="在这里插入图片描述"></p>
+<h4 id="BiFPN"><a href="#BiFPN" class="headerlink" title="BiFPN"></a>BiFPN</h4><p>常见的Neck阶段的特征融合方法如下所示：<img src="/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/12321312.png" alt="在这里插入图片描述"></p>
 <p>作者认为，多尺度特征融合的存在存在如下问题：</p>
 <ul>
 <li>各个尺度的特征信息不一致，但在实践中却占有相同权重</li>
@@ -1306,7 +1306,7 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-19 10:52:55" itemprop="dateModified" datetime="2022-04-19T10:52:55+08:00">2022-04-19</time>
+                <time title="修改时间：2022-04-19 11:59:08" itemprop="dateModified" datetime="2022-04-19T11:59:08+08:00">2022-04-19</time>
               </span>
 
           
