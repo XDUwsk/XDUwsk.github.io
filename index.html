@@ -148,6 +148,236 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/26/Label%20Assignment/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/26/Label%20Assignment/" class="post-title-link" itemprop="url">未命名</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-26 20:14:21" itemprop="dateCreated datePublished" datetime="2022-07-26T20:14:21+08:00">2022-07-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-07-14 15:47:08" itemprop="dateModified" datetime="2022-07-14T15:47:08+08:00">2022-07-14</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Label-Assignment-是什么"><a href="#Label-Assignment-是什么" class="headerlink" title="Label Assignment 是什么"></a>Label Assignment 是什么</h2><p>Label Assignment 也称为Target Assignment，可理解为网络提供正负样本进行学习，让网络学习我们所要完成的目标的“正确”和“错误”的概念.</p>
+<p>例如在目标检测的相关任务中，以下图为例任务为检出其中的蛙人、数字和字母，我们所期望的检测结果为：</p>
+<p><img src="/2022/07/26/Label%20Assignment/objectDetect.png" alt="HT_2022_004_00543" style="zoom:50%;"></p>
+<p>但是实际的检测效果可能为：</p>
+<p><img src="/2022/07/26/Label%20Assignment/objectDetect_bad.png" alt="HT_2022_004_00543" style="zoom:50%;"></p>
+<p>显然我们需要告诉网络，我们所需要的是第一张图而不是第二张，因为其包裹对象完整，而不是不完整或存在位置偏移的第二张图。而这个<strong>告诉</strong>的动作本质上就是Label Assignment的任务。</p>
+<p>然而在实际的目标检测过程中，一张图中会有多个类别的目标，多个GT，Label Assignment的过程会十分复杂。只要是一个检测器，其只要需要划分正负样本就可以看作一个label assignment的过程。label assignment已经作为检测网络的最核心的问题之一，建立GT和预测之间的对应关系（类别，Box，置信度）的好坏会直接影响到网络的效果。</p>
+<p>Label Assignment一般可以分为两个方面的内容，一为学习目标的表示，一为正负样本的匹配，即可以理解为我们输出的预测框该怎么框，以及我们输出的预测框与GT的对应关系。</p>
+<h3 id="学习目标的表示"><a href="#学习目标的表示" class="headerlink" title="学习目标的表示"></a>学习目标的表示</h3><p>对于学习目标的表示，基于网络的不同，先验的不同，学习目标的表示也各不相同。</p>
+<h4 id="基于anchor的目标检测"><a href="#基于anchor的目标检测" class="headerlink" title="基于anchor的目标检测"></a>基于anchor的目标检测</h4><p>基于anchor的目标检测大都采用bounding box的方法，即在此类方法中的学习目标是anchor的坐标，通过anchor作为分类和框回归的先验。</p>
+<h4 id="基于set-prediction的目标检测"><a href="#基于set-prediction的目标检测" class="headerlink" title="基于set-prediction的目标检测"></a>基于set-prediction的目标检测</h4><p>基于set-prediction的目标检测的代表为DETR，其将transformer引入目标检测，将任务视为一个图像到集合的问题，避免了人工设计anchor，转而embedding，让网络自己去学习anchor，学习embedding</p>
+<h4 id="基于key-point、anchor-point等方式目标检测"><a href="#基于key-point、anchor-point等方式目标检测" class="headerlink" title="基于key-point、anchor-point等方式目标检测"></a>基于key-point、anchor-point等方式目标检测</h4><h3 id="学习正负样本的匹配"><a href="#学习正负样本的匹配" class="headerlink" title="学习正负样本的匹配"></a>学习正负样本的匹配</h3><h4 id="正负样本匹配的定义"><a href="#正负样本匹配的定义" class="headerlink" title="正负样本匹配的定义"></a>正负样本匹配的定义</h4><p><img src="/2022/07/26/Label%20Assignment/v2-bcce6dc999beb25f778a50e094bbfe8a_720w.jpg" alt="img"></p>
+<p>如上图所示，我们关注的目标为人和推车，假设黄框为Ground Truth，蓝绿色为算法自动生成的anchor，那么将自动生成的anchor与推车的ground truth之间做匹配的过程，判断哪个anchor应该标注为正样本，哪些anchor应该标注为负样本的过程就是正负样本匹配的过程</p>
+<h4 id="Faster-RCNN"><a href="#Faster-RCNN" class="headerlink" title="Faster-RCNN"></a>Faster-RCNN</h4><p>以Faster-RCNN类的目标检测器为例，其通过RPN生成anchor，若目标图像中有两个目标物体，我们需要将生成的成千上万个anchor与真实目标的ground truth做匹配，其分配策略为基于IoU的分配策略，首先计算anchor与ground truth之间的IoU，IoU&gt;fg_thres(0.7)作为正样本，IoU&lt;bg_thres(0.3)作为负样本，IoU在bg_thres~fg_thres(0.3~0.7)之间作为ignore样本(不参与训练)，并使用NMS进行过滤</p>
+<p>但这样的存在问题：</p>
+<ol>
+<li>IoU不能代表anchor的定位能力，IoU在0.3以下的anchor也可能被回归到0.7以上；</li>
+<li>IoU为0.95和0.75的anchor有优劣之分，但一刀砍策略无法体现它们的区别；</li>
+<li>anchor是预定义的，所以无法保证每个ground truth都能匹配很好的anchor，导致不同ground truth分配到的anchor不均衡。</li>
+</ol>
+<p>后续针对上述问题，提出了算法如下：（更新后的IOU算法：CIOU DIOU等）</p>
+<h4 id="TopK"><a href="#TopK" class="headerlink" title="TopK"></a>TopK</h4><p>用于解决问题3</p>
+<p><strong>分配策略</strong>：对每个ground truth，找到与它IoU为TopK的anchor作为正样本；可以看作通过动态改变IoU阈值来划分正负样本，同时保证不同大小的目标都能得到一定数量的anchor进行训练。</p>
+<h4 id="Learning-from-Noisy-Anchor"><a href="#Learning-from-Noisy-Anchor" class="headerlink" title="Learning from Noisy Anchor"></a>Learning from Noisy Anchor</h4><p>用于解决问题2</p>
+<p><strong>核心思想</strong>：提出一个评价anchor质量的指标cleanliness，根据回归后IoU以及分类置信度得出，用于判断一个正anchor是否是noisy的。</p>
+<p><strong>分配策略</strong>：cleanliness可以代替0/1作为分类标签加入focal loss，同时还作为权重加权回归，即质量好的anchor多回归，质量不好(noisy)的anchor少回归。</p>
+<h4 id="HAMBox"><a href="#HAMBox" class="headerlink" title="HAMBox"></a>HAMBox</h4><p>用于解决问题1</p>
+<p><strong>核心思想</strong>：提出一种anchor补偿策略，动态地把那些本身和ground truth重叠度不高但回归结果很好的anchor设为正样本。</p>
+<p><strong>分配策略</strong>：与TopK类似，在训练中对每个ground truth动态地补偿k个anchor作为正样本，这些anchor根据回归结果好坏选出。</p>
+<h4 id="ATSS（该论文证明了回归的方式，数据的表示方式不影响训练效果，影响训练效果的是正负样本的分配）"><a href="#ATSS（该论文证明了回归的方式，数据的表示方式不影响训练效果，影响训练效果的是正负样本的分配）" class="headerlink" title="ATSS（该论文证明了回归的方式，数据的表示方式不影响训练效果，影响训练效果的是正负样本的分配）"></a>ATSS（该论文证明了回归的方式，数据的表示方式不影响训练效果，影响训练效果的是正负样本的分配）</h4><p><strong>核心思想</strong>：从统计意义上思考正负样本的定义，把每个ground truth周围的anchor与它的IoU进行统计可以形成一个分布，通过取这个分布上的某个分位数来决定每个ground truth的IoU阈值</p>
+<p><strong>分配策略</strong>：</p>
+<ol>
+<li>对于每个输出的检测层，选计算每个anchor的中心点和目标的中心点的L2距离，选取K个anchor中心点离目标中心点最近的anchor为候选正样本（candidate positive samples）</li>
+<li>计算每个候选正样本和groundtruth之间的IOU，计算这组IOU的均值和方差根据方差和均值，设置选取正样本的阈值：t=m+g ；m为均值，g为方差</li>
+<li>根据每一层的t从其候选正样本中选出真正需要加入训练的正样本然后进行训练</li>
+</ol>
+<p>普遍思路：1、如何度量一个anchor的好坏 2、如何将anchor（GT）分配给GT（anchor）使网络学习最大化</p>
+<p>其余方法：OTA、DETR、OneNet、E2E with FCN</p>
+<h2 id="A-Dual-Weighting-Label-Assignment-Scheme-for-Object-Detection"><a href="#A-Dual-Weighting-Label-Assignment-Scheme-for-Object-Detection" class="headerlink" title="A Dual Weighting Label Assignment Scheme for Object Detection"></a>A Dual Weighting Label Assignment Scheme for Object Detection</h2><p>2022 cvpr 一种用于目标检测的双加权标签分配方案</p>
+<h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>标签分配是要给每一个训练样本分配一个正损失权重和一个负损失权重，这两个权重会在目标检测的过程中发挥重要的作用。现存的标签分配方法大都专注于正权重的设计而负权重只是直接从正权重的基础上推导而来，这样的机制限制了检测器的性能。<strong>本文拓展研究了一种新型的权重范式$dual\ weighting(DW)$,$DW$分别指定了正权重和负权重。一个样本的正权重由其的分类和定位分数的一致性来决定，负权重被分解为两个部分：一个样本为负样本的可能性以及其为负样本的前提下其的重要性。</strong>这样的权重策略更灵活的区分重要以及不那么重要的样本，并最终导致物体检测的有效性的增加。</p>
+<h3 id="简介及相关工作"><a href="#简介及相关工作" class="headerlink" title="简介及相关工作"></a>简介及相关工作</h3><p>目标检测作为一项基础的视觉任务，其已经吸引了很多研究者数十年的注意力。目前最为先进$(SOTA)$的目标检测大都通过预先定义的anchor来预测类别属性和回归偏移来执行密集检测。Anchor作为一个基础的检测单元，需要被分配合适的分类和回归的标签去监督整个训练过程。这样的标签分配的过程可以看作为为每个anchor分配损失权重的过程，一个anchor的分类损失（回归损失类似）可以简单的表示为：</p>
+<p>  $ \mathcal {L}_{cls}= - w_{pos} \times \ln {(s)} - w_{neg} \times \ln {(1-s)}$</p>
+<p>其中$w_{pos}$和$w_{neg}$分别为正权重和负权重，$s$是预测的分类分数。基于$w_{pos}$和$w_{neg}$的设计，标签分类的方法可以大致的分为两类，分别为hard LA和soft LA。</p>
+<h4 id="hard-LA"><a href="#hard-LA" class="headerlink" title="hard LA"></a>hard LA</h4><p>hard LA假设每个anchor要么是正要么是负的，这意味着$w_{pos} , w_{neg} ∈ {0, 1}  $并且$w_{pos} + w_{neg} =1$，这个策略的核心策略是找到一个合适的边界去将anchor分为positive set和negative set。基于这样的分割策略，可以细分为静态的与动态的。</p>
+<h5 id="静态-hard-LA"><a href="#静态-hard-LA" class="headerlink" title="静态 hard LA"></a>静态 hard LA</h5><p>​    静态 hard LA采取了预先定义好的指标来进行区分。</p>
+<ul>
+<li>IoU以及IoU类（RCNN类）</li>
+<li>anchor中心到对应的GT中心点的距离（FCOS、Foveabox）</li>
+</ul>
+<p>​    问题/缺陷：<strong>静态匹配策略忽略了具有不同大小和形状的对象的划分边界可能会有所不同。</strong></p>
+<h5 id="动态-hard-LA"><a href="#动态-hard-LA" class="headerlink" title="动态 hard LA"></a>动态 hard LA</h5><ul>
+<li>ATSS</li>
+<li>Prediction-aware assignment strategies</li>
+<li>OTA</li>
+<li>Transformer-based detectors</li>
+</ul>
+<p>问题/缺陷：<strong>动态和静态的分配策略都忽略了样本不是相同重要的事实</strong></p>
+<p>分析目标检测的评价指标我们可以发现，<strong>最优预测不仅应该具有较高的分类分数，还应该具有准确的定位</strong>，这意味着在训练中，<strong>分类头和回归头之间具有较高一致性的Anchor应该更为重要</strong>。</p>
+<h4 id="soft-LA"><a href="#soft-LA" class="headerlink" title="soft LA"></a>soft LA</h4><p>基于以上的问题、缺陷以及分析，我们可以发现soft LA的策略更加适合。</p>
+<ul>
+<li>GFL</li>
+<li>VFL<ul>
+<li>上述两种方法是经典的基于IoUs并通过乘以一个调制因子转化成为目标标签的soft LA方法。</li>
+</ul>
+</li>
+<li>Focal Loss</li>
+<li>Generalized focal loss</li>
+<li>Varifocal loss</li>
+<li>FreeAnchor、Autoassign</li>
+</ul>
+<p>现有的方法大都集中于正权重的设计，然而负权重仅仅由正权重得出。这样的方法会限制检测器的学习能力，这是因为负样本权重只提供了很少的新监督信息。这样的耦合权重设计机制会导致细腻度不够。</p>
+<p>如下图所示：</p>
+<p><img src="/2022/07/26/Label%20Assignment/image-20220713133757496.png" alt="image-20220713133757496"></p>
+<p>对于左上图而言，假设其为目标物体，假设分别有四个anchor分别为A、B、C、D，其对应的与GT的IoU和Score如右上图所示，则常见的soft LA的算法得到的$w_{pos}  \  w_{neg} $如上图下部分所示。框A、B、C、D有不同的预测结果，，然而GFL和VFL算法分配了几乎相同的权重给（B、C、D）。由于在现存的soft LA算法中负权重与正权重高度相关耦合，所以具有不同特点的anchor有的时候会被赋予基本上相同的正负权重，从而影响检测器的有效性。</p>
+<p>为了给检测器提供更具有分辨性能的监督信号，我们提出了$dual \  weighting (DW)$，一种新的LA算法，从不同的角度分别指定正权重和负权重，并使其互为补充。</p>
+<p>正权重：正权重动态的被从类别检测头中包含的置信度分数以及回归检测头中包含的回归分数决定的</p>
+<p>负权重：对于每个anchor而言，负样本被分为两部分，1、这个样本是负样本的可能性2、其是负样本的情况下，他的重要性 并由这两部份相乘得到。</p>
+<p>通过这样的方式，在推理的时候，有更高分类分数和更精确的定位的bounding boxes会更容易在NMS之后剩下，而其余的会排序较后并会被筛除。根据上图所示，DW给四个不同的anchor分配了几乎不同的正、负权重，这样可以提供给检测器更加精细的监督特征。</p>
+<p>并附加设计了一个边框修正模块去提供给我们的权重一个更加精确的回归分数。基于粗略回归图设计了一个回归优化算法。通过引入适当的计算负担，得到了更精确的回归.</p>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><h4 id="动机和框架"><a href="#动机和框架" class="headerlink" title="动机和框架"></a>动机和框架</h4><p>要与NMS相容，一个好的稠密检测器应该可以预测同时具有好的分类分数和精确定位的边缘框，然而如果训练样本都一致的被对待，就容易出现以下问题：有最高分类分数的通常不是拥有最好位置回归的边缘框。特别是在IoU的评判标准下，这样的问题会严重影响检测器的效果。soft LA尝试着评价分类和回归的一致性，当使用soft LA时，一个anchor的loss，可表示如下：</p>
+<p>$L_{cls}= -w_{pos} \times ln(s)-w_{neg}\times ln(1-s)$</p>
+<p>$L_{reg}= w_{reg} \times l_{reg}(b,b^`)$</p>
+<p>其中$s$是预测的类别分数,$b$和$b^`$是预测的边缘框和GT，$l_{reg}$是回归损失函数，例如$L_1 \ loss$ ，IoU Loss等等。在类别预测和回归中的不一致可以通过给一致性较好的anchor分配更大的$w_{pos}\ w_{neg}$来解决。因此这些经过较好训练的anchor就会在预测的时候预测更高的分类分数和更精确的定位，</p>
+<p>现有的工作大都将$w_{pos}$与$w_{neg}$设定为相同的值，并主要注重于如何去定义其的一致性以及整合其到损失函数中，下表整理了在最近的代表性工作中，pos anchor的$w_{pos}\ w_{neg}$的公式。</p>
+<p><img src="Label Assignment/url=http%3A%2F%2Fdingyue.ws.126.net%2F2022%2F0412%2F938a56efj00ra7am0002fd200u000b6g00id006u.jpeg" alt="img"></p>
+<p>我们可以发现现有的方法中通常定义一个度量因素t作为分类和定位之间的一致性的程度的表示。然后将不一致性度量因素定义为（1-t），并最终通过增加比例因子$((s-t)^2,s^2,t)$整合到正损失和负损失之中去。</p>
+<p>与之前的$w_{pos}\ w_{neg}$高度相关的方法不同，我们提出的方法将$w_{pos}\ w_{neg}$分别使用预测感知的方法进行测试</p>
+<p>即：pos加权函数以预测的cls得分s和预测框与GT目标之间的IoU作为输入，并通过估计cls与reg head之间的一致性程度来设置pos权重。 neg加权函数采用与pos加权函数相同的输入，但将负样本权重表示为以下2项的乘法：Anchor是负样本的概率以及其为负样本时的重要性。这样，具有相似pos权值的模糊Anchor可以接收到具有不同负样本权值的更细粒度的监督信号，这是现有方法中是没有的。</p>
+<p>该方法的流程示意图如下：</p>
+<p><img src="/2022/07/26/Label%20Assignment/image-20220714104625755.png" alt="image-20220714104625755" style="zoom:200%;"></p>
+<p>即首先通过选择GT中心附近的Anchor（中心先验），为每个GT目标构建一个候选正样本集合。候选集合外的Anchor被认为是负样本，不会参与加权函数的设计过程，因为它们的统计数据(如IoU，cls分数)在早期训练阶段非常混乱。候选集内的Anchor将被分配到$w_{pos}\ w_{neg} \ w_{reg}$三个权重上，以更有效地监督训练过程。</p>
+<h4 id="pos加权函数"><a href="#pos加权函数" class="headerlink" title="pos加权函数"></a>pos加权函数</h4><p>一个样本的正加权函数应当反映其在分类和定位两方面上的准确检测物体的能力。本文通过分析物体检测的评价指标分析得出影响其的因素。在进行COCO数据集上进行测试期间，对一个类别的所有预测应该通过一个排序指标被合适的排序。现存的方法大都使用分类分数或分类和预测的IoU作为排序指标。每个边界框的正确性将从排名列表的开头开始检查。一个预测将被定义为一个正确的预测的条件如下：</p>
+<ul>
+<li>预测的边界框和最近的GT之间的IoU大于预先设定的阈值$\theta$</li>
+<li>在本预测框之前没有排名更靠前的预测框满足上一个条件</li>
+</ul>
+<p>即只有第一个具有大于阈值$\theta$的IoU的边界框会被定义为pos detection。其他的框对于这个GT而言都会被认为是假阳性。</p>
+<p>我们可以研究得到，高的排名分数和高IoU都是pos预测的充要条件，这表明同时满足这两个条件的anchor会在测试阶段更容易被定义为pos prediction，因此其在训练阶段就应该具有更高的重要性。从这个角度分析，$w_{pos}$应当与IoU和排名分数正相关，即</p>
+<p>$w_{pos} ∝ IoU\ and\ w_{pos} ∝ s$</p>
+<p>我们定义一致性度量t如下所示,t是为了衡量两个条件之间的对齐度：</p>
+<p>$t=s\times IoU^{\beta}$</p>
+<p>其中，$\beta$被用来平衡这两个条件。</p>
+<p>为了使正权重在不同的anchor中有较大的变化，从而提供较为高细腻度的监督信息，添加一个指数项的调制因子：</p>
+<p>$w_{pos}=e^{ut}  \times t$</p>
+<p>其中u是一个超参数，控制不同pos权重的相对差距，最后，每个实例的每个Anchor的pos权值由候选集内的所有pos权值之和进行归一化。</p>
+<h4 id="neg加权函数"><a href="#neg加权函数" class="headerlink" title="neg加权函数"></a>neg加权函数</h4><p>虽然pos权重可以表明具有高的cls分数和大的IoUs的一致Anchor，但不一致Anchor的重要性不能用pos权重来区分。如本文首图所示，Anchor D的位置更好(IoU大于θ)，但cls得分较低，而Anchor B的位置较差(IoU小于θ)，但cls得分较高。它们可能具有相同的一致性程度度量t，这不能反映它们的差异。为了为检测器提供更多的鉴别监督信息，本文建议通过为它们分配区别更明显的负权重来忠实地表明它们的重要性，这定义为以下2项的乘法。</p>
+<h5 id="样本作为负样本的概率"><a href="#样本作为负样本的概率" class="headerlink" title="样本作为负样本的概率"></a>样本作为负样本的概率</h5><p>根据COCO的衡量指标，小于$\theta$的IoU是将一个预测判断为错误的充分条件。这意味着一个不能满足IoU衡量标准预测边缘框即使有高的类别分数也会被定义为neg detection。所以，IoU是决定一个样本是否为neg detection的唯一的因素，我们定义其为$P_{neg}$</p>
+<p>依据COCO数据集的衡量标准采取IoU从0.5到0.95去衡量AP，本文定义$P_{neg}$应当满足如下规则：</p>
+<script type="math/tex; mode=display">
+P_{neg} = \begin {cases} 1, & \textit {if } \; \text {IoU $<$ 0.5}, \\ [0,1], & \textit {if } \; \text {IoU $\in $ [0.5,0.95]}, \\ 0, & \textit {if } \; \text {IoU $>$ 0.95}, \end {cases} \label {eq5}</script><p>在区间[0.5,0.95]内定义的任何单调递减函数都适用于上式。为简单起见，将$P_{neg}$实例化为以下函数：</p>
+<p>$  P_{neg} = -k \times IoU ^ {\gamma _1} + b, \quad \textit {if } \text { IoU $\in $ [0.5,0.95]} $</p>
+<p>其通过点（0.5,1）和（0.95,0）。一旦确定$\gamma _1$，参数k和b可以用未确定系数的方法得到。图3绘制了$  P_{neg} $和IoU在具有不同$\gamma _1$值的曲线。</p>
+<p><img src="/2022/07/26/Label%20Assignment/v2-14dc210edad1c4ba4fec5ae5635e98bd_720w.jpg" alt="img"></p>
+<h5 id="样本作为负样本的前提下的重要程度"><a href="#样本作为负样本的前提下的重要程度" class="headerlink" title="样本作为负样本的前提下的重要程度"></a>样本作为负样本的前提下的重要程度</h5><p>在推理的时候，Rank列表中的负样本预测不会影响召回率，但会降低精度。所以负样本边界框的Rank应该尽可能落后，也就是说，它们的Rank分数应该尽可能小。基于这一点，Rank得分较高的负样本预测比Rank得分较低的负样本预测更重要，因为它们是网络优化的困难样本。</p>
+<p>因此我们定义$I_{neg}$为负样本的重要程度，其应该是排名分s的函数，特别的，我们定义其为：</p>
+<p>$I_{neg}=s^{\gamma_2}$</p>
+<p>其中$\gamma_2$是表明对重要的负样本应该给予多少优先考虑的一个因素</p>
+<p>所以最终，我们定义neg weight为$w_{neg}=P_{neg}\times I_{neg}$,整合之后如下：</p>
+<script type="math/tex; mode=display">
+\small { w_{neg}= \begin {cases} s^{\gamma _2}, & \textit {if } \; \text {IoU $<$ 0.5}, \\ (-k \times IoU^{\gamma _{1}}+b) \times s^{\gamma _{2}}, & \textit {if } \; \text {IoU $\in $ [0.5,0.95]}, \\ 0, & \textit {if } \; \text {IoU $>$ 0.95}, \end {cases} }</script><p>我们分析可得：$w_{neg}$与IoU呈负相关，但与s呈正相关。可以看出，对于2个pos权重相同的Anchor，IoU较小的Anchor的neg权重较大。 $w_{neg}$的定义与推理过程很好地兼容，它可以进一步区分具有几乎相同pos权重的模糊Anchor。</p>
+<h5 id="边框修正"><a href="#边框修正" class="headerlink" title="边框修正"></a>边框修正</h5><p>由于pos和neg都以IoU作为输入，所以更准确的IoU可以促使更高质量的样本，有利于学习更强的特征。本文提出一个Box Refinement操作，基于预测偏移图$O ∈ R^{H×W ×4 }$其中$ O(j, i) = {∆l, ∆t, ∆r, ∆b}$ 表示从当前Anchor中心到最左边的l、最上面的r、最右边的r和最下面的b边的预测距离。由于靠近物体边界的点更有可能预测准确的位置，所以作者设计了一个可学习的预测模块基于粗边界框为每边生成一个边界点。</p>
+<p>如下图示意所示：</p>
+<p><img src="/2022/07/26/Label%20Assignment/v2-262a6397bb3c6fcd0d2a0d712ad31b3c_720w.jpg" alt="img"></p>
+<p>四个边界点的坐标定义如下：</p>
+<p>$B_{l}=\left (j+\Delta _{l}^{y}, i-\Delta l+\Delta _{l}^{x}\right )$<br>$B_{t}=\left (j-\Delta t+\Delta _{t}^{y}, i+\Delta _{t}^{x}\right )$<br>$B_{r}=\left (j+\Delta _{r}^{y}, i+\Delta r +\Delta _{r}^{x}\right )$<br>$B_{b}=\left (j+\Delta b+\Delta _{b}^{y}, i+\Delta _{b}^{x}\right )$</p>
+<p>其中的$\Delta$都是上述模块的输出，且偏移图更新为</p>
+<script type="math/tex; mode=display">
+O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^{x}+O(B_{l},0), \; \Delta t+\Delta _{t}^{y}+O(B_{t},1) \\ \Delta r+\Delta _{r}^{x}+O(B_{r},2), \; \Delta b+\Delta _{b}^{y}+O(B_{b},3) \end {array}\hspace {-1.mm}\right \}</script><h5 id="损失函数"><a href="#损失函数" class="headerlink" title="损失函数"></a>损失函数</h5><p>本文所提出的DW可以被应用在大多数现存的稠密检测器上，下面以FCOS应用DW为例。 按照惯例将中心度分支和分类分支的输出乘以最终的分类分数，损失函数如下所示：</p>
+<p>$  \mathcal {L}_{det}=\mathcal {L}_{cls}+\beta \mathcal {L}_{reg}$</p>
+<p>其中$\beta$是一个平衡因子，与$t = s \times IoU^ \beta  $中的$\beta$相同。对上式进行进一步解释可得：</p>
+<script type="math/tex; mode=display">
+\small { \begin {aligned} \mathcal {L}_{c l s}&=\sum \nolimits _{n=1}^{N} -w_{p o s}^{n} \times \ln \left (s^{n}\right )-w_{n e g}^{n} \times \ln \left (1-s^{n}\right ) \\ &+\sum \nolimits _{m=1}^{M} F L\left (s^{m}, 0\right ), \\ \mathcal {L}_{reg}&=\sum \nolimits _{n=1}^{N} w_{pos}^{n} \times GIoU\left (b, b^{\prime }\right ), \end {aligned} }</script><p>其中N和M分别是Anchor的总数，FL是Focal Loss，GIoU回归损失，s时预测的cls得分，b和b’分别是预测框和GT的位置。</p>
+<h3 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h3><p>使用的数据集为MS-COCO，其包含115k的train set，5k的val set和20k的tset set。对其进行了消融实验，并通过AP（平均精度）来对其性能进行衡量。</p>
+<p>使用ImageNet上预训练的ResNet-50和FPN作为实验的backbone，绝大多是使用12个epoch的训练，初始学习率为0.01,并在第8和第11个epoch后衰减十倍，在消融实验中，都使用800像素大小的图片进行训练。所有的实验都使用SGDM在8个GPU，总batchsize为16上运行。推理的时候，threshold设定背景框为0.05，并移除阈值为0.6的冗余框，得到最终的预测结果，超参数设置为：$γ_1=2$ , $γ_2=2$ , $β=5$ , $μ=5$</p>
+<h4 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h4><h5 id="1、正样本加权的超参数"><a href="#1、正样本加权的超参数" class="headerlink" title="1、正样本加权的超参数"></a>1、正样本加权的超参数</h5><p><img src="/2022/07/26/Label%20Assignment/v2-e0b9d845e784f904b8f6bcec964a22cb_720w.jpg" alt="img"></p>
+<p>pos权重有2个超参数：$\beta$和$u$</p>
+<ul>
+<li>$\beta$在一致性度量t中平衡了cls得分和IoU之间的贡献。随着$\beta$值的增加，IoU的贡献程度也在增加。</li>
+<li>$u$控制着pos权重的相对尺度。与较不一致的样本相比，更大的$u$使最一致的样本具有相对较大的pos权重。</li>
+</ul>
+<p>在表中展示了通过改变 $\beta$从3到7和$u$从3到8来改变DW的性能。可以看到，当  $\beta$ 为5，$u$为5时，效果最好。 $\beta$和$u$的其他组合会使AP性能从0.1降至0.7。因此，在其余所有实验中，将  $\beta$和$u$设为5。</p>
+<h5 id="2、负样本加权的超参数"><a href="#2、负样本加权的超参数" class="headerlink" title="2、负样本加权的超参数"></a>2、负样本加权的超参数</h5><p><img src="/2022/07/26/Label%20Assignment/v2-09fd13f1d0709079d09e145dc6880e28_720w.jpg" alt="img"></p>
+<p>作者还进行了几个实验来研究DW对超参数 $\gamma _1$和$\gamma _2$的鲁棒性，这些参数用于调节负样本权重的相对尺度。使用不同的  $\gamma _1$和 $\gamma _2$组合得到的AP结果范围为41~41.5，如表所示。这意味着DW的性能对这2个超参数不敏感。因此，在所有的实验中都采用了 $\gamma _1=2, \gamma _2=2$</p>
+<h5 id="3、候选集的构建"><a href="#3、候选集的构建" class="headerlink" title="3、候选集的构建"></a>3、候选集的构建</h5><p><img src="/2022/07/26/Label%20Assignment/v2-e609b081788ca0d076f841911e3fbd66_720w.jpg" alt="img"></p>
+<p>作为目标检测的常见做法，Soft LA只应用于候选集的Anchor。作者测试了3种候选集的构建方法，它们都是基于从Anchor到相应的GT中心的距离r（由特征stride归一化）。</p>
+<ul>
+<li>第1种方法是选择距离小于阈值的Anchor。</li>
+<li>第2种方法是从FPN的每个级别中选择最前k个最近的Anchor。</li>
+<li>第3种方法是给每个Anchor一个Soft中心权重 $e^{-r^2}$，并将其与$w_{pos}$相乘。</li>
+</ul>
+<p>结果如表4所示。可以看出，AP性能在41.1~41.5之间略有波动，这表明我们的DW对候选袋的分离方法具有鲁棒性。</p>
+<h5 id="4、负样本加权函数的设计"><a href="#4、负样本加权函数的设计" class="headerlink" title="4、负样本加权函数的设计"></a>4、负样本加权函数的设计</h5><p><img src="/2022/07/26/Label%20Assignment/v2-754d5b17ec7d646d36d44bb42657df8c_720w.jpg" alt="img"></p>
+<p>本文通过用其他替代方法来研究负权重函数的影响，如表所示。可以看到，只使用pos权重会将性能降低到39.5，这表明对于一些低质量的Anchor，只分配它们小的$w_{pos}$不足以降低它们的Rank分数。它们可以被强制赋予更大的$w_{neg}$从而使排名下降，从而在测试期间带来更高的AP。</p>
+<p>在不使用$I_{neg} , P_{neg}$的情况下，分别得到了40.5AP和40.0AP，这验证了这两项都是必要的。正如现有方法所做的，试图用 $1−w_{pos}$ 替换$w_{pos}$ 实现了40.7AP的性能，比标准DW的低0.8点。</p>
+<h5 id="5、Box-Refinement"><a href="#5、Box-Refinement" class="headerlink" title="5、Box Refinement"></a>5、Box Refinement</h5><p>在没有Box Refinement的情况下，DW方法达到41.5AP，这是第1个在不增加FCOS-ResNet-50的情况下，在COCO上实现超过41AP性能的方法。通过Box Refinement，DW可达到42.2AP，如表6所示。表7还显示，Box Refinement可以持续地提高具有不同Backbone的DW的性能。</p>
+<h5 id="6、加权策略"><a href="#6、加权策略" class="headerlink" title="6、加权策略"></a>6、加权策略</h5><p>为了证明DW策略的有效性，将其与其他使用不同加权策略的LA方法进行了比较。结果如表所示。前5行是Hard LA方法，而其他的则是Soft LA方法。</p>
+<p><img src="/2022/07/26/Label%20Assignment/v2-4db83f6b986f5e87b8794488b8216ad5_720w.jpg" alt="img"></p>
+<p>Hard LA的最佳性能是通过OTA，40.7AP。由于OTA将LA作为一个最优规划问题，它将增加训练时间的20%以上。GFLv2利用一个额外复杂的分支来估计定位质量，并在Soft LA方法中获得了41.1AP的第2名性能。</p>
+<p>与将权重分配给损失的主流方法不同，将自动分配权重分配给cls分数，并在训练期间通过它们的梯度更新它们。作者尝试分离自动分配中的权重并分配给损失，但只得到39.8和36.6AP，分别比原始性能低0.6和3.8分。这意味着自动分配中的加权方案在适应主流实践时不能很好地工作。</p>
+<h4 id="与SOTA方法对比"><a href="#与SOTA方法对比" class="headerlink" title="与SOTA方法对比"></a>与SOTA方法对比</h4><p><img src="/2022/07/26/Label%20Assignment/v2-1365a72879d6593ed1070cc695d66c55_720w.jpg" alt="img"></p>
+<h3 id="讨论"><a href="#讨论" class="headerlink" title="讨论"></a>讨论</h3><h4 id="DW的可视化"><a href="#DW的可视化" class="headerlink" title="DW的可视化"></a>DW的可视化</h4><p>下图为DW和目前现有的方法的可视化图</p>
+<p><img src="/2022/07/26/Label%20Assignment/v2-df32a561f9b4fd2187410fc2e63614dd_720w.jpg" alt="img"></p>
+<p>对上图进行分析可得，DW中的正权重和副权重大都集中于GT的中心，而GFL和VFL分配权重大都在更宽的范围。这种差异意味着DW可以更多地关注重要的样本，并减少容易获得的样本的贡献，比如那些在物体边界附近的样本。这就是为什么DW对candidate bag的选择更稳健。</p>
+<p>我们还可以看到，中心区域的锚在DW中有不同的(pos，neg)重量对。相比之下，GFL和VFL中的阴性权重与pos权重高度相关。而DW变化则相对较大</p>
+<h4 id="DW目前存在的问题"><a href="#DW目前存在的问题" class="headerlink" title="DW目前存在的问题"></a>DW目前存在的问题</h4><p>虽然DW可以很好地区分不同Anchor对一个物体的重要性，但它会同时减少训练样本的数量，如图5所示。这可能会影响对小目标的训练效果。如表7所示，DW对小目标的改进不如对大目标的改进高。为了缓解这一问题，作者可以根据目标大小动态设置不同的$w_{pos}$超参数，以平衡大小目标之间的训练样本。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>我们提出了一种名为双重加权（DW）的自适应标签分配方案，以训练准确的密集对象检测器。 DW 打破了以往密集检测器中耦合加权的惯例，它通过从不同方面估计一致性和不一致性指标，为每个锚点动态分配单独的 pos 和 neg 权重。还开发了一种新的框细化操作来直接细化回归图上的框。 DW 与评估指标高度兼容。在 MS COCO 基准上的实验验证了 DW 在各种主干下的有效性。无论有没有框细化，带有 ResNet-50 的 DW 分别达到了 41.5 AP 和 42.2 AP，记录了新的 state-of-the-art。作为一种新的标签分配策略，DW 还展示了对不同检测头的良好泛化性能。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1370,7 +1600,7 @@ int main()
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
