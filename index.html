@@ -148,6 +148,743 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/" class="post-title-link" itemprop="url">Towards Data-Efficient Detection Transformer</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 21:01:24 / 修改时间：21:02:10" itemprop="dateCreated datePublished" datetime="2022-08-22T21:01:24+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Towards-Data-Efficient-Detection-Transformers"><a href="#Towards-Data-Efficient-Detection-Transformers" class="headerlink" title="Towards Data-Efficient Detection Transformers"></a>Towards Data-Efficient Detection Transformers</h2><h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>DETR在足量样本的COCO数据集上表现出了有竞争性的效果。然而我们发现许多DETR类的方法在内容数量较少的数据集上（如Cityscapes）会有明显的性能的下降。换而言之，DETR通常需要大量的数据。为了处理这个问题。我们逐步的将数据效率高的RCNN变换为代表性的DETR，分析了影响数据效率（data efficiency）的因素。试验结果表明从局部图片进行稀疏特征采样是影响的关键。基于这个观察，本文通过简单的交替 key 和 value序列在cross attention中的构造方式，用对原始模型最少的改变的方式缓解了现存DETR方法对数据需求量巨大的问题。另外，我们介绍了一个简单但有效的数据增强的方法，从而提供更丰富的监督并提高了数据效率。实验证明，我们的方法可以被很容易的应用到不同的DETR变种上去，并在较小和较大的数据集上均可提升检测效果。</p>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>目标检测是在计算机视觉领域里面的长盛不衰的话题。最近一种新型的目标检测算法，名叫detection transformer，因为其的简单和尚可的检测效果吸引了许多的注意力。这个类别的先驱工作是DETR，其将目标检测的任务看作是直接的集合预测问题，并利用transformer直接将目标查询转换为目标对象。其实现了相对于开创性的Faster RCNN在常用的COCO数据集上更好的效果，但其具有收敛速度显著慢于基于CNN系列检测器的缺点。因为这个原因，许多随后的工作都是致力于提高DETR的收敛速度。</p>
+<ul>
+<li>Deformable DETR：通过efficient attention mechanism机制</li>
+<li>Swin transformer：通过conditional spatial query机制</li>
+<li>（SMCA）Fast convergence of detr with spatially modulated co-attention：通过regression-aware co-attention机制</li>
+</ul>
+<p>这些上述的方法都可以在COCO数据集上以相似的训练代价，实现相对于Faster RCNN而言更好的检测效果，证明了DETR类方法的优越性。</p>
+<p>现有的工作大都认为DETR类的方法在简单性和模型效果上均优于基于CNN的目标检测器。然而本文发现，DETR只有在充足的训练数据的情况下（例如COCO2017,有118K训练数据）才能展现出其优越的性能，然而在训练数据量不是非常充足的时候，其的效果会出现明显的下降。以自动驾驶领域常用的数据集Cityscapes（约3k训练数据）为例，大部分的DETR类的方法的AP小于Faster RCNN的AP的一半。且不同的DETR类的检测器，其性能的差距在COCO数据集上是小于3AP的，但在数量较小的Cityscapes数据集上，其会存在一个明显的差距，其性能差距约有15AP。如下图所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220811161935395.png" alt="image-20220811161935395"></p>
+<p>这些发现证明了DETR类的目标检测相较于CNN类的目标检测器而言，更需要大量的数量进行训练。然而带有标签的数据的获取是需要大量的时间和人力的。</p>
+<p>总而言之，为了迎合目前现存的DETR对训练数据的需求，需要大量的人力和计算资源。为了应对这个问题，本文首先从实验上，通过逐步的将数据高效的Sparse RCNN转换为DETR，分析了影响DETR中影响数据效率的关键性因素。我们的发现和分析表明：</p>
+<ul>
+<li>稀疏的局部特征采样是影响数据效率的关键，<ul>
+<li>其缓解了学习注意到特定物体的困难</li>
+<li>其避免了图像像素两倍的计算复杂度</li>
+<li>令利用多尺度的特征成为可能，多尺度的特征已经被证明在目标检测任务中是关键的</li>
+</ul>
+</li>
+</ul>
+<p>基于上述的观察，我们通过简单的交替 key 和 value序列在cross attention中的构造方式，提升了现存的DETR类的目标检测算法的数据效率。具体来说，我们在前一个解码器层预测的边界框的指导下，对发送到交叉注意力层的键和值特征执行稀疏采样特征，这样对原始模型的修改最少，并且没有任何专门的模块。另外，本文通过提供给DETR丰富的监督信号来缓解对数据的需求。为达到这个目的，本文提出了一种标签加强的方式，通过在标签分配的过程中重复前景物体的label去高效并简单的执行。这个方法可以被应用在不同的DETR类的方法从而提升其的数据效率。有趣的是，其依旧带来了在训练数据充足的COCO数据集上的性能提升。</p>
+<p>本文的贡献如下总结所示：</p>
+<ul>
+<li>本文确定了DETR的数据效率的问题。虽然DETR实现了在COCO数据集上的优秀效果，其一般会在小规模的数据集上遭受到明显的性能下降。</li>
+<li>本文通过从 Sparse RCNN 到 DETR 的逐步模型转换，通过实验分析了影响检测转换器数据效率的关键因素，并发现局部区域的稀疏特征采样是数据效率的关键。</li>
+<li>本文通过简单的交替在cross-attention模块中key和value序列的构造方式，明显的提升了现存的DETR方法的数据效率</li>
+<li>本文提出了一种简单但有效的标签增强策略，从而提供更丰富的监督信号并提升了数据效率。其可以与不同的方法融合，从而实现在不同数据集上的性能增益。</li>
+</ul>
+<h3 id="相关工作"><a href="#相关工作" class="headerlink" title="相关工作"></a>相关工作</h3><h4 id="目标检测"><a href="#目标检测" class="headerlink" title="目标检测"></a>目标检测</h4><p>目标检测在许多现实生活中是非常必要的，例如自动驾驶，缺陷检测和遥感。最具有代表性的目标检测的工作可以被粗略的分为两类，两阶段的Faster RCNN和一阶段的YOLO和RetinaNet。虽然上述方法有效，但上述方法一般而言是需要以来与许多人工设计（启发式算法）的先验，例如anchor generation和rule based 标签分配方式。</p>
+<p>最近DETR提供了一种简单并且干净的目标检测的计算流程。其将目标检测看作是集合预测的任务，并应用transformer将稀疏的目标候选转换为目标物体。DETR的成功引爆了最近井喷的DETR类的方法，并且许多最近的工作都致力于缓解DETR的收敛速度慢的问题。</p>
+<ul>
+<li>DeformDETR 提出了可学习的稀疏特征采样的可变形注意力机制并聚合多尺度特征以加速模型收敛并提高模型性能。</li>
+<li>CondDETR 提出从解码器嵌入中学习条件空间查询，这有助于模型快速学习定位四个末端以进行检测</li>
+</ul>
+<p>这些工作实现了在COCO 2017数据集上用相似的训练代价得到Faster RCNN更好的性能。这似乎表明DETR类的方法已经在简单性和性能上压制了Faster RCNN。但本文发现DETR通常需要更多的数据，并在小规模的数据集上表现比Faster RCNN要差。</p>
+<h4 id="目标检测中的标签分配"><a href="#目标检测中的标签分配" class="headerlink" title="目标检测中的标签分配"></a>目标检测中的标签分配</h4><p>在目标检测中，标签分配是一个十分重要的组件。其将一个物体的ground truth与从模型中的一个预测相匹配，从而为训练提供监督信号。在DETR之前，许多的目标检测器采用的是一对多的匹配策略，其将每个ground trurh基于局部空间关系分类给多个预测框。而DETR相反，其是采用的一对一的匹配策略，将ground truth与预测框之间通过最小化全局匹配损失来进行匹配。这个标签分配方式被许多的后续的DETR方法所采用。尽管这样的分配方式具有避免了重复移除的过程的优点，但只有少量的候选目标在每次迭代的过程中被目标标签所监督。这样就会导致模型必须从大量的数据中获得足够的监督信号或需要更多论次的训练。为了解决这个问题，本文提出了一种标签增强的方式去提供更丰富的监督信号。</p>
+<h4 id="视觉transformer（ViT）中的数据效率"><a href="#视觉transformer（ViT）中的数据效率" class="headerlink" title="视觉transformer（ViT）中的数据效率"></a>视觉transformer（ViT）中的数据效率</h4><p>视觉transformer正在成为特征提取器和视觉识别的CNN的替代品。尽管其具有优秀的性能表现，但其一般而言需要比CNN需要更多的数据，并依赖于大量的数据和更多轮次的训练。</p>
+<ul>
+<li>DeiT 通过从预训练的CNN上进行知识蒸馏，配合上更好的训练配方，从而提高了数据效率</li>
+<li>Liu等人提出了一个密集的相对定位损失去提高ViT类算法的数据效率（Efficient training of visual transformers with small datasets）</li>
+</ul>
+<p>与之前专注于transformer主干在图像分类任务上的数据效率问题不同，本文在目标检测任务上处理DETR数据效率的问题</p>
+<h3 id="RCNN类算法与DETR类算法的不同之处分析"><a href="#RCNN类算法与DETR类算法的不同之处分析" class="headerlink" title="RCNN类算法与DETR类算法的不同之处分析"></a>RCNN类算法与DETR类算法的不同之处分析</h3><p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png" alt="image-20220812084137035"></p>
+<p>上图为从SRCN（Sparse RCNN）逐渐转化为DETR的过程中，在Ciytscapes数据集上，分别在训练50 epoch和300 epoch的情况下的AP情况。</p>
+<p>对上图进行分析可得，DETR一般而言相比与RCNN需要更多的数据。为了寻找影响数据效率的关键性因素，本文将数据效率高的RCNN逐步的转变为数据效率较低的DETR，从而消融不同设计的影响。相同的实验方法在ATSS和Visformer中被使用，但实验目的不同。</p>
+<h4 id="检测器的选择"><a href="#检测器的选择" class="headerlink" title="检测器的选择"></a>检测器的选择</h4><p>为了从模型的转换中获得有效的结果，需要选择适当的检测器去参与实验。为了达到这个目的，本文选择Sparse RCNN和DETR作为实验模型，原因如下所示：</p>
+<ul>
+<li>两个模型都是在各自的领域里（RCNN类和DETR类）具有代表性的模型。所以由这两者的转换得出的结论可以推广到其他的探测器中去。</li>
+<li>这两个模型在数据效率方面有巨大的差异</li>
+<li>其在标签分配（label assignment）、损失函数设计（loss design），优化器选择（optimization）上具有许多的相似之处。这些相似之处可以在我们专注于核心部件的不同的时候消除没有那么重要的部件的影响。</li>
+</ul>
+<h4 id="Sparse-RCNN到DETR的转换"><a href="#Sparse-RCNN到DETR的转换" class="headerlink" title="Sparse RCNN到DETR的转换"></a>Sparse RCNN到DETR的转换</h4><ul>
+<li>交替训练方式<ul>
+<li>虽然Sparse RCNN和DETR有许多的相似之处，但其在训练策略（训练方式）上依旧有所不同。如分类损失、object query的数量，学习率和梯度剪切。本文首先通过将Sparse RCNN的训练策略用DETR的训练策略替代，我们发现Sparse RCNN用DETR的训练策略进行训练时，其在50 epoch时表现稍好，但在300epoch时表现较差。消除训练策略的差异可以帮助我们关注与影响数据效率的更核心的因素。</li>
+</ul>
+</li>
+<li>移除FPN：<ul>
+<li>多尺度特征融合已经被证明对目标检测是有效的。当CNN类的FPN neck可以实现在较小的计算代价的情况下完成多尺度特征融合，注意力机制有输入图像尺寸的平方的计算复杂度，使在DETR中对多尺度特征融合代价昂贵。因此DETR只采用了原图像经过32倍下采样的单尺度特征进行预测。在这个阶段，我们移除了FPN neck部分，并只将经过32倍下采样的特征传入检测头。模型在50epoch的情况下性能明显的下降了7.3AP</li>
+</ul>
+</li>
+<li>引入transformer encoder：<ul>
+<li>在DETR中，transformer encoder可以被认为是检测器的neck部分，其被用来处理被backbone提取出的特征。在移除了FPN neck之后，我们加入transformer encoder作为网络的neck。与在DETR中相似，backbone提取出的特征投影和位置编码同样被引入。试验结果表明AP在50epoch的时候有所下降，在300eopch的时候有所上升。我们推测其与ViT中相似，注意力机制因为其平方项的复杂度和缺少先验知识，其需要更长的训练epoch去收敛和发展其的优势。</li>
+</ul>
+</li>
+<li>使用cross-attention替代dynamic convolutions<ul>
+<li>在Sparse RCNN中的dynamic convolutions（动态卷积）和DETR中的cross-attention（互注意力）的作用相似。它们都基于图像特征的相似性自适应地将上下文聚合到候选对象。在这个步骤中，我们将dynamic convolutions替换为带有可学习的query positional embedding，其结果反直觉的表示：大量可学习的参数不一定会让模型需要更多的数据。事实上，动态卷积的70M的参数可以展现出相较于cross-attention而言更好的数据效率。</li>
+</ul>
+</li>
+<li>对齐解码器中的dropout设置<ul>
+<li>在Sparse RCNN和DETR中的decoder是非常相似的。在将dynamic convolution 用cross-attention替代之后，其可以被认为是transformer decoder。在其之间有一个轻微的不同是dropout layer在self-attention和FFN之间的使用。我们消除了这个影响。</li>
+</ul>
+</li>
+<li>移除级联边缘框细化<ul>
+<li>Sparse RCNN遵循了Cascade RCNN中的级联边缘框回归，其中每个decoder层都迭代的细化前一层做的边缘框预测。本文移除了这个步骤，模型性能有所下降。虽然级联边缘框细化没有被大多数的DETR类的检测器所使用，但其可以自然的被级联解码器所包含。</li>
+</ul>
+</li>
+<li>移除ROIAlign<ul>
+<li>Sparse RCNN和其余RCNN类的检测其相同，从感兴趣的局部区域采样特征，然后根据采样的稀疏特征进行预测。而每个DETR中的内容查询直接从全局的特征图中聚合特定于对象的信息。在这个步骤中，我们移除了Sparse RCNN中的ROIAlign，box target transformation也被移除。我们可以发现，模型的性能出现了明显的下降，在50epoch的情况下出现了8.4Ap的下降。我们推测从整个特征图上学习到局部对象区域的代价较大，所以模型需要更多的数据和训练epoch去获取局部属性。</li>
+</ul>
+</li>
+<li>移除初始的proposals<ul>
+<li>最终，DETR直接预测了目标的bounding box，RCNN类预测使用了一些初始化的先验。在这个步骤中，我们通过移除初始的proposals消除了影响。预料之外的是，这个小改变使模型性能出现了明显的下降。我们人文初始的proposals作为空间上的先验，帮助模型聚焦于局部空间信息，从而减少了从大量训练数据中学习局部性的需要</li>
+</ul>
+</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>如上所示，从Sparse RCNN转换为DETR的结果和分析如下所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png" alt="image-20220812084137035"></p>
+<p>其在更改之后对AP影响大于5AP的本文认为是影响数据效率的关键因素，如下所示：</p>
+<ol>
+<li>局部稀疏特征采样</li>
+<li>依赖稀疏特征采样的多尺度特征拥有可接受的计算复杂度</li>
+<li>依赖于空间先验的预测</li>
+</ol>
+<p>其中，1和3有助于模型关注局部对象区域，减轻从大量数据中学习局部性的需求，而2有助于更全面地利用和增强图像特征，但它也依赖于稀疏特征。</p>
+<p>DeformDETR是在DETR中特殊的一种，其表现出了与Sparse RCNN相比而言有可比性的数据效率。我们从Sparse RCNN到DETR的变换过程中可以对DeformDETR的数据效率进行解释：multi-scale deformable attention从图像的局部区域采样稀疏特征并利用多尺度特征。 模型的预测是相对于初始参考点的。 因此，DeformDETR 尽管没有专门设计在小型数据集上实现数据高效，但其满足了所有三个关键因素。</p>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><p>本节主要利用现有的DETR类方法，在对原始的设计做最小的改变的前提下提升数据效率。</p>
+<ul>
+<li>本文重新对现有的DETR类算法进行了审视思考</li>
+<li>基于前文的实验和分析，对现有的数据需求量巨大的DETR类模型做最少的改变并显著的提升他们的数据效率。</li>
+<li>提供一种简单但有效的标签增强方法，从而为DETR提供更丰富的监督信号提升数据效率。</li>
+</ul>
+<h4 id="对DETR的重新审视"><a href="#对DETR的重新审视" class="headerlink" title="对DETR的重新审视"></a>对DETR的重新审视</h4><h5 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h5><p>DETR通常来说，由backbone，transformer encoder，transformer decoder，prediction head构成。</p>
+<ul>
+<li><p>backbone：backbone首先从输入图片中提取多尺度的特征，被称作$\{f^l\}^L_{l=1}$，其中$f^l \in R^{H ×W ×C}$。最后一个特征曾有着最小的分辨率，将其展平并嵌入以获得$z^L \in R^{S^L \times D}$，其中$S^L =H^L \times W^L$是序列长度，$D$是特征维度。相应的，位置编码嵌入被表示为$p^L \in R^{S^L\times D}$。</p>
+</li>
+<li><p>transformer encoder：之后单尺度序列特征被transformer编码，并获得$Z^L_e \in R^{S^L \times D}$。</p>
+</li>
+<li><p>transformer decoder：decoder包含了$L_d$层的decoder layers。 查询内容的嵌入表示被初始化为$q_0\in R^{N\times D}$，其中$N$是查询的数量。每个decoder层 $DecoderLayer_l$采用上一个decoder的输出$q_{l-1}$，查询位置编码$p_l$，图像序列特征$z_l$和其位置嵌入$p_l$作为输入，输出为解码序列特征。即</p>
+<p>$q _l= DecoderLayer_l (q_{l−1} , p_q , z_l, p_l),= 1 . . . L_d $</p>
+<p>在大多数DETR类检测器中，例如DETR和CondDETR，单尺度的图像特征被解码器所利用，因此$z_l=z^L_e$、$p_l=p^L$，其中$l=1…L_d$</p>
+<ul>
+<li>prediction head ：DETR的head是使用的单纯的FFN前馈网络加上softmax进行的判断</li>
+</ul>
+</li>
+</ul>
+<h5 id="标签分配"><a href="#标签分配" class="headerlink" title="标签分配"></a>标签分配</h5><p>DETR将目标检测任务视作集合预测的问题，并对每个解码器层的预测执行深度监督。在这个过程中，标签集可以被表示如下：$y=\{y_1,…,y_M,\emptyset,…,\emptyset\}$，其中$M$为前景物体的在图像中的数量，$\emptyset$(no object)被填充到标签集合里，使标签集合的大小为$N$。相应的，每个decoder的输出可以被写作$\hat y = \{\hat y\}_{i=1}$。在标签分配的过程中，DETR搜寻一个最优的$τ \in T_N$，使得下述的匹配损失最小：</p>
+<script type="math/tex; mode=display">
+\hat τ= argmin_{$τ \in T_N}\sum^N_iL_{ match} (y_i , \hat y_{τ (i)})</script><p>其中$L_{ match} (y_i , \hat y_{τ (i)})$为在ground truth和index为$τ (i)$的预测之间的配对损失。</p>
+<h4 id="模型的提升"><a href="#模型的提升" class="headerlink" title="模型的提升"></a>模型的提升</h4><h5 id="系数特征采样"><a href="#系数特征采样" class="headerlink" title="系数特征采样"></a>系数特征采样</h5><p>根据上述RCNN类算法与DETR类算法的不同之处分析，我们分析可得局部特征采样对数据效率是非常关键的。幸运的是，在DETR中，物体位置是在每个decoder layer之后预测得出的，因此，我们可以在上一个decoder预测的bounding box的指导下不需要引入新的参数的采样局部特征。如下图所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/vz2GLTd9Ylg5q.png" alt="img"></p>
+<p>虽然有更复杂的局部特征采样方法可以使用，本文只采用了最常用的RoIAlign。采样操作可以被写成如下形式：</p>
+<p>$z_L = RoIAlign(z^L_e , b_{l-1}),\ \ \ l=2…L_d$</p>
+<p>其中$b_{l-1}$是上一层预测得出的边缘框，$z_l^L\in R^{N\times K^2\times D}$是被采样的特征，$K$是在RoIAlign采样的特征分辨率。注意reshape操作和flatten操作在上式中被省略。类似的，可以得到对应的position embedding  $p^L_l$。</p>
+<p>在DETR中的级联结构使使用逐层边界框细化来提升检测性能很自然。本文在RCNN类算法与DETR类算法的不同之处分析处也验证了迭代细化和对初始空间参考进行预测的有效性。因此，本文如CondDETR一样引进了边缘框细化和在实施过程中的初始参考点。</p>
+<h5 id="结合多尺度特征"><a href="#结合多尺度特征" class="headerlink" title="结合多尺度特征"></a>结合多尺度特征</h5><p>我们的系数特征采样使DETR以较小的计算花销使用多尺度特征变得可能。为了达到这个目的，本文使用backbone从被展平和嵌入之后的高分辨率特征提取特征以得到$\{z^l\}^{L-1}_{l=1} \in \R^{S^l \times D}$，从而进行局部特征采样。然而这些特征不被transformer encoder处理。虽然可以使用更复杂的技术，这些单尺度的被RoIAlign所采样的特征被简单的拼接，从而形成我们的多尺度的特征。这些特征可以被自然的利用cross-attention机制在decoder中被融合。</p>
+<p>$z^{ms}_l=[z^1_l],[z^2_l],…,[z^L_l],l=2…L_d$</p>
+<p>其中$z^{ms}_l \in \R^{N \times LK^2 \times D}$为多尺度特征，$z^l_L=RoIAlign(z^l,b_{l-1}),l-1…L-1$是。对应的位置嵌入$p^{ms}_l$用相似的方式得到。解码过程和原始的DETR是相同的。唯一的区别在于$z_l=z^{ms}_l$以及$p_l=p^{ms}_l$。</p>
+<h4 id="标签增强"><a href="#标签增强" class="headerlink" title="标签增强"></a>标签增强</h4><p>DETR展现出了标签分配的一对一的分配方式。尽管拥有避免重复删除过程的优点，但只有少数检测候选者在每次迭代中都被提供了一个积极的监督信号。这样会导致模型需要更大数量的数据或者更多论次的训练，从而获得足够的监督。</p>
+<p>为了缓解这个问题，本文提出了一种标签增强的策略为DETR提供更丰富的监督信号，即通过在二部图匹配的过程中重复positive labels。如下图所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/kITnuhEstBzQy.png" alt="img"></p>
+<p>我们为每个前景样本$y_i$重复labels $R_i$次，并使label set $N$的总长度不变。</p>
+<p>$y=\{ y^1_1,y^2_1,…,y^{R_1}_1,…y^1_M,y^2_M,…,y^{R_M}_M,…,\emptyset,…,\emptyset    \}$</p>
+<p>label assignment的其余公式与DETR中相同。</p>
+<p>在实际操作的过程中，考虑以下两种重复策略：</p>
+<ul>
+<li>固定重复次数：所有positive的label都被重复相同的次数</li>
+<li>固定positive采样比例：positive的labels被重复采样，从而确保有$r$个positive样本在label set中。</li>
+</ul>
+<p>特别的$F=N\times r$是重复标签后的预期正样本数。 我们首先将每个正标签重复 $F//M$次，然后随机抽取 $F \% M $个正标签而不重复。 默认情况下，我们使用固定重复次数策略，因为它更容易实现并且生成的标签集是确定性的。</p>
+<h3 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h3><h4 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h4><p>本文重点关注DETR的数据效率。因此，我们的大多数实验都是在 Cityscapes 和下采样 COCO 2017在内的小型数据集上进行的。具体来说，Cityscapes 数据集包含2,975 张用于训练的图像和500 张用于评估的图像。对于下采样的 COCO 2017 数据集，训练图像随机下采样0.1、0.05、0.02 和0.01，而评估集保持不变。此外，我们还验证了我们的方法在具有118K 训练图像的全尺寸 COCO 2017 数据集上的有效性。</p>
+<h4 id="实施细节"><a href="#实施细节" class="headerlink" title="实施细节"></a>实施细节</h4><p>默认情况下，我们的特征采样实现为 RoIAlign，特征分辨率为4。包括三个不同的特征级别用于多尺度特征融合。我们的标签增强采用固定重复次数，并且使用阈值为0.7 的非极大值抑制(NMS)来去除重复。所有模型都训练了50 个 epoch，并且除非另有说明，否则学习率会在40 个 epoch 后衰减。在 ImageNet-1K 上预训练的 ResNet-50用作主干。为了保证足够的训练迭代次数，所有关于 Cityscapes 和下采样 COCO2017 数据集的实验都以8 的batch size进行训练。结果是使用不同的随机种子重复运行五次的平均值。我们的数据高效检测转换器仅对现有方法进行轻微修改。除非另有说明，否则我们遵循相应基线方法的原始实现细节。运行时间在 NVIDIA A100 GPU 上进行评估。</p>
+<h4 id="主要结果"><a href="#主要结果" class="headerlink" title="主要结果"></a>主要结果</h4><h5 id="基于Cityscapes"><a href="#基于Cityscapes" class="headerlink" title="基于Cityscapes"></a>基于Cityscapes</h5><p>在本节中，我们将我们的方法与现有的DETR进行比较。 如下表所示，大多数检测变压器都存在数据效率问题。 尽管如此，通过对 CondDETR 模型进行微小更改，我们的 DE-CondDETR 能够实现与 DeformDETR 相当的数据效率。 此外，通过标签增强提供的更丰富的监督，我们的 DELA-CondDETR 超过了 DeformDETR 2.2 AP。 此外，我们的方法可以与其他检测转换器相结合，以显着提高它们的数据效率，例如，我们训练了 50 个 epoch 的 DE-DETR 和 DELA-DETR 的性能明显优于训练了 500 个 epoch 的 DETR。另外，我们的方法依旧提高了DeformDETR的数据效率。见下</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812145944038.png" alt="image-20220812145944038"></p>
+<p>上表为DETR在Cityscapes上的比较，DE前缀表明使用了本文的data-efficient，LA表明使用了label增强。</p>
+<hr>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151829137.png" alt="image-20220812151829137"></p>
+<p>上表为DeformDETR使用了LA之后的效果对比。</p>
+<hr>
+<h5 id="基于下采样的COCO2017数据集"><a href="#基于下采样的COCO2017数据集" class="headerlink" title="基于下采样的COCO2017数据集"></a>基于下采样的COCO2017数据集</h5><p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151508333.png" alt="image-20220812151508333"></p>
+<p>下采样的 COCO 2017 数据集分别包含 11,828 (10%)、5,914 (5%)、2,365 (2%) 和 1,182 (1%) 训练图像。 如上图 所示，我们的方法在很大程度上始终优于基线方法。 特别是，仅用 ∼1K 图像训练的 DELA-DETR 显着优于 DETR 基线，训练数据是训练数据的五倍。 同样，DELA-CondDETR 始终优于使用两倍数据量训练的 CondDETR 基线。</p>
+<hr>
+<h4 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h4><p>在本节中，我们进行消融实验以更好地理解我们方法的每个组成部分。 所有消融研究都是在 DELACondDETR 和 Cityscapes 数据集上实施的，而更多基于 DELADETR 的消融研究可以在我们的附录中找到。</p>
+<hr>
+<h5 id="每个模块的有效性"><a href="#每个模块的有效性" class="headerlink" title="每个模块的有效性"></a>每个模块的有效性</h5><p>我们首先消融了我们方法中每个模块的作用，如下表所示。使用局部特征采样和多尺度特征融合将模型的性能分别显着提高了 8.3 和 6.4 AP。 此外，标签增强进一步将性能提高了 2.7 AP。 此外，单独使用标签增强也带来了 2.6 AP 的性能增益。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152636147.png" alt="image-20220812152636147"></p>
+<hr>
+<h5 id="RoIAlign-的特征分辨率"><a href="#RoIAlign-的特征分辨率" class="headerlink" title="RoIAlign 的特征分辨率"></a>RoIAlign 的特征分辨率</h5><p>通常，RoIAlign 中较大的样本分辨率可提供更丰富的信息，从而提高检测性能。 然而，采样更大的特征分辨率也更耗时，并且增加了解码过程的计算成本。 如下表所示，当分辨率从 1 增加到 4 时，模型性能显着提高了 5.6 AP。但是，当分辨率进一步增加到 7 时，改进很小，并且增加了 FLOPs 和延迟。 为此，我们将 RoIAlign 的特征分辨率默认设置为 4。</p>
+<h5 id="多尺度特征的数量"><a href="#多尺度特征的数量" class="headerlink" title="多尺度特征的数量"></a>多尺度特征的数量</h5><p>为了结合多尺度特征，我们还从主干中采样了 8 倍和 16 倍的下采样特征来构建3个不同级别的多尺度特征。 从上表可以看出，它显着提高了模型性能 6.4 AP。 然而，当我们进一步为多尺度融合添加 64 倍下采样特征时，性能下降了 0.5 AP。 默认情况下，我们使用 3 个特征级别进行多尺度特征融合。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152843982.png" alt="image-20220812152843982"></p>
+<hr>
+<h5 id="标签增强的策略"><a href="#标签增强的策略" class="headerlink" title="标签增强的策略"></a>标签增强的策略</h5><p>在本节中，我们消融了提出的两种标签增强策略，即固定重复时间和固定正样本比率。 如下左表 所示，使用不同的固定重复次数可以持续提高 DE-DETR 基线的性能，但性能增益会随着重复次数的增加而降低。 因此，默认采用固定重复时间 2。 此外，如下右表 所示，虽然使用不同的比率可以提高 AP，但在正负样本比率为 1:3 时性能最佳，有趣的是，这也是Faster RCNN中最常用的正负采样比率。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812154348539.png" alt="image-20220812154348539"></p>
+<h4 id="泛化到特征丰富的数据集"><a href="#泛化到特征丰富的数据集" class="headerlink" title="泛化到特征丰富的数据集"></a>泛化到特征丰富的数据集</h4><p>虽然上述实验表明，我们的方法可以在只有有限的训练数据可用时提高模型性能，但不能保证我们的方法在训练数据充足的情况下仍然有效。 为此，我们用足够多的数据在 COCO 2017 上评估了我们的方法。 从下表 中可以看出，我们的方法不会降低 COCO 2017 上的模型性能。相反，它提供了改进效果。 具体来说，DELA-DETR 和 DELA-CondDETR 分别将其相应的基线提高了 8.3 和 2.8 AP。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812153538482.png" alt="image-20220812153538482"></p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>在本文中，我们确定了DETR的数据效率问题。 通过从 Sparse RCNN 到 DETR 的逐步模型转换，我们发现局部区域的稀疏特征采样是数据效率的关键。基于这些，我们通过在预测的bounding box的指导下通过简单地采样多尺度特征在对原始模型的修改最少的前提下来改进现有的检测转换器。 此外，我们提出了一种简单而有效的标签增强策略，以提供更丰富的监督，从而进一步缓解数据效率问题。 大量实验验证了我们方法的有效性。 随着Transformer在视觉任务中越来越流行，我们希望我们的工作能够激发大家探索Transformer在不同任务中的数据效率。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Deformable%20DETR/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/08/22/Deformable%20DETR/" class="post-title-link" itemprop="url">Deformable DETR</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 20:56:45 / 修改时间：21:00:19" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:45+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Deformable-DETR-：-deformable-transformers-for-End-to-End-object-detection"><a href="#Deformable-DETR-：-deformable-transformers-for-End-to-End-object-detection" class="headerlink" title="Deformable DETR ： deformable transformers for End-to-End object detection"></a>Deformable DETR ： deformable transformers for End-to-End object detection</h2><h3 id="DETR的问题"><a href="#DETR的问题" class="headerlink" title="DETR的问题"></a>DETR的问题</h3><p>是针对DETR进行改进的一篇文章，其指出DETR主要存在以下两点问题：</p>
+<ol>
+<li>DETR需要相较于现有的目标检测器更长的训练epoch来收敛。</li>
+<li>DETR在检测小物体时准确率较低。</li>
+</ol>
+<p>这是由于transformer结构所引入的问题，即是transformer组件处理特征图方面的不足：transformer结构其在初始化时分配给所有特征像素的注意力权重几乎是均等的，这就造成了模型需要长时间去学习关注真正有意义的位置。其次Transformer在计算注意力权重时，伴随着高计算量与空间复杂度。特别是在编码器部分，与特征像素点的数量成平方级关系，因此难以处理高分辨率的特征。</p>
+<p>deformable DETR结合deformable conv的空间稀疏采样的优势和transformer元素间建模的能力。通过添加稀疏的空间位置，避免了上述的问题，因此DETR不采用全局的注意力计算，而是只计算reference point周围一小部分点的注意力。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Deformable DETR是一种End-to-End的目标检测器，其在DETR和transformer的基础上做了改进，能够更快收敛，同时减少计算量提高精度。其核心部件为Multi-scale Deformable Attention Module（多尺度可变形注意力模块），其为一种处理图像特征图的有效的注意力机制。</p>
+<h3 id="Deformable-Attention-Module"><a href="#Deformable-Attention-Module" class="headerlink" title="Deformable Attention Module"></a>Deformable Attention Module</h3><p>针对于DETR存在的问题，提出Deformable Attention Module ，其不用遍历所有的空间位置，而是与可变形卷积相似，其只注意参考点周围的一小部分关键采样点，而不是特征图的整体。其通过为每个query分配少量固定的键，可以缓解难以收敛和特征空间分辨率所带来的问题。</p>
+<p>示意图如下所示：</p>
+<p><img src="/2022/08/22/Deformable%20DETR/image-20220810091027439.png" alt="image-20220810091027439"></p>
+<p>下面给出MultiheadAttention和DeformableAttention的计算公式</p>
+<script type="math/tex; mode=display">
+MultiHeadAttn(z_q , x) =\sum ^M_{m=1}W_m[\sum_{k∈Ω_k}A_{mqk}\cdot W_m^`x_k]
+\\
+DeformAttn(z_q , p_q , x) =\sum ^M_{m=1}W_m[\sum^K_{k=1}A_{mqk}\cdot W_m^`x(p_q+∆p_{mqk})]
+\\
+MSDeformAttn(z_q , p_q , \{x^l\}^L_{l=1}) =\sum ^M_{m=1}W_m[\sum^L_{l=1}\sum^K_{k=1}A_{mlqk}\cdot W_m^`x^l( \phi_l ( p̂ _q )+∆p_{mlqk})]</script><p>对DeformAttn，输入特征图尺寸为$C<em>H</em>W$，$z_q$为带有内容特征的第q个查询元素，为$p_q$为一个二维参考点，公式中参数如下解释：</p>
+<ul>
+<li>m 表示注意力头（head）。</li>
+<li>k 表示 sampled key（被采样的键）。K 表示 total sampled key number( $K \lt\lt HW$ )。</li>
+<li>$\Delta p_{mqk}$表示第 m 个注意力头中第 k 个采样点的采样偏移量。</li>
+<li>$A_{mqk}$表示第 m 个注意力头中第 k 个采样点的注意力权重 V。</li>
+<li><img src="/2022/08/22/Deformable%20DETR/4b4befc3e13742eea81d3b220c04133e.png" alt="img">，Xk表示第k个采样点，Um和Vm是可学习的参数。</li>
+<li>标量注意力权重 $A_{mqk}$的取值范围为[ 0 , 1]，通过$\sum^K_{k=1}A_{mqk}=1$进行归一化。</li>
+<li><img src="/2022/08/22/Deformable%20DETR/fc909ee8a2414a778ba1f82d7120c36a.png" alt="img">是范围不受限制的2-d实数。</li>
+<li>由于$p_q+\Delta p_{mqk}$是分数阶的，所以在计算$x(p_q+\Delta p_{mqk})$时，采用了《Deformableconvolutional networks (ICCV)》中的双线性插值。</li>
+<li>$\Delta p_{mqk}$和$A_{mqk}$都是通过在查询特征$z_q$上的线性投影获得的。</li>
+<li>在实现中，查询特征$z_q$被送入3MK通道的线性投影算子，其中前2MK通道编码采样偏移量为 ，其余MK通道被送入softmax算子以获得注意力权重 。</li>
+</ul>
+<p>可变形注意力模块是为了将卷积特征图作为 key 要素进行处理而设计的。令 $N_q$ 为 query 元素的个数，当 MK 比较小时，可变形注意力模块的复杂度为$O(2N_q C^2 + min(HW C^2 , N_q KC^2 ))$。当它应用于DETR编码器时，其中 $N_q = HW$，复杂度变为$O(HWC^2)$，与空间大小成线性复杂度。当它被用作DETR解码器中的交叉注意力模块时，其中 $N_q = N$ ( N为对象查询次数)，复杂度变为$O (NKC^2)$，这与空间大小HW无关。</p>
+<h3 id="Multi-scale-Deformable-Attention-Module"><a href="#Multi-scale-Deformable-Attention-Module" class="headerlink" title="Multi-scale Deformable Attention Module"></a>Multi-scale Deformable Attention Module</h3><p>仿照其余目标检测框架中的多尺度特征，提出Multi-scale Deformable Attention Module，将可变形注意力模块扩展为多尺度，其公式依旧如下所示：</p>
+<script type="math/tex; mode=display">
+MultiHeadAttn(z_q , x) =\sum ^M_{m=1}W_m[\sum_{k∈Ω_k}A_{mqk}\cdot W_m^`x_k]
+\\
+DeformAttn(z_q , p_q , x) =\sum ^M_{m=1}W_m[\sum^K_{k=1}A_{mqk}\cdot W_m^`x(p_q+∆p_{mqk})]
+\\
+MSDeformAttn(z_q , p̂ _q , \{x^l\}^L_{l=1}) =\sum ^M_{m=1}W_m[\sum^L_{l=1}\sum^K_{k=1}A_{mlqk}\cdot W_m^`x^l( \phi_l ( p̂ _q )+∆p_{mlqk})]</script><p>对MSDeformAttn，$\{x^l\}^L_{l=1}$为输入的多尺度特征图，其每层的输入特征图尺寸为$C<em>H_l</em>W_l$，$z_q$为带有内容特征的第q个查询元素，$p̂ _q ∈ [0, 1]^2$二维参考点，公式中参数如下解释：</p>
+<ul>
+<li>m 表示注意力头（head）。</li>
+<li>k 表示 sampled key（被采样的键）。K 表示 total sampled key number( K &lt;&lt; HW )。</li>
+<li>$\Delta p_{mlqk}$表示第 L 个特征层和第 m 个注意力头中第 k 个采样点的采样偏移量。</li>
+<li>$A_{mlqk}$表示第 L 个特征层和第 m 个注意力头中第 k 个采样点的注意力权重 V。</li>
+<li><img src="/2022/08/22/Deformable%20DETR/4b4befc3e13742eea81d3b220c04133e.png" alt="img">，Xk表示第k个采样点，Um和Vm是可学习的参数。</li>
+<li>标量注意力权重 $A_{mlqk}$的取值范围为[ 0 , 1]，通过$\sum^L_{l=1}\sum^K_{k=1}A_{mlqk}=1$进行归一化。</li>
+<li>$p̂ _q ∈ [0, 1]^2$是归一化坐标，我们用其清晰的表示尺度公式，其中$(0,0)$表示左上角的点,$(1,1)$表示右下角的点</li>
+<li>$\phi_l ( p̂ _q )$将归一化的坐标$p̂ _q $重新缩放至输入特征图的第$l$层上。</li>
+<li>多尺度可变形注意力与以前的单尺度版本非常相似，只是它从多尺度特征图中采样LK 点，而不是从单尺度特征图中采样 K 点。</li>
+</ul>
+<p>当选$L=1,K=1，且W_m^`∈R^{C_v\times C}$固定为单位矩阵的时候，上述公式退化为deformable convolution。</p>
+<h3 id="Deformable-Transformer-Encoder"><a href="#Deformable-Transformer-Encoder" class="headerlink" title="Deformable Transformer Encoder"></a>Deformable Transformer Encoder</h3><p>我们将DETR中处理特征图的Transformer注意力模块替换为提出的多尺度可变形注意力模块。编码器的输入和输出都是具有相同分辨率的多尺度特征图。</p>
+<p>在编码器中，通过ResNet (transformed by a 1 × 1 convolution) 中的从 $C_3$阶段到$C_5$阶段的输出特征图中提取多尺度特征图$\{x^l\}^{L-1}_{l=1}(L = 4)$，其中$C_l$分辨率是输入图的$\frac{1}{2^l}$ 。 在最后的$C_5$级上通过 3 × 3 步长为 2 的卷积得到的最低分辨率特征图$x^L$，记为$C_6$。所有多尺度特征图的通道数为 C = 256 。注意：FPN 中自顶向下的结构没有被使用，因为我们提出的多尺度可变形注意力机制本身可以在多尺度特征图之间交换信息。多尺度特征图的构造如下图所示。注：添加FPN不会提高性能，因为本文所设计的结构能在不同层级之间交换信息，和FPN的功能相同</p>
+<p><img src="/2022/08/22/Deformable%20DETR/image-20220810101839490.png" alt="image-20220810101839490"></p>
+<p>在Deformable Transformer Encoder的应用中，输出是与输入具有相同分辨率的多尺度特征图。key和query均为多尺度特征图中的像素。对于每个查询像素，参考点为其本身。为了识别每个查询像素位于哪个特征级别（即属于目标物体的概率），除了位置嵌入外，我们在特征表示中添加了一个尺度级别的嵌入，记为$e_l$。不同于固定编码的位置嵌入，尺度级嵌入$\{e_l\}^L_{l=1}$随机初始化并与网络联合训练。</p>
+<h3 id="Deformable-Transformer-Decoder"><a href="#Deformable-Transformer-Decoder" class="headerlink" title="Deformable Transformer Decoder"></a>Deformable Transformer Decoder</h3><p>解码器中存在交叉注意力和自注意力模块，两种类型的注意力模块的query elements都是object query。</p>
+<p>在交叉注意力模块中，object query从特征图中提取特征，其中的key元素是编码器输出的特征图。</p>
+<p>在自注意力模块中，object query是相互作用的，其中的key元素是object query。由于我们提出的可变形注意力模块是为了处理卷积特征图作为key元素而设计的，因此我们只将每个交叉注意力模块替换为多尺度可变形注意力模块，而自注意力模块保持不变。对于每个object query，参考点的二维归一化坐标$p̂ _q$ 通过可学习的线性投影和sigmoid函数从其对象查询嵌入中预测。</p>
+<p>由于multi-scale deformable attention module提取参考点周围的图像特征，我们让检测头预测边界框作为参考点的相对偏移量，以进一步降低优化难度。将参考点作为箱体中心的初始猜测。检测头预测参考点的相对偏移量。这样，学习到的解码器注意力将与预测的边界框具有较强的相关性，这也加速了训练收敛。</p>
+<p>通过将DETR中的Transformer注意力模块替换为可变形注意力模块，我们建立了一个高效、快速收敛的检测系统，称为可变形DETR 。</p>
+<h3 id="多种计算方式之间关系"><a href="#多种计算方式之间关系" class="headerlink" title="多种计算方式之间关系"></a>多种计算方式之间关系</h3><p><img src="/2022/08/22/Deformable%20DETR/1858467-20220401094649223-612897571.png" alt="img"></p>
+<h3 id="deformable-DETR结构示意图"><a href="#deformable-DETR结构示意图" class="headerlink" title="deformable DETR结构示意图"></a>deformable DETR结构示意图</h3><p><img src="/2022/08/22/Deformable%20DETR/1858467-20220401094708641-447017032.png" alt="img"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/VIT/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/08/22/VIT/" class="post-title-link" itemprop="url">VIT</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 20:56:31 / 修改时间：20:59:02" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:31+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="VIT-An-image-is-worth-16-x-16-words-Transformer-for-image-recognition-at-scale"><a href="#VIT-An-image-is-worth-16-x-16-words-Transformer-for-image-recognition-at-scale" class="headerlink" title="(VIT) An image is worth 16 x 16 words: Transformer for image recognition at scale"></a>(VIT) An image is worth 16 x 16 words: Transformer for image recognition at scale</h2><h3 id="评价"><a href="#评价" class="headerlink" title="评价"></a>评价</h3><p>ViT是2020年Google团队提出的将Transformer应用在图像分类的模型，因其模型“简单”且效果好，可扩展性强，在数据量越大的前提下效果越好，从而成为了transformer在CV领域应用的里程碑著作。</p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>当拥有足够多的数据进行预训练的时候，ViT的表现就会超过CNN，突破transformer缺少归纳偏置（即先验知识，如：卷及神经网络所默认的平移不变性等）的限制，可以在下游任务中获得较好的迁移效果。但是当训练数据集不够大的时候，ViT的表现通常比同等大小的ResNets要差一些。这是因为CNN具有两种归纳偏置，一种是局部性（locality/two-dimensional neighborhood structure），即图片上相邻的区域具有相似的特征；一种是平移不变形（translation equivariance）（即$f(g(x))=g(f(x))$),其中g代表卷积操作，f代表平移操作。当CNN具有以上两种归纳偏置，就有了很多先验信息，需要相对少的数据就可以学习一个比较好的模型。</p>
+<h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p>ViT的整体结构如下图所示：</p>
+<p><img src="/2022/08/22/VIT/v2-5afd38bd10b279f3a572b13cda399233_720w.jpg" alt="img"></p>
+<p>整个ViT的运行流程如下所示：</p>
+<ul>
+<li><p>假设输入图片大小为224x224,每个patch对应的像素为16x16，则对于每张图片而言，其生成的patch数量为$（224/16）×（224/16）=196$，即生成的patch序列长度为196，每个patch的大小为$16<em>16</em>3$，每个patch的元素总量为$768$。</p>
+</li>
+<li><p>对于ViT而言，其整体的结构和流程都是模仿transformer和bert的所以其分为以下几个部分：</p>
+<ul>
+<li>Patch Embeding：上述所生成的每个patch通过投影层，投影成固定长度的向量，作为encoder的第一部分输入。其固定长度的向量的长度定义为768，所以输入的patch序列的维度为$196<em>768$，Patch Embedding的维度为$768</em>768$，最终得到的Patch Embedding的向量长度为$196*768$。</li>
+<li>Position Embedding：由于将图片分为多个patch之后，每个patch经过投影的过程中不引入位置编码信息，所以仿照bert引入position enbedding部分。其位置编码可以理解为是一个有N行（输入patch序列的长度），每行有768（embedding的维度）个元素的矩阵，其第i行就代表了第i个位置所对应的Position Embedding的值。将Patch Embedding与Position Embedding的值相加，由于维度都是$196*768$，所以加之后的维度相同</li>
+<li>$[cls]$:仿照bert中的$[cls]$，在196x768的基础上加一维，变成197x768，由于其具体的计算过程中是元素和元素之间两两计算，所以作者认为这样可以在计算过程中学到如何从其他元素上学到我们所需要的信息。并最终在经过Encoder部分的计算之后，取对应位置的输出进行分类。</li>
+</ul>
+</li>
+<li>Encoder：encoder部分由$Add/Norm+多头自注意力机制+Add/Norm+MLP$组成，其过程与transformer中的一致。其输入维度为$(196+1)*768$，经过Encoder之后输入维度与输入相同。所以支持多个Encoder块进行叠加。</li>
+<li>MLP Head：在MLP时，输入为197x768，并经过与bert相似的操作，将维度放大四倍再收缩回去，即变为$197<em>（768</em>4）$再缩小变为$197*768$。</li>
+<li>最终选取MLP的第0个位置处的元素（即为[cls]对应的位置处的元素）进行图片分类</li>
+</ul>
+<p>最终的计算步骤如下图所示：</p>
+<p><img src="/2022/08/22/VIT/v2-ebf697b1994598019a6a59855dc0dbed_720w.png" alt="img"></p>
+<h3 id="讨论"><a href="#讨论" class="headerlink" title="讨论"></a>讨论</h3><h4 id="Position-Embedding"><a href="#Position-Embedding" class="headerlink" title="Position Embedding"></a>Position Embedding</h4><p>作者研究对比了多种位置编码方式：</p>
+<ul>
+<li>1-D的位置编码</li>
+<li>2-D的位置编码</li>
+<li>相对位置编码</li>
+</ul>
+<p>作者实验结论为：不管使用哪种位置编码方式，模型的精度都很接近，甚至不适用位置编码，模型的性能损失也没有特别大。原因可能是ViT是作用在image patch上的，而不是image pixel，对网络来说这些patch之间的相对位置信息很容易理解，所以使用什么方式的位置编码影像都不大。</p>
+<p><img src="/2022/08/22/VIT/v2-99f02198921e7aed8162cd7af8a29805_720w.jpg" alt="img"></p>
+<h4 id="image-presentation"><a href="#image-presentation" class="headerlink" title="image presentation"></a>image presentation</h4><p>关于使用[cls]进行学习和直接对输出的结果通过average pooling进行学习的方法，通过实验表明两者区别不大。</p>
+<p><img src="/2022/08/22/VIT/v2-4a8b39b1d2dd43d1e9b16edbc38b1660_720w.jpg" alt="img"></p>
+<p>文章主要为了和bert类似，所以引入[cls]进行学习</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/DETR/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/08/22/DETR/" class="post-title-link" itemprop="url">DETR</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 20:56:17 / 修改时间：20:59:43" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:17+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="DETR-End-to-End-Object-Detection-with-Transformers"><a href="#DETR-End-to-End-Object-Detection-with-Transformers" class="headerlink" title="DETR: End-to-End Object Detection with Transformers"></a>DETR: End-to-End Object Detection with Transformers</h2><p>目标检测的目标是预测bounding boxes的集合和每个感兴趣物体的类别，之前的方法大都是采用间接的方法进行解决的，例如利用anchor，提出大量的region proposals或者window centers等，将问题视为回归或分类的问题。这些间接的方法都采用了很多的先验知识，并且这些先验的选取会严重的影响检测的效果。DETR将目标检测的问题视为集合预测的问题，真正建立了一个end-to-end的检测网络，并移除了许多需要手动设计的组件，例如NMS。</p>
+<h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p><img src="/2022/08/22/DETR/image-20220808085358261.png" alt="image-20220808085358261"></p>
+<p>DETR的整体结构如上所示，其由backbone、transformer encoder、transformer decoder、预测前馈网络(FFNs)、辅助解码损失构成。</p>
+<p>其中基于CNN的backbone负责对输入图片进行特征的提取，encoder-decoder负责对backbone传入的图片特征和位置编码进行全局范围的特征的学习和注意力学习，然后最后使用FFNs进行最终目标的预测。</p>
+<h4 id="backbone"><a href="#backbone" class="headerlink" title="backbone"></a>backbone</h4><p>假定输入图像尺寸为$3 <em>H</em>W $，通过backbone进行特征的提取，从而生成一个尺寸为$C<em>H_0</em>W_0$的feature map。这个feature map的维度为C，在原文中使用的值是2048。每个feature map的尺寸大小为$H<em>W$，在原文中使用的尺寸为$\frac{H_0 }{32}</em>\frac{W_0 }{32}$。</p>
+<h3 id="Encoder"><a href="#Encoder" class="headerlink" title="Encoder"></a>Encoder</h3><h4 id="Encoder的输入"><a href="#Encoder的输入" class="headerlink" title="Encoder的输入"></a>Encoder的输入</h4><p>​    另外，由于transformer的过程中需要对输入元素进行注意力机制的计算，其计算复杂度为$O(n^2)$，所以backbone最后得出的特征需要首先通过$1<em>1$的卷积层进行降维。如原始的feature map的尺寸为$C</em>H<em>W$，经过$1</em>1$的卷积之后得到的大小为$D<em>H</em>W$。又由于transformer需要的是序列信息的输入，所以将三维的$D<em>H</em>W$进行压缩，压缩为$D*(HW)$。这样传入的序列，每个序列的长度为$HW$，共有$D$个序列。在原文中$D=256$</p>
+<p>​    由于在transformer的注意力机制的计算过程中，是对位置不敏感的，所以需要加入positional encoding代表其的空间信息。在原文的positional encoding的过程中，源码为：</p>
+<p><img src="/2022/08/22/DETR/image-20220808103125644.png" alt="image-20220808103125644"></p>
+<p><img src="/2022/08/22/DETR/image-20220808103146058.png" alt="image-20220808103146058"></p>
+<p>可见其为随机初始化的，然后将其进行复制从而扩展。最终的尺度也为$D*(HW)$</p>
+<h4 id="Encoder本身"><a href="#Encoder本身" class="headerlink" title="Encoder本身"></a>Encoder本身</h4><p>​    Encoder本身的结构的定义与经典transformer的相似，如下所示：</p>
+<p><img src="/2022/08/22/DETR/7.png" alt="DETR Transformer"></p>
+<h4 id="Decoder"><a href="#Decoder" class="headerlink" title="Decoder"></a>Decoder</h4><p>Decoder本身的架构也与transformer中的经典架构相似。其输入一部分为encoder部分的输出，尺度为$D<em>(HW)$，另一部分的输入为可学习的object query，其尺度为$N</em>D$，其中N为decoder最终输出的，一个远大于图像中可能存在的物体的数量，在原文中采用的是$N=100$。object query是一个随机初始化的向量，对训练之后得到的object query进行可视化，得到的结果如下所示：</p>
+<p><img src="/2022/08/22/DETR/10.png" alt="在这里插入图片描述"></p>
+<p>可得其是学到了从图片的哪个位置进行目标的搜寻的。</p>
+<p>target被初始化为0，其尺度为$D*N$。</p>
+<ul>
+<li>在self-attention部分，QKV均与target相关，$Q,K=target+query$，$V=target$</li>
+<li>在cross-attention部分，Q由self-attention的输出结合位置编码query得到，K由encoder部分的输出结合位置编码P E得到，即$K=memory+PE$，V不使用位置编码，即$V=memory$</li>
+</ul>
+<p>Decoder的输出尺度为$D*N$。</p>
+<h4 id="预测前馈网络-FFNs"><a href="#预测前馈网络-FFNs" class="headerlink" title="预测前馈网络(FFNs)"></a>预测前馈网络(FFNs)</h4><p>其本质上就是一个三层的前馈网络，用于进行类别的判断和bounding box的回归。</p>
+<ul>
+<li>用于为目标分类的逻辑回归层(线性映射+softmax)，定义为class_head=nn.Linear(d,num_classes+1)，这个加的1指的是<code>no object</code></li>
+<li>用于检测框回归的MLP，定义为<code>box_head=MLP(input_dim=d, hidden_dim=d,output_dim=4, num_layers=3)</code></li>
+</ul>
+<h4 id="辅助解码损失"><a href="#辅助解码损失" class="headerlink" title="辅助解码损失"></a>辅助解码损失</h4><p>在训练过程中，我们发现在解码器中使用辅助损耗[1]是很有帮助的，特别是有助于模型输出每个类的对象正确数量。每个解码器层的输出用共享层范数进行归一化，然后送到共享预测头(分类和盒预测)（The output of each decoder layer is normalized with a shared layer-norm then fed to the shared prediction heads (classification and box prediction).）。然后，我们像往常一样将匈牙利损失用于监督。</p>
+<h3 id="创新点"><a href="#创新点" class="headerlink" title="创新点"></a>创新点</h3><p>本文的创新点主要有如下亮点</p>
+<ul>
+<li>DETR将目标检测问题视为集合预测的问题，是NMS-free的，并完成了one-to-one label assignment</li>
+<li>DETR利用transformer将图像表示为固定大小的预测集合</li>
+<li>DETR使用基于集合的全局损失来强制进行独一无二的预测</li>
+</ul>
+<h3 id="损失计算"><a href="#损失计算" class="headerlink" title="损失计算"></a>损失计算</h3><p>在一次计算的过程中，DETR解码器会生成一个固定大小为N的预测集合（原文中设置N=100），N被设置为明确大于图像中物体数量的数值。</p>
+<ul>
+<li>我们假设$y$表示真实目标的集合，用$\hat{y}=\{\hat{y}\}^{N}_{i=1}$表示N个预测集合的结果。</li>
+<li>对真实目标的标签集合进行padding，加入no object，使得预测集合的数量和真实目标经过padding后的数量一致，为N。</li>
+<li><p>为了在两个集合之间找到一个二部图匹配，我们寻找一个使得N个元素的开销$σ̂ $最小的排列。</p>
+<ul>
+<li>$σ̂ = arg min_{σ∈S_N}\sum^N_i L_{match} (y_i , ŷ_{σ(i)} )$</li>
+<li>其中 $L_{match} (y_i , ŷ_{σ(i)} )$是在真实目标集合和预测集合在索引为$σ(i)$的情况下的成对匹配成本，前人的工作证明匈牙利算法对这个问题能有效计算</li>
+<li>匹配的损失同时考虑了类别以及预测框和真实框的相似程度，每个真实目标元素$i$可以被看作为$y_i=(c_i,b_i)$，其中$c_i$是目标的类别标签（可能为$no\ object$），$b_i∈ [0, 1]^4$是一个定义了真实边框中心点的坐标和其到边缘框的宽和高的图像尺寸的参数。我们定义预测集合的编号为$σ(i)$的样本的类别$c_i$的可能性为$p̂ _{σ(i)} (c_i )$，定义预测框为$b̂ _{σ(i)}$。并由此我们定义$L_{match} (y_i , ŷ_{σ(i)} )$为:</li>
+<li><script type="math/tex; mode=display">
+L_{match} (y_i , ŷ_{σ(i)} )=−1_{c_i \neq ∅} p̂ _{σ(i)} (c_i ) + 1_{c_i  \neq ∅} L_{box}(b_i , b̂ _{σ(i)} )</script></li>
+<li>这种匹配方式与基于anchor和基于region proposal的作用相同，主要区别在于本文的方式需要找到一对一的匹配来直接进行集合预测而没有重复</li>
+</ul>
+</li>
+<li><p>对于上面步骤所表述的对所有匹配对的匈牙利损失如下所示，其与常规物体检测的损失定义类似：</p>
+<ul>
+<li><script type="math/tex; mode=display">
+L_{Hungarian}(y, ŷ) =\sum^N_{i=1}[ − log p̂ _{σ̂(i)} (c_i ) + 1_{c_i \neq ∅} L_{box} (b_i , b̂ _{σ̂ }(i))]</script><ul>
+<li>其中$σ̂(i)$是在损失计算的第一个公式中计算得出的最优项，并且在损失的计算中，物体与$no\ object$的损失与预测无关</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>对于边缘框损失而言，其与边缘框有关且表示为$L_{box}$。本文直接提出了对目标的预测，为了解决所带来的物体大小所带来的对损失计算的影响，本文使用了$l_1\ loss$和广义的IOU loss的线性组合。即最终的$L_{IOU}(b_i,b̂ _{σ(i)})$公式表达如下：</p>
+<ul>
+<li><script type="math/tex; mode=display">
+L_{IOU}(b_i,b̂ _{σ(i)})=λ_{iou} L_{iou}(b_i , b̂ _{σ(i)} ) + λ_{L1} ||b i − b̂ _{σ(i)} ||_1 \\其中λ_{iou}、 λ_{L1} 为超参数</script></li>
+</ul>
+</li>
+</ul>
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><p>DETR做到了真正没有非最大抑制（NMS）后处理，而且不需要anchor（锚点生成）等人工的先验知识。</p>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><p>训练时间较长，对小目标的检测性能不是很高。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Bert/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/08/22/Bert/" class="post-title-link" itemprop="url">Bert</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 20:56:02 / 修改时间：20:59:28" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:02+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Bert-Pre-training-of-Deep-Bidirectional-Transformers-for-Language-Understanding"><a href="#Bert-Pre-training-of-Deep-Bidirectional-Transformers-for-Language-Understanding" class="headerlink" title="(Bert)Pre-training of Deep Bidirectional Transformers for Language Understanding"></a>(Bert)Pre-training of Deep Bidirectional Transformers for Language Understanding</h2><h3 id="评价"><a href="#评价" class="headerlink" title="评价"></a>评价</h3><p>bert是一种预训练模型，在训练的过程中主要训练如下所示的两个子任务</p>
+<ul>
+<li>预测句子中被掩盖的词</li>
+<li>判断输入的两个句子是不是上下句</li>
+</ul>
+<p>然后在该预训练模型后面依据特定任务加上相应的微调即可完成NLP的下游任务，例如翻译、问答等。</p>
+<p>bert的架构是基于transformer的，其通过叠加transformer的encoder部分组成bert的整体框架，其encoder部分由一层多头自注意力机制、一层全链接网络、两层残差及标准化层组成，其中一个encoder部分的示意图如下所示：</p>
+<p><img src="/2022/08/22/Bert/image-20220802090401760.png" alt="image-20220802090401760"></p>
+<p>在论文中提出了两种大小的模型，大的模型有24层，每层16个attention。小的模型12层，每层12个attention。</p>
+<p>整个模型由模型输入、网络训练以及对每个具体任务的微调组成。</p>
+<h3 id="模型任务"><a href="#模型任务" class="headerlink" title="模型任务"></a>模型任务</h3><p>要了解模型的训练过程，首先需要对模型的训练任务有一定了解。模型的训练任务分为以下两个部分<strong>masked language model</strong>和<strong>next sentence prediction</strong>。</p>
+<ul>
+<li>masked language model：即随机掩盖掉输入中的部分单词，然后让模型通过上下文来预测该单词。<ul>
+<li>具体在bert中，选用了15%的token会被随机掩盖，这15%的token中80%用[MASK]这个token来代替，10%用随机的一个词来替换，10%保持这个词不变。这种设计使得模型具有捕捉上下文关系的能力，同时能够有利于token-level tasks例如序列标注。</li>
+<li>不将选中的token全都用[mask]替换的原因是，如果全部替换，会让模型学习到“如果当前词是 [MASK]，就根据其他词的信息推断这个词；如果当前词是一个正常的单词，就直接抄输入”，但是在模型微调的时候，并不会存在[mask]，所以会让模型在微调时失效。</li>
+</ul>
+</li>
+</ul>
+<p>示意图如下所示：</p>
+<p><img src="/2022/08/22/Bert/1620.jpeg" alt="img"></p>
+<ul>
+<li>next sentence prediction：给定两句话，判断第二句话是否紧跟在第一句话之后。<ul>
+<li>其任务具体为在所有样本中的50%的句子，选择其相应的下一句一起形成上下句，作为正样本；其余50%的句子随机选择一句非下一句一起形成上下句，作为负样本。且作者强调，应使用document-level的而不是sentence-level的样本，从而具备长序列特征的抽象能力。</li>
+</ul>
+</li>
+</ul>
+<p>示意图如下所示：</p>
+<p><img src="/2022/08/22/Bert/1620-16594041231163.jpeg" alt="img"></p>
+<h3 id="模型输入"><a href="#模型输入" class="headerlink" title="模型输入"></a>模型输入</h3><p>对于bert而言，其输入分为三部分：即Token Enbeddings，position embeddings，segment embeddings。其中由bert的设计，我们引入[CLS]作为输入的开始的起始符，引入[SEP]作为两个句子的分割符（next sentence prediction中输入为两句话，故引入[SEP]）。</p>
+<ul>
+<li>Token Enbeddings：为单词本身的向量表示。在bert中使用的是WordPiece方法，其是指将单词划分成一组有限的公共子词单元，能在单词的有效性和字符的灵活性之间取得一个折中的平衡。最终用30000左右的token表达了所有的词。</li>
+<li>position embedding：将单词的位置信息编码成特征向量。因为我们的网络结构没有RNN 或者LSTM，因此我们无法得到序列的位置信息，所以需要构建一个position embedding来表示位置信息。<ul>
+<li>构建position embedding有两种方法：BERT是初始化一个position embedding，然后通过训练将其学出来；而Transformer是通过制定规则来构建一个position embedding（sin、cos表示）</li>
+</ul>
+</li>
+<li>segment embedding：用于区分两个句子的向量表示。</li>
+</ul>
+<p>下图为模型输入的示意图：</p>
+<p><img src="/2022/08/22/Bert/embedding.png" alt="img"></p>
+<p>并最终将上述三种Embedding相加，作为最终的输入。</p>
+<h3 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h3><h4 id="不同结构的bert"><a href="#不同结构的bert" class="headerlink" title="不同结构的bert"></a>不同结构的bert</h4><p>对于bert而言，其主要的结构在于其encoder块的叠加，大的模型有24层，每层16个attention，隐藏层大小为1024，参数总量为340M。小的模型12层，每层12个attention，隐藏层大小为768，参数总量为110M。</p>
+<p>以小的模型为例，输入的size由WordPiece可得为30000。</p>
+<ul>
+<li>嵌入层：嵌入层可学习的参数量为：$30000*12$</li>
+<li>对于一个encoder块：<ul>
+<li>首先经过多头自注意力的计算，参数量为$(64<em>12)</em>(64<em>12)</em>4$</li>
+<li>然后经过全链接层的计算，参数量为$(64<em>12)</em>(64<em>12)</em>8$</li>
+<li>总共有12层，所以总共encoder部份的计算总量为$(64<em>12)</em>(64<em>12)</em>(4+8)*12$</li>
+</ul>
+</li>
+</ul>
+<p>总共的计算量为:</p>
+<p>$30k<em>(12</em>64)+(64<em>12)</em>(64<em>12)</em>(4+8)*12\approx110M$</p>
+<p>大模型同理。</p>
+<p>其所对应的Encoder块的计算原理如之前写的transformer所示。</p>
+<h4 id="BN-LN的选择"><a href="#BN-LN的选择" class="headerlink" title="BN/LN的选择"></a>BN/LN的选择</h4><p>对于BN、LN的选择，可直观的如下图所示：</p>
+<p><img src="/2022/08/22/Bert/BNLN.png" alt="img"></p>
+<p>可以简单的对其理解为，BN是对一个batch里面所有样本的同一个位置的特征做归一化，然后LN是对一个batch里面的一个样本的所有特征做归一化。</p>
+<p>所以LN更加符合对文本处理的直觉。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><h4 id="模型特点"><a href="#模型特点" class="headerlink" title="模型特点"></a>模型特点</h4><ul>
+<li>使用transformer作为算法的主要框架，transformer能<strong>更彻底的捕捉语句中的双向关系</strong></li>
+<li>使用了mask language model 和next sentence prediction的多任务训练目标，<strong>是一个自监督的过程，不需要数据的标注</strong></li>
+<li>使用tpu这种强大的机器训练了大规模的预料，是NLP的很多任务达到了全新的高度。</li>
+</ul>
+<p>​    BERT本质上是在海量语料的基础上，通过自监督学习的方法为单词学习一个好的特征表示。该模型的优点是可以根据具体的人物进行微调，或者直接使用预训练的模型作为特征提取器。</p>
+<h4 id="可优化空间"><a href="#可优化空间" class="headerlink" title="可优化空间"></a>可优化空间</h4><p>（1）如何让模型有<strong>捕捉Token序列关系</strong>的能力，而不是简单依靠位置嵌入。</p>
+<p>（2）模型太大，太耗机器</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">transformer相关</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-08-22 20:55:36" itemprop="dateCreated datePublished" datetime="2022-08-22T20:55:36+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/26/SSD%20Single%20Shot%20MultiBox%20Detector/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1144,573 +1881,11 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">pytorch相关</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-03-28 10:54:34" itemprop="dateCreated datePublished" datetime="2022-03-28T10:54:34+08:00">2022-03-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-19 10:51:07" itemprop="dateModified" datetime="2022-04-19T10:51:07+08:00">2022-04-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="在pycharm中调用pytorch函数没有自动补全"><a href="#在pycharm中调用pytorch函数没有自动补全" class="headerlink" title="在pycharm中调用pytorch函数没有自动补全"></a>在pycharm中调用pytorch函数没有自动补全</h2><h3 id="问题原因："><a href="#问题原因：" class="headerlink" title="问题原因："></a>问题原因：</h3><p>pytorch的代码绝大部分由c++进行实现，不是原生的python代码，而pycharm的代码提示时通过<code>.pyi</code>类型的文件进行实现的。关于.pyi文件，在<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0484/">PEP484</a>中写到</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Stub files are files containing type hints that are only for use by the type checker, not at runtime. There are several use cases for stub files:</span><br><span class="line"></span><br><span class="line">Extension modules</span><br><span class="line">Third-party modules whose authors have not yet added type hints</span><br><span class="line">Standard library modules for which type hints have not yet been written</span><br><span class="line">Modules that must be compatible with Python 2 and 3</span><br><span class="line">Modules that use annotations for other purposes</span><br></pre></td></tr></table></figure>
-<p>即.pyi文件作为stub files，帮助添加type hint，从而帮助pycharm实现自动补全。</p>
-<h3 id="解决办法："><a href="#解决办法：" class="headerlink" title="解决办法："></a>解决办法：</h3><p>故可以通过手动添加_int.pyi的方式实现pycharm对pytorch的自动补全的实现。并且这样的.pyi文件的功能只有类型检查，对其余功能没有影响。写好的.pyi文件见以下链接：<a target="_blank" rel="noopener" href="https://gist.github.com/t-vi/0d0ae013072f96f50fa11fbc2287e33b">_int_.pyi</a></p>
-<p>将该文件clone，并更名为__init__.pyi，复制到</p>
-<p><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/image-20220324093751177.png" alt="image-20220324093751177"></p>
-<p><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/image-20220324093801169.png" alt="image-20220324093801169"></p>
-<p><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/image-20220324093807805.png" alt="image-20220324093807805"></p>
-<p>便可以实现pycharm对pytorch的自动补全功能。</p>
-<h2 id="pytorch的自动求导相关"><a href="#pytorch的自动求导相关" class="headerlink" title="pytorch的自动求导相关"></a>pytorch的自动求导相关</h2><p>pytorch的自动求导是建立再pytorch的tensor（张量）之上的，张量可以简单的理解为pytorch的一个n维数组，通过设置tensor的<code>.requires_grad=True</code>来使其支持求导。backwards求梯度的核心为dynamic computation graph(DCG)——即动态计算图。</p>
-<p>以如下计算图为例，<a target="_blank" rel="noopener" href="https://blog.csdn.net/f156207495/article/details/88727860">参考链接</a><br><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2YxNTYyMDc0OTU=,size_16,color_FFFFFF,t_70.png" alt="在这里插入图片描述"><br>对于其中的x与y和z：使用z.backgrad()进行z的雅可比行列式的计算，并通过x.grad和 y.grad进行x和y偏导的获取。由x和y这两个叶子节点构建z的过程中，z记住了x和y构建的过程，z.backgrad()计算的时候根据记住的z和x、y的关系实现了x、y对z的偏导的求取。</p>
-<ul>
-<li>data: 变量中存储的值，如x中存储着1，y中存储着2，z中存储着3</li>
-<li>requires_grad：该变量有两个值，True 或者 False，如果为True，则加入到反向传播图中参与计算。</li>
-<li>grad：该属性存储着相关的梯度值。当requires_grad为False时，该属性为None。即使requires_grad为True，也必须在调用其他节点的backward()之后，该变量的grad才会保存相关的梯度值。否则为None</li>
-<li>grad_fn：表示用于计算梯度的函数，之所以叫做动态计算图，是指在grad_fn动态的保存了对叶子节点的各种操作，在使用backward之后通过grad_fn之中的操作对进行求导。</li>
-<li>is_leaf：为True或者False，表示该节点是否为叶子节点。</li>
-</ul>
-<p>当调用backward函数时，只有requires_grad为true以及is_leaf为true的节点才会被计算梯度，即grad属性才会被赋予值。</p>
-<p>实际上，<code>.requires_grad=True</code>将该节点设置为了叶子节点，只有叶子节点才可以积累，中间节点并不会计算梯度，如果需要计算的话，使用<code>x.retain_gard()</code>进行需要梯度计算的设置。</p>
-<p>对于单个张量的情况下，可以直接使用z.backward()进行计算，对于多个张量，需要使用z.backward(torch.ones_like(z))传入一个外部梯度，从而进行计算，实际上，z.backward()也会自动传入torch.tensor(1)。传入的参数会与z的雅可比行列式进行相乘，从而算出对应的结果。</p>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/102942725">扩展autograd</a>部分见链接。</p>
-<h2 id="pytorch中CNN网络结构的编写相关"><a href="#pytorch中CNN网络结构的编写相关" class="headerlink" title="pytorch中CNN网络结构的编写相关"></a>pytorch中CNN网络结构的编写相关</h2><p>pytorch编写CNN深度学习模型，一般而言包括以下几个部分：</p>
-<ul>
-<li>模型定义</li>
-<li>数据处理和加载</li>
-<li>训练模型（Train and Validate）</li>
-<li>测试模型</li>
-<li>训练过程可视化（可选）</li>
-</ul>
-<h3 id="模型定义"><a href="#模型定义" class="headerlink" title="模型定义"></a>模型定义</h3><p>pytorch的模型定义部分的标准格式如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Classifier</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(Classifier, self).__init__()</span><br><span class="line">        <span class="comment"># torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)</span></span><br><span class="line">        <span class="comment"># torch.nn.MaxPool2d(kernel_size, stride, padding)</span></span><br><span class="line">        <span class="comment"># input 維度 [3, 128, 128]</span></span><br><span class="line"></span><br><span class="line">        self.cnn = nn.Sequential(</span><br><span class="line">            nn.Conv2d(<span class="number">3</span>, <span class="number">64</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [64, 128, 128]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">64</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [64, 64, 64]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [128, 64, 64]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">128</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [128, 32, 32]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">128</span>, <span class="number">256</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [256, 32, 32]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">256</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [256, 16, 16]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">256</span>, <span class="number">512</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [512, 16, 16]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">512</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [512, 8, 8]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">512</span>, <span class="number">512</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [512, 8, 8]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">512</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [512, 4, 4]</span></span><br><span class="line">        )</span><br><span class="line">        self.fc = nn.Sequential(</span><br><span class="line">            nn.Linear(<span class="number">512</span> * <span class="number">4</span> * <span class="number">4</span>, <span class="number">1024</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.Linear(<span class="number">1024</span>, <span class="number">512</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.Linear(<span class="number">512</span>, <span class="number">11</span>)</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        out = self.cnn(x)</span><br><span class="line">        out = out.view(out.size()[<span class="number">0</span>], -<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> self.fc(out)</span><br></pre></td></tr></table></figure>
-<p>这个代码是李宏毅老师2020深度学习课程的hw3的范例代码中截取的。</p>
-<p>代码中，有以下需要注意的点：</p>
-<ul>
-<li>该模型必须继承<code>nn.Module</code>，并且必须执行父类的构造函数，即<code>super(Classifier, self).__init__()</code>，必须这样做的原因：一个网络实例化之后的本质是维护<code>nn.Module</code>中的八个字典，即：</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">_parameters</span><br><span class="line">_buffers</span><br><span class="line">_backward_hooks</span><br><span class="line">_forward_hooks</span><br><span class="line">_forward_pre_hooks</span><br><span class="line">_state_dict_hooks</span><br><span class="line">_load_state_dict_pre_hooks</span><br><span class="line">_modules</span><br></pre></td></tr></table></figure>
-<p>这八个字典用于网络的前向、反向以及正反序列化中。因此当继承<code>nn.Module</code>之后，必须执行父类的构造函数从而保证上述的字典被创造出来，从而使后续的卷积、池化等操作能够正常的被记录。该部分详情可见<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/53927068">链接</a>。</p>
-<ul>
-<li>__init__在执行父类的构造函数之后是该网络的部分网络结构的构造描述部分。在网络结构的构造部分常用的层有卷积层、批标准化层、激活函数、池化层、全连接层。网络模型的构造方法常见的有以下几种：<a target="_blank" rel="noopener" href="https://www.jb51.net/article/138245.htm">pytorch构造网络模型的方法</a></li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">	在上述代码中，输入维度为[<span class="number">3</span>, <span class="number">128</span>, <span class="number">128</span>] 即RGB三色图像，长宽各<span class="number">128</span>。</span><br><span class="line">nn.Conv2d(in_channels, out_channels, kernel_size, stride=<span class="number">1</span>, padding=<span class="number">0</span>)</span><br><span class="line">	图片的channels是指图片的维数，即RGB图像为三维，黑白图像为一维。一般的channels是指每个卷积层中卷积核的数量。而上一次层的out_channels即为下一层的in_channels。out_channels数目即为卷积核的数目，每个卷积核提取之后的特征数目的确定由in_channels、kernel_size、stride、padding共同决定，具体公式见下面链接：步长、填充、卷积核大小与输入输出大小的关系。conv2d完成卷积操作，功能是特征提取。</span><br><span class="line">nn.BatchNorm2d(num_features, eps=<span class="number">1e-05</span>, momentum=<span class="number">0.1</span>, affine=<span class="literal">True</span>, track_running_stats=<span class="literal">True</span>)</span><br><span class="line">	其中的num_features一般设置为特征数，即Conv2d中的输出通道数。BN完成批标准化操作，功能是将每个特征对结果的影响因素设置到相同水平。可以加快收敛速度。</span><br><span class="line">nn.ReLU() </span><br><span class="line">	激活函数对输入信息进行非线性变换，使整个系统模拟所有的函数成为可能。</span><br><span class="line">nn.MaxPool2d(kernel_size, stride, padding)</span><br><span class="line">	最大池化的作用理论依据为下采样之后的图像不影响这个图像的辨识和分类，输出的特征维数与con2d的计算规则相同，并且减少位置敏感性。</span><br><span class="line">nn.Linear(in_features,out_features)</span><br><span class="line">	该函数用于网络中的全连接层，in_features指输入的二维张量的大小，out_features指输出的二维张量的大小，即全连接层的神经元个数。全连接层的计算量巨大，为上一层的featuremap的通道数乘以高乘以宽再乘以out_features。</span><br></pre></td></tr></table></figure>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_34243930/article/details/107231539">Conv2d参考链接</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_37665306/article/details/103939069">步长、填充、卷积核大小与输入输出大小的关系</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_39777550/article/details/108038677">BatchNorm2d参考链接</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/g11d111/article/details/82665265">MaxPool2d参考链接</a> </p>
-<ul>
-<li><p>forward部分是实际上的网络结构，其完成网络的正向传播的部分。在网络的一次训练中，学习需要计算梯度从而进行一次参数的更新，一般首先使用一次前向传播加一次反向传播求出网络中所有可学习参数的偏导。在使用forward的时候，不应该直接调用forward方法，应该使用<code>model(input)</code>的方法进行对model的__call__方法的调用，由__call__ 对model的forward方法进行调用。这样调用，而不使用model2.forward(self,x)的原因是前者实现了额外的功能，即：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>，先执行完所有的_forward_pre_hooks里的hooks</span><br><span class="line"><span class="number">2</span>, 再调用CivilNet的forward函数</span><br><span class="line"><span class="number">3</span>, 再执行完所有的_forward_hooks中的hooks</span><br><span class="line"><span class="number">4</span>, 再执行完所有的_backward_hooks中的hooks</span><br></pre></td></tr></table></figure>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/53927068">forward相关</a></p>
-</li>
-</ul>
-<h3 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h3><p>pytorch中的优化器简而言之可以理解为在计算梯度之后的更新参数的策略。常用的优化器设置有：</p>
-<p>在代码中集成为torch.optim类，使用下列代码进行展示：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="string">&quot;\n&quot;</span>.join([o <span class="keyword">for</span> o <span class="keyword">in</span> <span class="built_in">dir</span>(torch.optim) <span class="keyword">if</span> <span class="string">&quot;_&quot;</span> <span class="keyword">not</span> <span class="keyword">in</span> o]))</span><br></pre></td></tr></table></figure>
-<p>结果为：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ASGD</span><br><span class="line">Adadelta</span><br><span class="line">Adagrad</span><br><span class="line">Adam</span><br><span class="line">AdamW</span><br><span class="line">Adamax</span><br><span class="line">LBFGS</span><br><span class="line">Optimizer</span><br><span class="line">RMSprop</span><br><span class="line">Rprop</span><br><span class="line">SGD</span><br><span class="line">SparseAdam</span><br></pre></td></tr></table></figure>
-<p>上述优化策略的具体阐述见<a target="_blank" rel="noopener" href="https://blog.csdn.net/CharmsLUO/article/details/109853517">链接</a>，optimizer的构建及使用如下所示：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">//选一个你心仪的优化器，并设置其所需要的参数</span><br><span class="line">optimizer = torch.optim.SGD(model.parameters(), lr = <span class="number">0.01</span>, momentum=<span class="number">0.9</span>)</span><br><span class="line">//代指每次训练的时候</span><br><span class="line"><span class="keyword">for</span> epoch......</span><br><span class="line">	<span class="keyword">for</span> data....</span><br><span class="line">    //每次计算之前应该使用optimizer将model的梯度清理，从而舍弃上一次BP计算得到的梯度，为新的一次前向+反向做好准备。</span><br><span class="line">	optimizer.zero_grad()</span><br><span class="line">	//训练</span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">    //在backward之后使用.step()完成参数的更新。</span><br><span class="line">   	optimizer.step()</span><br></pre></td></tr></table></figure>
-<p>实际代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epoch):</span><br><span class="line">    model.train()  <span class="comment"># ensure model in train model ( Dropout etc...)</span></span><br><span class="line">    <span class="keyword">for</span> i, data <span class="keyword">in</span> <span class="built_in">enumerate</span>(train_loader):</span><br><span class="line">        optimizer.zero_grad()  <span class="comment"># use optimizer to set model gradient 0</span></span><br><span class="line">        train_pred = model(data[<span class="number">0</span>].cuda())  </span><br><span class="line">        batch_loss = loss(train_pred, data[<span class="number">1</span>].cuda())  <span class="comment"># 计算 loss （注意 prediction 跟 label 必须同时 CPU 或是 GPU 上）</span></span><br><span class="line">        batch_loss.backward()  <span class="comment"># 利用 back propagation 算出每个参数的 gradient</span></span><br><span class="line">        optimizer.step()  <span class="comment"># 以 optimizer 用 gradient 更新参数值</span></span><br></pre></td></tr></table></figure>
-<p>使用如下代码进行每层变换之后的feature map 的 size大小查看：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> layer <span class="keyword">in</span> net:</span><br><span class="line">    <span class="built_in">input</span>=layer(<span class="built_in">input</span>)</span><br><span class="line">    <span class="built_in">print</span>(layer.__class__.__name__, <span class="string">&#x27;output shape:\t&#x27;</span>, <span class="built_in">input</span>.shape)</span><br><span class="line">或者</span><br><span class="line"><span class="keyword">for</span> name,layer <span class="keyword">in</span> model._modules.items():</span><br><span class="line">    <span class="built_in">input</span>=layer(<span class="built_in">input</span>)</span><br><span class="line">    <span class="built_in">print</span>(layer.__class__.__name__, <span class="string">&#x27;output shape:\t&#x27;</span>, <span class="built_in">input</span>.shape)</span><br></pre></td></tr></table></figure>
-<h3 id="数据处理和加载"><a href="#数据处理和加载" class="headerlink" title="数据处理和加载"></a>数据处理和加载</h3><p>数据的处理和加载通过写自己的dataset从而进行实现</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, img, y=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.img = img</span><br><span class="line">        self.y = y</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.img)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.img[index]</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br><span class="line"></span><br><span class="line">train_set = ImgDataset(train_data_img, train_data[<span class="string">&quot;label&quot;</span>])</span><br><span class="line">train_loader = DataLoader(train_set, batch_size=<span class="number">64</span>)</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">深度学习网络相关</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-03-28 10:50:14" itemprop="dateCreated datePublished" datetime="2022-03-28T10:50:14+08:00">2022-03-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-19 11:59:08" itemprop="dateModified" datetime="2022-04-19T11:59:08+08:00">2022-04-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="深度学习相关整理"><a href="#深度学习相关整理" class="headerlink" title="深度学习相关整理"></a>深度学习相关整理</h1><h2 id="DNN"><a href="#DNN" class="headerlink" title="DNN"></a>DNN</h2><p>DNN（Deep Neural Networks），即深度神经网络，是CNN、RNN等网络的基础。DNN的结构如下图所示：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-3d922852b85d4361cb71ca649af5707f_1440w.jpg" alt="img"></p>
-<p>即有多个隐藏层的网络，也可称之为多层感知机。</p>
-<p>在DNN中，层与层之间是全连接的，第一层为输入层，最后一层为输出层，中间的为隐藏层。</p>
-<p>DNN网络的计算过程可以看作为一系列的矩阵运算，即借用李宏毅老师的ppt中的图：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/chapter13-10.png" alt="img"></p>
-<p>假设输入为向量$X$，layer之间的传递关系为线性的，用$W^i$和$b^i$表示，其中w为权重，b为偏差，即整个神经网络的运算可以看做一系列的矩阵的运算，假设激活函数用$\sigma$来表示，即可以表示为：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/chapter13-11.png" alt="img"></p>
-<p>DNN网络的本质可以看作，用隐藏层来进行特征提取，从而替代人为的体征提取，这样在最后一个隐藏层的输出所输出的便为机器自己学习到的一组特征。学习的过程即为找到最好特征的过程，即定义一个Loss function来评估模型的好坏，一般使用如交叉熵（cross entropy）对结果$y$和预期结果$\hat{y}$进行计算，并使其最小。计算的过程即为减少Loss function的过程，即为找到最佳特征的过程。一般计算的过程即为求微分的过程，</p>
-<h2 id="反向传播"><a href="#反向传播" class="headerlink" title="反向传播"></a>反向传播</h2><p>一般而言计算的过程即为求Loss function最小的过程，即为更改权重，偏置等参数求到Loss function的全局最低点。在这个计算过程中我们使用的方法为梯度下降法，在梯度下降法的过程中需要对各个参数的偏微分进行运算，然后进行各个参数的更新，以进行下一次Loss function 的计算和更新，而反向传播算法是一种比较有效率的计算方法。</p>
-<h3 id="为什么反向传播会比较有效率"><a href="#为什么反向传播会比较有效率" class="headerlink" title="为什么反向传播会比较有效率"></a>为什么反向传播会比较有效率</h3><p>这一部分参考csdn，链接如下：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_24568487/article/details/80782867">反向传播为什么更有效率</a></p>
-<p>简单的说，可以理解为如果一个模型有100000个参数，当正向传播的时候需要对每一个参数计算偏导，即需要计算100000次，而反向传播可以先计算最后一层的隐藏层对输出层的偏导，再计算倒数第二个隐藏层对倒数第一个隐藏层的偏导，从而在一次反向传播的过程中将所有的参数的偏导都计算出来。</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/71.png" alt="71"></p>
-<p>即如图所示，对b1的偏导数由链式法则可以推出是由下面所有层的偏导和这一层的偏导数所决定的。</p>
-<h3 id="反向传播的计算"><a href="#反向传播的计算" class="headerlink" title="反向传播的计算"></a>反向传播的计算</h3><p>这一部分参考李宏毅老师的课件及笔记，链接如下：<a target="_blank" rel="noopener" href="https://datawhalechina.github.io/leeml-notes/#/chapter14/chapter14?id=%e5%8f%8d%e5%90%91%e4%bc%a0%e6%92%ad">反向传播</a></p>
-<p>实际上大部分深度学习的网络使用的最基础的降低loss function的方法都是梯度下降法，而反向传播算法是一种通用的提高计算速度的计算方法，所以反向传播十分重要。</p>
-<h2 id="CNN"><a href="#CNN" class="headerlink" title="CNN"></a>CNN</h2><p>当使用DNN处理图像的时候，假设图像为100x100x3时，假设有1000个neuron，则有100x100x3x1000个参数，CNN针对图像的一些特点，提出一些假设，简化了DNN的架构。</p>
-<p>CNN的前提假设：</p>
-<ul>
-<li><p>Some patterns are much smaller than the whole image. 即只要看一部分的图像就可以确定这件事情，大部分特征不需要看全图。</p>
-</li>
-<li><p>The same patterns appear in different regions .同一个特征出现在图片的不同地方可以使用同一组参数进行侦测，无需重新设计。</p>
-</li>
-<li><p>Subsampling the pixels will not change the object.对图像做下采样之后依旧不影响对图像的辨识。</p>
-</li>
-</ul>
-<p>基于以上三个假设，CNN的整体架构为：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/CNN.png" alt="70"></p>
-<p>其中convolution即为假设一、二的具象化，max pooling为假设三的具象化，通过convolution和maxpooling即完成了一次特征提取的过程，得到一个较小的image。</p>
-<p>深度网络比人工特征提取+SVM效果好的原因：</p>
-<ul>
-<li>深度网络进行特征提取相较于人工特征提取，更加完善，不具有经验局限性。</li>
-<li>深度网络+softmax进行分类在训练的时候是一起训练的，而人工特征提取和SVM是分开进行的。</li>
-</ul>
-<h3 id="LeNet"><a href="#LeNet" class="headerlink" title="LeNet"></a>LeNet</h3><p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-e5539ed222a20cdb9c7ebfca5c640a5d_1440w.jpg" alt="img"></p>
-<p>第一次定义CNN网络结构，由两个卷积层，两个池化层，两个全连接层组成。卷积核都是5×5，stride=1，池化层使用maxpooling。为了构造高性能的卷积神经网络，我们通常对卷积层进行排列，逐渐降低其表示的空间分辨率，同时增加通道数。</p>
-<ul>
-<li>定义了卷积神经网络（Convolutional Neural Network, CNN）的基本框架：卷积层 + 池化层（Pooling Layer） + 全连接层</li>
-<li>定义了卷积层（Convolution Layer），与全连接层相比，卷积层的不同之处有两点：局部连接（引进“感受野”这一概念）、权值共享（减少参数数量）</li>
-<li>利用池化层进行下采样（Down sampooling），从而减少计算量</li>
-<li>用 Tanh 作为非线性激活函数（现在看到的都是改进过的 LeNet 了，用 ReLU 代替 Tanh。相较于 Sigmoid，Tanh 以原点对称（zero-centered），收敛速度会快。关于其解释，请看：<a href="https://link.zhihu.com/?target=https%3A//liam.page/2018/04/17/zero-centered-active-function/">谈谈激活函数以零为中心的问题</a>）</li>
-</ul>
-<h3 id="AlexNet"><a href="#AlexNet" class="headerlink" title="AlexNet"></a>AlexNet</h3><p>可以视为更深更大的LeNet，主要改进：丢弃法，ReLu，MaxPooling：</p>
-<ul>
-<li><p>激活函数从sigmoid变为ReLu（减缓梯度消失）</p>
-</li>
-<li><p>隐藏全连接层后添加了丢弃曾</p>
-</li>
-<li><p>使用了数据增强</p>
-</li>
-</ul>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-fa3b7277f36b20f7ca623ad12fcdcfbe_720w.jpg" alt="img"></p>
-<p>模型共8层，包括5个卷积层和3个全连接层，最后一层使用softmax做分类输出。</p>
-<ul>
-<li>采用双 GPU 网络结构，从而可以设计出更“大”、更“深”的网络（相较于当时的算力来说）</li>
-<li>采用 ReLU 代替 Tanh，稍微解决梯度消失问题（Gradient Vanishing Problem），加快网络收敛速度。（关于常见激活函数的比较，可以看这篇：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32610035">常用激活函数的比较 - 徐小贱民的文章 - 知乎</a>）</li>
-<li>提出局部相应归一化（LRN, Local Response Normalization），据作者所言，该操作能减少指标 Top-1/Top-5 Error Rate 1.4%/1.2%。（我个人不喜欢 LRN，因为我觉得它的超参数太多了，不具备很好的泛化能力。关于 Normalization 的发展历程可以看这篇：<a href="https://link.zhihu.com/?target=https%3A//blog.csdn.net/Code_Mart/article/details/92715180">[笔记] 神经网络中 Normalization 的发展历程</a>）</li>
-<li>令 Pooling 操作中的 stride 小于池化核的大小，从而使相邻的池化区域存在重叠部分，这一操作称为 Overlapping Pooling。据作者所言，这一操作能减少指标 Top-1/Top-5 Error Rate 0.4%/0.3%，并且减少过拟合现象。</li>
-<li>对训练数据进行随机裁剪（Random Crop），将训练图像由 256 × 256 裁剪为 224 × 224，并做随机的镜像翻转（Horizontal Reflection）。并在测试时，从图像的四个角以及中心进行裁剪，并进行镜像翻转，这样可以得到 10 个 Patch，将这些 Patch 的结果进行平均，从而得到最终预测结果。（之前在一个人脸识别比赛中，我师兄用这样的操作直接提高了４~5个点，算是一种简单的集成操作吧）</li>
-<li>对训练图像做 PCA（主成分分析），利用服从 (0,0.1) 的高斯分布的随机变量对主成分进行扰动。作者指出，这一操作能减少指标 Top-1 Error Rate 1%。</li>
-<li>利用 Dropout 避免网络过拟合。（我觉得这也算是集成操作的一种，因为随着模型的复杂度的提高，弱分类器也会越来越大，纯粹由弱分类器进行 Ensemble 应该不实际。最近谷歌对 Dropout 的专利貌似申请下来了，据说相关文档详细到可以作为 Dropout 的使用指南。）</li>
-</ul>
-<h3 id="VGG使用块的网络"><a href="#VGG使用块的网络" class="headerlink" title="VGG使用块的网络"></a>VGG使用块的网络</h3><p>针对于AlexNet比LeNet虽然复杂，效果好，但没有一个通用的模板来知道后续的研究人员设计新的网络，提出VGG即使用块的网络。</p>
-<p>使用（卷积核为3x3，填充为1的卷积层、激活函数）的叠加，加上2x2，步幅为2的池化层作为一个VGG块。超参数为n层m通道中的n和m。</p>
-<p>tips：为什么不使用5x5的卷积层，原因为：经过实验，发现在相同的计算量的前提下，3x3卷积核的效果比5x5卷积核的效果好。</p>
-<p>VGG使用可重复使用的VGG块来构建深度卷积神经网络，不同的卷积块个数和超参数可以得到不同复杂度的变种。</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-27a13a7163bfe9bd6a10f5a086f01182_1440w.jpg" alt="img"></p>
-<h3 id="NIN-网络中的网络"><a href="#NIN-网络中的网络" class="headerlink" title="NIN 网络中的网络"></a>NIN 网络中的网络</h3><p>针对于VGG等较深的网络中第一个全连接层的计算量大，参数多的情况，提出NIN。</p>
-<p>NIN块：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220406221653574.png" alt="image-20220406221653574"></p>
-<p>其中1x1的卷积层的步幅为1，无填充，输入输出大小相同，可以看作全连接层，起到全连接层的作用。两个1x1的卷积层对每个像素都增加的非线性性。</p>
-<p>NIN架构：</p>
-<p>无全连接层，交替使用NIN块和步幅为2的最大池化层，从而逐步减小高宽和增大通道数，最后使用全局平均池化层得到输出，输出通道数为类别数。其不容易过拟合，参数数量更少。</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220406222021914.png" alt="image-20220406222021914"></p>
-<p>用1*1卷积层代替全连接层的好处：</p>
-<ul>
-<li>不改变图像空间结构<br>全连接层会破坏图像的空间结构，而1*1卷积层不会破坏图像的空间结构。</li>
-<li>输入可以是任意尺寸<br>全连接层的输入尺寸是固定的，因为全连接层的参数个数取决于图像大小。而卷积层的输入尺寸是任意的，因为卷积核的参数个数与图像大小无关。</li>
-</ul>
-<h3 id="GoogLeNet-含并行连结的网络"><a href="#GoogLeNet-含并行连结的网络" class="headerlink" title="GoogLeNet 含并行连结的网络"></a>GoogLeNet 含并行连结的网络</h3><p> NiN严重影响了GoogLeNet的设计，GoogLeNet的核心观点为，不同大小的卷积核的组合是有利的，其最基本的卷积块为Inception块，其分为四个路径，由不同的卷积核在四个不同层面上抽取信息，最后在输出通道维进行合并。作者指出：提高模型表达能力的最直接的办法就是增加模型的“大小”，而这又会导致两个问题的产生：</p>
-<ul>
-<li><p><strong>模型越大，其网络参数也就越大，就越容易产生过拟合现象，所以就需要更大的数据集，然而大型数据集的构建成本是很高昂的</strong></p>
-</li>
-<li><p><strong>模型越大，对于计算资源的需求就越大，这在现实任务中是难以接受的</strong>。</p>
-<p>作者认为解决这两个问题的基本方法是<strong>将全连接层，甚至是卷积层改为稀疏的网络结构</strong>。</p>
-</li>
-</ul>
-<p>Inception块的架构如下：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407095249641.png" alt="image-20220407095249641"></p>
-<p> GoogLeNet的网络架构如下：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407095639989.png" alt="image-20220407095639989"></p>
-<p>GoogLeNet的通道数为GoogLeNet的超参数。Inception块和单独的3x3或5x5卷积层比，Inception块拥有更少的参数个数和计算复杂度。其使用了九个inception块，是第一个达到上百层的网络。</p>
-<p>inception后续有很多变种，如v2 v3 等等，其主要的改变在于对inception块中卷积核的改变，并在v4中结合resnet的精神，引入残差进行计算。<br>Inception-v2<br>在v1的基础上加入batch normalization技术，在tensorflow中，使用BN在激活函数之前效果更好；将5×5卷积替换成两个连续的3×3卷积，使网络更深，参数更少<br>Inception-v3<br>核心思想是将卷积核分解成更小的卷积，如将7×7分解成1×7和7×1两个卷积核，使网络参数减少，深度加深<br>Inception-v4<br>引入了ResNet，使训练加速，性能提升。但是当滤波器的数目过大（&gt;1000）时，训练很不稳定，可以加入activate scaling因子来缓解</p>
-<h3 id="ResNet-残差网络"><a href="#ResNet-残差网络" class="headerlink" title="ResNet 残差网络"></a>ResNet 残差网络</h3><p>残差网络对随后的深层神经网络设计产生了深远的影响，其使得深层的网络更加容易训练。</p>
-<p>思想：使模型函数嵌套，即确保加了一层之后模型所覆盖的解释范围是大于之前的，而不是有所偏离。每个附加层都应该更容易的包含其原始函数作为其组成部分即可如下所示：</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407143555719.png" alt="image-20220407143555719"></p>
-<p>残差块</p>
-<p>如图所示，即将原始输入作为输出的一部分直接传输使得原本所要拟合的函数 H（x） ，改为 F（x） ，其中，H（x）=F（x）+x。</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-8cca8110539fbdea2a891bc990f6ac31_720w.jpg" alt="img"></p>
-<p>为什么resnet能避免梯度消失：将乘法变为加法</p>
-<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407150021196.png" alt="image-20220407150021196"></p>
-<h2 id="数据增强相关"><a href="#数据增强相关" class="headerlink" title="数据增强相关"></a>数据增强相关</h2><p>在已有的数据集上增加数据，如增加背景噪声，改变图片的颜色和形状等方式，使得数据集具有更多的多样性，从而使模型的泛化性能更好。训练的时候每次从数据集中读取图片后进行在线的随机的生成，可以看作正则项。</p>
-<p>经常可以数据增强的项：旋转、切割、颜色。在实际使用中，torchvision.transforms中包含常用的变换。一般使用torchvision.transforms.Compose[]进行多种图像增广方法的结合，样例代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.ToPILImage(),</span><br><span class="line">    transforms.RandomHorizontalFlip(),  </span><br><span class="line">    transforms.RandomRotation(<span class="number">15</span>),  </span><br><span class="line">    transforms.ToTensor(),  </span><br><span class="line">])</span><br></pre></td></tr></table></figure>
-<p>在实际训练的时候，一般在自定义dataset的__getitem__的时候，将transform赋值给data，样例代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, x, y=<span class="literal">None</span>, transform=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.x = x</span><br><span class="line">        <span class="comment"># label is required to be a LongTensor</span></span><br><span class="line">        self.y = y</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            self.y = torch.LongTensor(y)</span><br><span class="line">        self.transform = transform</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.x)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.x[index]</span><br><span class="line">        <span class="keyword">if</span> self.transform <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            X = self.transform(X)</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" class="post-title-link" itemprop="url">基于github+Hexo创建个人博客</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-03 10:59:39 / 修改时间：12:03:39" itemprop="dateCreated datePublished" datetime="2022-03-03T10:59:39+08:00">2022-03-03</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>由于本身自己本科电子信息，对于网络方面，计算机方面的知识比较匮乏。故结合自身在写个人博客方面的经验写一个对0基础人群的博客构建文章。</p>
-<h3 id="建立博客"><a href="#建立博客" class="headerlink" title="建立博客"></a>建立博客</h3><p>站在前人的肩膀上，基于hexo和github创建个人博客主页的方法及流程可参见以下：</p>
-<ol>
-<li>[<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103268406">个人博客第1篇——注册GitHub</a>]</li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103325381">个人博客第2篇——Git 2.25.0详细安装步骤</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103391101">个人博客第3篇——绑定GitHub并提交文件</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103860494">个人博客第四篇——购买域名</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/105715224">个人博客第5篇——安装node.js和Hexo</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103813944">个人博客第6篇——解析域名</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/105584373">个人博客第7篇——设置next主题</a></li>
-</ol>
-<p>其中，如果是单纯只是为了创建一个自己的博客，只为自己看，可以不用购买域名以及解析域名。</p>
-<h3 id="博客书写相关问题"><a href="#博客书写相关问题" class="headerlink" title="博客书写相关问题"></a>博客书写相关问题</h3><h4 id="博客语法"><a href="#博客语法" class="headerlink" title="博客语法"></a>博客语法</h4><p>推荐使用markdown进行博客的书写，windows端推荐使用typora，相关下载以及使用相关问题请自行搜索。markdown语法入门可在bilibili或菜鸟教程进行搜索。</p>
-<h4 id="博客书写以及第一篇文档上传"><a href="#博客书写以及第一篇文档上传" class="headerlink" title="博客书写以及第一篇文档上传"></a>博客书写以及第一篇文档上传</h4><p>打开git 进入博客文件夹，即如图</p>
-<p><img src="/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/image-20220303115809992.png" alt="image-20220303115809992"></p>
-<p>输入 hexo new “文章标题”                    这会生成在blog文件夹下的source/_posts文件夹下创建 文章标题.md</p>
-<p>在文章结束之后，</p>
-<p>hexo g                生成</p>
-<p>hexo d                部署</p>
-<p>即可在博客看到改变</p>
-<h4 id="上传博客图像显示失败"><a href="#上传博客图像显示失败" class="headerlink" title="上传博客图像显示失败"></a>上传博客图像显示失败</h4><p>遇到这个情况，首先在typora里面偏好设置设置如下：</p>
-<p><img src="/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/image-20220303115545521.png" alt="image-20220303115545521"></p>
-<p>即化为相对地址，并自动将.md文档中的图片进行复制。</p>
-<p>然后参照 <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/ea78bdd0551f/">https://www.jianshu.com/p/ea78bdd0551f/</a> 所示，进行更改。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/03/Hilbert%E7%9A%84c-%E5%AE%9E%E7%8E%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/03/Hilbert%E7%9A%84c-%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">Hilbert的c++实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-03 10:26:51 / 修改时间：10:27:23" itemprop="dateCreated datePublished" datetime="2022-03-03T10:26:51+08:00">2022-03-03</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>​    在matlab的Hilbert变换中，其的描述以及计算步骤如下所示：</p>
-<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">hilbert uses a four-step algorithm:</span><br><span class="line">Calculate the FFT of the input sequence, storing the result in a vector x.</span><br><span class="line">Create a vector h whose elements h(<span class="built_in">i</span>) have the values:</span><br><span class="line"><span class="number">1</span> <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">1</span>, (n/<span class="number">2</span>)+<span class="number">1</span></span><br><span class="line"><span class="number">2</span> <span class="keyword">for</span> <span class="built_in">i</span> = <span class="number">2</span>, <span class="number">3</span>, ... , (n/<span class="number">2</span>)</span><br><span class="line"><span class="number">0</span> <span class="keyword">for</span> <span class="built_in">i</span> = (n/<span class="number">2</span>)+<span class="number">2</span>, ... , n</span><br><span class="line">Calculate the element-wise product of x and h.</span><br><span class="line">Calculate the inverse FFT of the sequence obtained in step <span class="number">3</span> and returns the first n elements of the result.</span><br></pre></td></tr></table></figure>
-<p>即</p>
-<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">希尔伯特使用四步算法：</span><br><span class="line">计算输入序列的FFT，将结果存储在向量x中。</span><br><span class="line">创建一个向量h，其元素h（<span class="built_in">i</span>）具有以下值：</span><br><span class="line"><span class="number">1</span>表示<span class="built_in">i</span>=<span class="number">1</span>，（n/<span class="number">2</span>）+<span class="number">1</span></span><br><span class="line"><span class="number">2</span>表示<span class="built_in">i</span>=<span class="number">2</span>，<span class="number">3</span>，（n/<span class="number">2</span>）</span><br><span class="line"><span class="number">0</span>表示<span class="built_in">i</span>=（n/<span class="number">2</span>）+<span class="number">2</span>，N</span><br><span class="line">计算x和h的元素乘积。</span><br><span class="line">计算步骤<span class="number">3</span>中获得的序列的逆FFT，并返回结果的前n个元素。</span><br></pre></td></tr></table></figure>
-<p>结合fftw和上述描述，可得其代码如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">hilbert</span><span class="params">(<span class="keyword">float</span>* in, fftwf_complex* out, <span class="keyword">int</span> N)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="comment">// copy the data into the complex array</span></span><br><span class="line">	<span class="comment">//for (int i = 0; i &lt; N; ++i)</span></span><br><span class="line">	<span class="comment">//&#123;</span></span><br><span class="line">	<span class="comment">//	out[i][0] = in[i];</span></span><br><span class="line">	<span class="comment">//	out[i][1] = 0;</span></span><br><span class="line">	<span class="comment">//&#125;</span></span><br><span class="line">	<span class="comment">//create a DFT plan and execute it</span></span><br><span class="line">	fftwf_plan plan = <span class="built_in">fftwf_plan_dft_r2c_1d</span>(N, in, out, FFTW_ESTIMATE);</span><br><span class="line">	<span class="built_in">fftwf_execute</span>(plan);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//destroy the plan to prevent a memory leak</span></span><br><span class="line">	<span class="built_in">fftwf_destroy_plan</span>(plan);</span><br><span class="line">	<span class="keyword">int</span> hN = N &gt;&gt; <span class="number">1</span>;   <span class="comment">// half of the length (N /2)</span></span><br><span class="line">	<span class="keyword">int</span> numRem = hN;  <span class="comment">// the number of remaining elements</span></span><br><span class="line">	<span class="comment">// multiply the appropriate values by 2</span></span><br><span class="line">	<span class="comment">// (those that should be multiplied by 1 are left intact because they wouldn&#x27;t change)</span></span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; hN; ++i) <span class="comment">// 1,2,...,N/2 - 1 的项乘以2</span></span><br><span class="line">	&#123;</span><br><span class="line">		out[i][<span class="number">0</span>] *= <span class="number">2</span>;</span><br><span class="line">		out[i][<span class="number">1</span>] *= <span class="number">2</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// if the length is even, the number of remaining elements decreases by 1</span></span><br><span class="line">	<span class="keyword">if</span> (N % <span class="number">2</span> == <span class="number">0</span>)</span><br><span class="line">		numRem--;</span><br><span class="line">	<span class="comment">// if it&#x27;s odd and greater than 1, the middle value must be multiplied by 2</span></span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (N &gt; <span class="number">1</span>)  <span class="comment">// 奇数非空</span></span><br><span class="line">	&#123;</span><br><span class="line">		out[hN][<span class="number">0</span>] *= <span class="number">2</span>;</span><br><span class="line">		out[hN][<span class="number">1</span>] *= <span class="number">2</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// set the remaining values to 0</span></span><br><span class="line">	<span class="comment">// (multiplying by 0 gives 0, so we don&#x27;t care about the multiplicands)</span></span><br><span class="line">	<span class="built_in">memset</span>(&amp;out[hN + <span class="number">1</span>][<span class="number">0</span>], <span class="number">0</span>, numRem * <span class="built_in"><span class="keyword">sizeof</span></span>(fftwf_complex));</span><br><span class="line">	<span class="comment">// create an IDFT plan and execute it</span></span><br><span class="line">	plan = <span class="built_in">fftwf_plan_dft_1d</span>(N, out, out, FFTW_BACKWARD, FFTW_ESTIMATE);</span><br><span class="line">	<span class="built_in">fftwf_execute</span>(plan);</span><br><span class="line">	<span class="comment">// do some cleaning</span></span><br><span class="line">	<span class="built_in">fftwf_destroy_plan</span>(plan);</span><br><span class="line">	<span class="built_in">fftwf_cleanup</span>();</span><br><span class="line">	<span class="comment">// scale the IDFT output </span></span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; N; ++i)</span><br><span class="line">	&#123;</span><br><span class="line">		out[i][<span class="number">0</span>] /= N;</span><br><span class="line">		out[i][<span class="number">1</span>] /= N;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>经过验证，其结果与matlab结果基本相同。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/" class="post-title-link" itemprop="url">c++中fftw库的安装及基础使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-03 10:22:35 / 修改时间：10:54:24" itemprop="dateCreated datePublished" datetime="2022-03-03T10:22:35+08:00">2022-03-03</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="c-中使用fftw库的安装与常用使用方法"><a href="#c-中使用fftw库的安装与常用使用方法" class="headerlink" title="c++中使用fftw库的安装与常用使用方法"></a>c++中使用fftw库的安装与常用使用方法</h3><h4 id="fftw库的安装（vs2017-win10-fftw3-3-5）"><a href="#fftw库的安装（vs2017-win10-fftw3-3-5）" class="headerlink" title="fftw库的安装（vs2017+win10+fftw3.3.5）"></a>fftw库的安装（vs2017+win10+fftw3.3.5）</h4><ol>
-<li><p>下载相关文件，网址：<a target="_blank" rel="noopener" href="https://fftw.org/pub/fftw/fftw-3.3.5-dll64.zip">https://fftw.org/pub/fftw/fftw-3.3.5-dll64.zip</a></p>
-</li>
-<li><p>解压，并打开<img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301215246204.png" alt="image-20220301215246204">进入到解压的文件夹当中</p>
-</li>
-<li><p>输入下列代码</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lib /machine:i386 /def:libfftw3-<span class="number">3</span>.def</span><br><span class="line">lib /machine:i386 /def:libfftw3f-<span class="number">3</span>.def</span><br><span class="line">lib /machine:i386 /def:libfftw3l-<span class="number">3</span>.def</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>此时会在文件夹中生成</p>
-<p><img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301215525640.png" alt="image-20220301215525640"><img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301215552702.png" alt="image-20220301215552702"></p>
-</li>
-<li><p>将其中的fftw3.h配置到vs安装地址中的include文件夹内（win10环境下可以通过全局搜索almfc文件夹找到该地址<img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301215818733.png" alt="image-20220301215818733"></p>
-</li>
-<li><p>将生成的.lib文件安装到lib文件夹下，即<img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301215910162.png" alt="image-20220301215910162"></p>
-</li>
-<li><p>将生成的.dll文件安装至system32文件夹内，即<img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301220020504.png" alt></p>
-</li>
-<li><p>配置项目链接，即在项目输入的附加依赖项里面加入<img src="/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/image-20220301220212706.png" alt="image-20220301220212706"></p>
-</li>
-<li><p>设置项目为64位</p>
-</li>
-</ol>
-<h4 id="测试安装代码"><a href="#测试安装代码" class="headerlink" title="测试安装代码"></a>测试安装代码</h4><pre><code>#include &quot;fftw3.h&quot;
-#include &lt;windows.h&gt;
-int main()
-&#123;
-    fftw_complex *in, *out;
-    fftw_plan p;
-    int N = 8;
-    int i;
-    int j;
-    in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N);
-    out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N);
-    for (i = 0; i &lt; N; i++)
-    &#123;
-        in[i][0] = 1.0;
-        in[i][1] = 0.0;
-        printf(&quot;%6.2f &quot;, in[i][0]);
-    &#125;
-    printf(&quot;\n&quot;);
-    p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-    fftw_execute(p); /* repeat as needed*/
-    for (j = 0; j &lt; N; j++)
-    &#123;
-        printf(&quot;%6.2f &quot;, out[j][0]);
-    &#125;
-    printf(&quot;\n&quot;);
-    fftw_destroy_plan(p);
-    fftw_free(in);
-    fftw_free(out);
-    system(&quot;pause&quot;);
-    return 0;
-&#125;
-</code></pre><h4 id="fftw库使用相关"><a href="#fftw库使用相关" class="headerlink" title="fftw库使用相关"></a>fftw库使用相关</h4><p>基本使用可见下pdf <a target="_blank" rel="noopener" href="https://github.com/XDUwsk/XDUwsk.github.io/blob/main/2022/03/03/c-%E4%B8%ADfftw%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85%E5%8F%8A%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8/FFTW_Intro.pdf">FFTW介绍及FFTW库的使用</a> ，代码框架如下</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//数据初始化及定义</span></span><br><span class="line">fftw_complex *in, *out;</span><br><span class="line">fftw_plan p;</span><br><span class="line"><span class="keyword">int</span> N ;</span><br><span class="line">in = (fftw_complex*)<span class="built_in">fftw_malloc</span>(<span class="built_in"><span class="keyword">sizeof</span></span>(fftw_complex) * N);</span><br><span class="line">out = (fftw_complex*)<span class="built_in">fftw_malloc</span>(<span class="built_in"><span class="keyword">sizeof</span></span>(fftw_complex) * N);</span><br><span class="line"><span class="comment">//对输入数据赋值</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//生成fftw的plan，fftw_forward为正变换，fftw_backward为逆变换</span></span><br><span class="line">p = <span class="built_in">fftw_plan_dft_1d</span>(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);</span><br><span class="line"><span class="built_in">fftw_execute</span>(p); <span class="comment">/* repeat as needed*/</span></span><br><span class="line"><span class="comment">//对输出数据进行处理</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//防止内存泄漏，释放内存</span></span><br><span class="line"><span class="built_in">fftw_destroy_plan</span>(p);</span><br><span class="line"><span class="built_in">fftw_free</span>(in);</span><br><span class="line"><span class="built_in">fftw_free</span>(out);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>tips：</p>
-<ol>
-<li>fftw的使用过程中，数据需要去均值。</li>
-<li>fftw的逆变换需要除以N从而完成归一化。</li>
-<li>fftw中的 fftwf_plan_dft_r2c_1d，变换之后只有单边谱，fftw_plan_dft_1d变换之后有双边谱。如果要从matlab到c++进行翻译，需要注意使用哪一个函数。</li>
-<li>fftw变换之后和matlab的fft变换之后的结果并不完全一样，有时会存在一些细小的不同，是正常的，且要小心某些极大值的出现，从而影响结果（出现的原因暂且不清楚，在link11翻译中出现了。</li>
-<li>一些有帮助的网站地址：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/zzzsj/p/14977446.html">https://www.cnblogs.com/zzzsj/p/14977446.html</a>    <a target="_blank" rel="noopener" href="https://blog.csdn.net/book_bbyuan/article/details/80875953">https://blog.csdn.net/book_bbyuan/article/details/80875953</a></li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+  </nav>
 
 
 
@@ -1775,12 +1950,12 @@ int main()
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="DETR: End-to-End Object Detection with Transformers目标检测的目标是预测bounding boxes的集合和每个感兴趣物体的类别，之前的方法大都是采用间接的方法进行解决的，例如利用anchor，提出大量的region proposals或者window centers等，将问题视为回归或分类的问题。这些间接的方法都采用了很多的先验知识，并且这些先验">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DETR">
+<meta property="og:url" content="http://example.com/2022/08/22/DETR/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="DETR: End-to-End Object Detection with Transformers目标检测的目标是预测bounding boxes的集合和每个感兴趣物体的类别，之前的方法大都是采用间接的方法进行解决的，例如利用anchor，提出大量的region proposals或者window centers等，将问题视为回归或分类的问题。这些间接的方法都采用了很多的先验知识，并且这些先验">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/08/22/DETR/image-20220808085358261.png">
+<meta property="og:image" content="http://example.com/2022/08/22/DETR/image-20220808103125644.png">
+<meta property="og:image" content="http://example.com/2022/08/22/DETR/image-20220808103146058.png">
+<meta property="og:image" content="http://example.com/2022/08/22/DETR/7.png">
+<meta property="og:image" content="http://example.com/2022/08/22/DETR/10.png">
+<meta property="article:published_time" content="2022-08-22T12:56:17.000Z">
+<meta property="article:modified_time" content="2022-08-22T12:59:43.851Z">
+<meta property="article:author" content="凯">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/08/22/DETR/image-20220808085358261.png">
+
+<link rel="canonical" href="http://example.com/2022/08/22/DETR/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>DETR | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/DETR/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DETR
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 20:56:17 / 修改时间：20:59:43" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:17+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="DETR-End-to-End-Object-Detection-with-Transformers"><a href="#DETR-End-to-End-Object-Detection-with-Transformers" class="headerlink" title="DETR: End-to-End Object Detection with Transformers"></a>DETR: End-to-End Object Detection with Transformers</h2><p>目标检测的目标是预测bounding boxes的集合和每个感兴趣物体的类别，之前的方法大都是采用间接的方法进行解决的，例如利用anchor，提出大量的region proposals或者window centers等，将问题视为回归或分类的问题。这些间接的方法都采用了很多的先验知识，并且这些先验的选取会严重的影响检测的效果。DETR将目标检测的问题视为集合预测的问题，真正建立了一个end-to-end的检测网络，并移除了许多需要手动设计的组件，例如NMS。</p>
+<h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p><img src="/2022/08/22/DETR/image-20220808085358261.png" alt="image-20220808085358261"></p>
+<p>DETR的整体结构如上所示，其由backbone、transformer encoder、transformer decoder、预测前馈网络(FFNs)、辅助解码损失构成。</p>
+<p>其中基于CNN的backbone负责对输入图片进行特征的提取，encoder-decoder负责对backbone传入的图片特征和位置编码进行全局范围的特征的学习和注意力学习，然后最后使用FFNs进行最终目标的预测。</p>
+<h4 id="backbone"><a href="#backbone" class="headerlink" title="backbone"></a>backbone</h4><p>假定输入图像尺寸为$3 <em>H</em>W $，通过backbone进行特征的提取，从而生成一个尺寸为$C<em>H_0</em>W_0$的feature map。这个feature map的维度为C，在原文中使用的值是2048。每个feature map的尺寸大小为$H<em>W$，在原文中使用的尺寸为$\frac{H_0 }{32}</em>\frac{W_0 }{32}$。</p>
+<h3 id="Encoder"><a href="#Encoder" class="headerlink" title="Encoder"></a>Encoder</h3><h4 id="Encoder的输入"><a href="#Encoder的输入" class="headerlink" title="Encoder的输入"></a>Encoder的输入</h4><p>​    另外，由于transformer的过程中需要对输入元素进行注意力机制的计算，其计算复杂度为$O(n^2)$，所以backbone最后得出的特征需要首先通过$1<em>1$的卷积层进行降维。如原始的feature map的尺寸为$C</em>H<em>W$，经过$1</em>1$的卷积之后得到的大小为$D<em>H</em>W$。又由于transformer需要的是序列信息的输入，所以将三维的$D<em>H</em>W$进行压缩，压缩为$D*(HW)$。这样传入的序列，每个序列的长度为$HW$，共有$D$个序列。在原文中$D=256$</p>
+<p>​    由于在transformer的注意力机制的计算过程中，是对位置不敏感的，所以需要加入positional encoding代表其的空间信息。在原文的positional encoding的过程中，源码为：</p>
+<p><img src="/2022/08/22/DETR/image-20220808103125644.png" alt="image-20220808103125644"></p>
+<p><img src="/2022/08/22/DETR/image-20220808103146058.png" alt="image-20220808103146058"></p>
+<p>可见其为随机初始化的，然后将其进行复制从而扩展。最终的尺度也为$D*(HW)$</p>
+<h4 id="Encoder本身"><a href="#Encoder本身" class="headerlink" title="Encoder本身"></a>Encoder本身</h4><p>​    Encoder本身的结构的定义与经典transformer的相似，如下所示：</p>
+<p><img src="/2022/08/22/DETR/7.png" alt="DETR Transformer"></p>
+<h4 id="Decoder"><a href="#Decoder" class="headerlink" title="Decoder"></a>Decoder</h4><p>Decoder本身的架构也与transformer中的经典架构相似。其输入一部分为encoder部分的输出，尺度为$D<em>(HW)$，另一部分的输入为可学习的object query，其尺度为$N</em>D$，其中N为decoder最终输出的，一个远大于图像中可能存在的物体的数量，在原文中采用的是$N=100$。object query是一个随机初始化的向量，对训练之后得到的object query进行可视化，得到的结果如下所示：</p>
+<p><img src="/2022/08/22/DETR/10.png" alt="在这里插入图片描述"></p>
+<p>可得其是学到了从图片的哪个位置进行目标的搜寻的。</p>
+<p>target被初始化为0，其尺度为$D*N$。</p>
+<ul>
+<li>在self-attention部分，QKV均与target相关，$Q,K=target+query$，$V=target$</li>
+<li>在cross-attention部分，Q由self-attention的输出结合位置编码query得到，K由encoder部分的输出结合位置编码P E得到，即$K=memory+PE$，V不使用位置编码，即$V=memory$</li>
+</ul>
+<p>Decoder的输出尺度为$D*N$。</p>
+<h4 id="预测前馈网络-FFNs"><a href="#预测前馈网络-FFNs" class="headerlink" title="预测前馈网络(FFNs)"></a>预测前馈网络(FFNs)</h4><p>其本质上就是一个三层的前馈网络，用于进行类别的判断和bounding box的回归。</p>
+<ul>
+<li>用于为目标分类的逻辑回归层(线性映射+softmax)，定义为class_head=nn.Linear(d,num_classes+1)，这个加的1指的是<code>no object</code></li>
+<li>用于检测框回归的MLP，定义为<code>box_head=MLP(input_dim=d, hidden_dim=d,output_dim=4, num_layers=3)</code></li>
+</ul>
+<h4 id="辅助解码损失"><a href="#辅助解码损失" class="headerlink" title="辅助解码损失"></a>辅助解码损失</h4><p>在训练过程中，我们发现在解码器中使用辅助损耗[1]是很有帮助的，特别是有助于模型输出每个类的对象正确数量。每个解码器层的输出用共享层范数进行归一化，然后送到共享预测头(分类和盒预测)（The output of each decoder layer is normalized with a shared layer-norm then fed to the shared prediction heads (classification and box prediction).）。然后，我们像往常一样将匈牙利损失用于监督。</p>
+<h3 id="创新点"><a href="#创新点" class="headerlink" title="创新点"></a>创新点</h3><p>本文的创新点主要有如下亮点</p>
+<ul>
+<li>DETR将目标检测问题视为集合预测的问题，是NMS-free的，并完成了one-to-one label assignment</li>
+<li>DETR利用transformer将图像表示为固定大小的预测集合</li>
+<li>DETR使用基于集合的全局损失来强制进行独一无二的预测</li>
+</ul>
+<h3 id="损失计算"><a href="#损失计算" class="headerlink" title="损失计算"></a>损失计算</h3><p>在一次计算的过程中，DETR解码器会生成一个固定大小为N的预测集合（原文中设置N=100），N被设置为明确大于图像中物体数量的数值。</p>
+<ul>
+<li>我们假设$y$表示真实目标的集合，用$\hat{y}=\{\hat{y}\}^{N}_{i=1}$表示N个预测集合的结果。</li>
+<li>对真实目标的标签集合进行padding，加入no object，使得预测集合的数量和真实目标经过padding后的数量一致，为N。</li>
+<li><p>为了在两个集合之间找到一个二部图匹配，我们寻找一个使得N个元素的开销$σ̂ $最小的排列。</p>
+<ul>
+<li>$σ̂ = arg min_{σ∈S_N}\sum^N_i L_{match} (y_i , ŷ_{σ(i)} )$</li>
+<li>其中 $L_{match} (y_i , ŷ_{σ(i)} )$是在真实目标集合和预测集合在索引为$σ(i)$的情况下的成对匹配成本，前人的工作证明匈牙利算法对这个问题能有效计算</li>
+<li>匹配的损失同时考虑了类别以及预测框和真实框的相似程度，每个真实目标元素$i$可以被看作为$y_i=(c_i,b_i)$，其中$c_i$是目标的类别标签（可能为$no\ object$），$b_i∈ [0, 1]^4$是一个定义了真实边框中心点的坐标和其到边缘框的宽和高的图像尺寸的参数。我们定义预测集合的编号为$σ(i)$的样本的类别$c_i$的可能性为$p̂ _{σ(i)} (c_i )$，定义预测框为$b̂ _{σ(i)}$。并由此我们定义$L_{match} (y_i , ŷ_{σ(i)} )$为:</li>
+<li><script type="math/tex; mode=display">
+L_{match} (y_i , ŷ_{σ(i)} )=−1_{c_i \neq ∅} p̂ _{σ(i)} (c_i ) + 1_{c_i  \neq ∅} L_{box}(b_i , b̂ _{σ(i)} )</script></li>
+<li>这种匹配方式与基于anchor和基于region proposal的作用相同，主要区别在于本文的方式需要找到一对一的匹配来直接进行集合预测而没有重复</li>
+</ul>
+</li>
+<li><p>对于上面步骤所表述的对所有匹配对的匈牙利损失如下所示，其与常规物体检测的损失定义类似：</p>
+<ul>
+<li><script type="math/tex; mode=display">
+L_{Hungarian}(y, ŷ) =\sum^N_{i=1}[ − log p̂ _{σ̂(i)} (c_i ) + 1_{c_i \neq ∅} L_{box} (b_i , b̂ _{σ̂ }(i))]</script><ul>
+<li>其中$σ̂(i)$是在损失计算的第一个公式中计算得出的最优项，并且在损失的计算中，物体与$no\ object$的损失与预测无关</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>对于边缘框损失而言，其与边缘框有关且表示为$L_{box}$。本文直接提出了对目标的预测，为了解决所带来的物体大小所带来的对损失计算的影响，本文使用了$l_1\ loss$和广义的IOU loss的线性组合。即最终的$L_{IOU}(b_i,b̂ _{σ(i)})$公式表达如下：</p>
+<ul>
+<li><script type="math/tex; mode=display">
+L_{IOU}(b_i,b̂ _{σ(i)})=λ_{iou} L_{iou}(b_i , b̂ _{σ(i)} ) + λ_{L1} ||b i − b̂ _{σ(i)} ||_1 \\其中λ_{iou}、 λ_{L1} 为超参数</script></li>
+</ul>
+</li>
+</ul>
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><p>DETR做到了真正没有非最大抑制（NMS）后处理，而且不需要anchor（锚点生成）等人工的先验知识。</p>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><p>训练时间较长，对小目标的检测性能不是很高。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Transformer/" rel="tag"># Transformer</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/08/22/Bert/" rel="prev" title="Bert">
+      <i class="fa fa-chevron-left"></i> Bert
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/08/22/VIT/" rel="next" title="VIT">
+      VIT <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#DETR-End-to-End-Object-Detection-with-Transformers"><span class="nav-number">1.</span> <span class="nav-text">DETR: End-to-End Object Detection with Transformers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#backbone"><span class="nav-number">1.1.1.</span> <span class="nav-text">backbone</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Encoder"><span class="nav-number">1.2.</span> <span class="nav-text">Encoder</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Encoder%E7%9A%84%E8%BE%93%E5%85%A5"><span class="nav-number">1.2.1.</span> <span class="nav-text">Encoder的输入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Encoder%E6%9C%AC%E8%BA%AB"><span class="nav-number">1.2.2.</span> <span class="nav-text">Encoder本身</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Decoder"><span class="nav-number">1.2.3.</span> <span class="nav-text">Decoder</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E6%B5%8B%E5%89%8D%E9%A6%88%E7%BD%91%E7%BB%9C-FFNs"><span class="nav-number">1.2.4.</span> <span class="nav-text">预测前馈网络(FFNs)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E8%A7%A3%E7%A0%81%E6%8D%9F%E5%A4%B1"><span class="nav-number">1.2.5.</span> <span class="nav-text">辅助解码损失</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E6%96%B0%E7%82%B9"><span class="nav-number">1.3.</span> <span class="nav-text">创新点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8D%9F%E5%A4%B1%E8%AE%A1%E7%AE%97"><span class="nav-number">1.4.</span> <span class="nav-text">损失计算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E7%82%B9"><span class="nav-number">1.5.</span> <span class="nav-text">优点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9"><span class="nav-number">1.6.</span> <span class="nav-text">缺点</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

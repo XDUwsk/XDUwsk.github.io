@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Towards Data-Efficient Detection Transformers摘要DETR在足量样本的COCO数据集上表现出了有竞争性的效果。然而我们发现许多DETR类的方法在内容数量较少的数据集上（如Cityscapes）会有明显的性能的下降。换而言之，DETR通常需要大量的数据。为了处理这个问题。我们逐步的将数据效率高的RCNN变换为代表性的DETR，分析了影响数据效率（data">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Towards Data-Efficient Detection Transformer">
+<meta property="og:url" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="Towards Data-Efficient Detection Transformers摘要DETR在足量样本的COCO数据集上表现出了有竞争性的效果。然而我们发现许多DETR类的方法在内容数量较少的数据集上（如Cityscapes）会有明显的性能的下降。换而言之，DETR通常需要大量的数据。为了处理这个问题。我们逐步的将数据效率高的RCNN变换为代表性的DETR，分析了影响数据效率（data">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220811161935395.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/vz2GLTd9Ylg5q.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/kITnuhEstBzQy.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812145944038.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151829137.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151508333.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152636147.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152843982.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812154348539.png">
+<meta property="og:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812153538482.png">
+<meta property="article:published_time" content="2022-08-22T13:01:24.000Z">
+<meta property="article:modified_time" content="2022-08-22T13:02:10.581Z">
+<meta property="article:author" content="凯">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220811161935395.png">
+
+<link rel="canonical" href="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Towards Data-Efficient Detection Transformer | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Towards Data-Efficient Detection Transformer
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-08-22 21:01:24 / 修改时间：21:02:10" itemprop="dateCreated datePublished" datetime="2022-08-22T21:01:24+08:00">2022-08-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Towards-Data-Efficient-Detection-Transformers"><a href="#Towards-Data-Efficient-Detection-Transformers" class="headerlink" title="Towards Data-Efficient Detection Transformers"></a>Towards Data-Efficient Detection Transformers</h2><h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>DETR在足量样本的COCO数据集上表现出了有竞争性的效果。然而我们发现许多DETR类的方法在内容数量较少的数据集上（如Cityscapes）会有明显的性能的下降。换而言之，DETR通常需要大量的数据。为了处理这个问题。我们逐步的将数据效率高的RCNN变换为代表性的DETR，分析了影响数据效率（data efficiency）的因素。试验结果表明从局部图片进行稀疏特征采样是影响的关键。基于这个观察，本文通过简单的交替 key 和 value序列在cross attention中的构造方式，用对原始模型最少的改变的方式缓解了现存DETR方法对数据需求量巨大的问题。另外，我们介绍了一个简单但有效的数据增强的方法，从而提供更丰富的监督并提高了数据效率。实验证明，我们的方法可以被很容易的应用到不同的DETR变种上去，并在较小和较大的数据集上均可提升检测效果。</p>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>目标检测是在计算机视觉领域里面的长盛不衰的话题。最近一种新型的目标检测算法，名叫detection transformer，因为其的简单和尚可的检测效果吸引了许多的注意力。这个类别的先驱工作是DETR，其将目标检测的任务看作是直接的集合预测问题，并利用transformer直接将目标查询转换为目标对象。其实现了相对于开创性的Faster RCNN在常用的COCO数据集上更好的效果，但其具有收敛速度显著慢于基于CNN系列检测器的缺点。因为这个原因，许多随后的工作都是致力于提高DETR的收敛速度。</p>
+<ul>
+<li>Deformable DETR：通过efficient attention mechanism机制</li>
+<li>Swin transformer：通过conditional spatial query机制</li>
+<li>（SMCA）Fast convergence of detr with spatially modulated co-attention：通过regression-aware co-attention机制</li>
+</ul>
+<p>这些上述的方法都可以在COCO数据集上以相似的训练代价，实现相对于Faster RCNN而言更好的检测效果，证明了DETR类方法的优越性。</p>
+<p>现有的工作大都认为DETR类的方法在简单性和模型效果上均优于基于CNN的目标检测器。然而本文发现，DETR只有在充足的训练数据的情况下（例如COCO2017,有118K训练数据）才能展现出其优越的性能，然而在训练数据量不是非常充足的时候，其的效果会出现明显的下降。以自动驾驶领域常用的数据集Cityscapes（约3k训练数据）为例，大部分的DETR类的方法的AP小于Faster RCNN的AP的一半。且不同的DETR类的检测器，其性能的差距在COCO数据集上是小于3AP的，但在数量较小的Cityscapes数据集上，其会存在一个明显的差距，其性能差距约有15AP。如下图所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220811161935395.png" alt="image-20220811161935395"></p>
+<p>这些发现证明了DETR类的目标检测相较于CNN类的目标检测器而言，更需要大量的数量进行训练。然而带有标签的数据的获取是需要大量的时间和人力的。</p>
+<p>总而言之，为了迎合目前现存的DETR对训练数据的需求，需要大量的人力和计算资源。为了应对这个问题，本文首先从实验上，通过逐步的将数据高效的Sparse RCNN转换为DETR，分析了影响DETR中影响数据效率的关键性因素。我们的发现和分析表明：</p>
+<ul>
+<li>稀疏的局部特征采样是影响数据效率的关键，<ul>
+<li>其缓解了学习注意到特定物体的困难</li>
+<li>其避免了图像像素两倍的计算复杂度</li>
+<li>令利用多尺度的特征成为可能，多尺度的特征已经被证明在目标检测任务中是关键的</li>
+</ul>
+</li>
+</ul>
+<p>基于上述的观察，我们通过简单的交替 key 和 value序列在cross attention中的构造方式，提升了现存的DETR类的目标检测算法的数据效率。具体来说，我们在前一个解码器层预测的边界框的指导下，对发送到交叉注意力层的键和值特征执行稀疏采样特征，这样对原始模型的修改最少，并且没有任何专门的模块。另外，本文通过提供给DETR丰富的监督信号来缓解对数据的需求。为达到这个目的，本文提出了一种标签加强的方式，通过在标签分配的过程中重复前景物体的label去高效并简单的执行。这个方法可以被应用在不同的DETR类的方法从而提升其的数据效率。有趣的是，其依旧带来了在训练数据充足的COCO数据集上的性能提升。</p>
+<p>本文的贡献如下总结所示：</p>
+<ul>
+<li>本文确定了DETR的数据效率的问题。虽然DETR实现了在COCO数据集上的优秀效果，其一般会在小规模的数据集上遭受到明显的性能下降。</li>
+<li>本文通过从 Sparse RCNN 到 DETR 的逐步模型转换，通过实验分析了影响检测转换器数据效率的关键因素，并发现局部区域的稀疏特征采样是数据效率的关键。</li>
+<li>本文通过简单的交替在cross-attention模块中key和value序列的构造方式，明显的提升了现存的DETR方法的数据效率</li>
+<li>本文提出了一种简单但有效的标签增强策略，从而提供更丰富的监督信号并提升了数据效率。其可以与不同的方法融合，从而实现在不同数据集上的性能增益。</li>
+</ul>
+<h3 id="相关工作"><a href="#相关工作" class="headerlink" title="相关工作"></a>相关工作</h3><h4 id="目标检测"><a href="#目标检测" class="headerlink" title="目标检测"></a>目标检测</h4><p>目标检测在许多现实生活中是非常必要的，例如自动驾驶，缺陷检测和遥感。最具有代表性的目标检测的工作可以被粗略的分为两类，两阶段的Faster RCNN和一阶段的YOLO和RetinaNet。虽然上述方法有效，但上述方法一般而言是需要以来与许多人工设计（启发式算法）的先验，例如anchor generation和rule based 标签分配方式。</p>
+<p>最近DETR提供了一种简单并且干净的目标检测的计算流程。其将目标检测看作是集合预测的任务，并应用transformer将稀疏的目标候选转换为目标物体。DETR的成功引爆了最近井喷的DETR类的方法，并且许多最近的工作都致力于缓解DETR的收敛速度慢的问题。</p>
+<ul>
+<li>DeformDETR 提出了可学习的稀疏特征采样的可变形注意力机制并聚合多尺度特征以加速模型收敛并提高模型性能。</li>
+<li>CondDETR 提出从解码器嵌入中学习条件空间查询，这有助于模型快速学习定位四个末端以进行检测</li>
+</ul>
+<p>这些工作实现了在COCO 2017数据集上用相似的训练代价得到Faster RCNN更好的性能。这似乎表明DETR类的方法已经在简单性和性能上压制了Faster RCNN。但本文发现DETR通常需要更多的数据，并在小规模的数据集上表现比Faster RCNN要差。</p>
+<h4 id="目标检测中的标签分配"><a href="#目标检测中的标签分配" class="headerlink" title="目标检测中的标签分配"></a>目标检测中的标签分配</h4><p>在目标检测中，标签分配是一个十分重要的组件。其将一个物体的ground truth与从模型中的一个预测相匹配，从而为训练提供监督信号。在DETR之前，许多的目标检测器采用的是一对多的匹配策略，其将每个ground trurh基于局部空间关系分类给多个预测框。而DETR相反，其是采用的一对一的匹配策略，将ground truth与预测框之间通过最小化全局匹配损失来进行匹配。这个标签分配方式被许多的后续的DETR方法所采用。尽管这样的分配方式具有避免了重复移除的过程的优点，但只有少量的候选目标在每次迭代的过程中被目标标签所监督。这样就会导致模型必须从大量的数据中获得足够的监督信号或需要更多论次的训练。为了解决这个问题，本文提出了一种标签增强的方式去提供更丰富的监督信号。</p>
+<h4 id="视觉transformer（ViT）中的数据效率"><a href="#视觉transformer（ViT）中的数据效率" class="headerlink" title="视觉transformer（ViT）中的数据效率"></a>视觉transformer（ViT）中的数据效率</h4><p>视觉transformer正在成为特征提取器和视觉识别的CNN的替代品。尽管其具有优秀的性能表现，但其一般而言需要比CNN需要更多的数据，并依赖于大量的数据和更多轮次的训练。</p>
+<ul>
+<li>DeiT 通过从预训练的CNN上进行知识蒸馏，配合上更好的训练配方，从而提高了数据效率</li>
+<li>Liu等人提出了一个密集的相对定位损失去提高ViT类算法的数据效率（Efficient training of visual transformers with small datasets）</li>
+</ul>
+<p>与之前专注于transformer主干在图像分类任务上的数据效率问题不同，本文在目标检测任务上处理DETR数据效率的问题</p>
+<h3 id="RCNN类算法与DETR类算法的不同之处分析"><a href="#RCNN类算法与DETR类算法的不同之处分析" class="headerlink" title="RCNN类算法与DETR类算法的不同之处分析"></a>RCNN类算法与DETR类算法的不同之处分析</h3><p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png" alt="image-20220812084137035"></p>
+<p>上图为从SRCN（Sparse RCNN）逐渐转化为DETR的过程中，在Ciytscapes数据集上，分别在训练50 epoch和300 epoch的情况下的AP情况。</p>
+<p>对上图进行分析可得，DETR一般而言相比与RCNN需要更多的数据。为了寻找影响数据效率的关键性因素，本文将数据效率高的RCNN逐步的转变为数据效率较低的DETR，从而消融不同设计的影响。相同的实验方法在ATSS和Visformer中被使用，但实验目的不同。</p>
+<h4 id="检测器的选择"><a href="#检测器的选择" class="headerlink" title="检测器的选择"></a>检测器的选择</h4><p>为了从模型的转换中获得有效的结果，需要选择适当的检测器去参与实验。为了达到这个目的，本文选择Sparse RCNN和DETR作为实验模型，原因如下所示：</p>
+<ul>
+<li>两个模型都是在各自的领域里（RCNN类和DETR类）具有代表性的模型。所以由这两者的转换得出的结论可以推广到其他的探测器中去。</li>
+<li>这两个模型在数据效率方面有巨大的差异</li>
+<li>其在标签分配（label assignment）、损失函数设计（loss design），优化器选择（optimization）上具有许多的相似之处。这些相似之处可以在我们专注于核心部件的不同的时候消除没有那么重要的部件的影响。</li>
+</ul>
+<h4 id="Sparse-RCNN到DETR的转换"><a href="#Sparse-RCNN到DETR的转换" class="headerlink" title="Sparse RCNN到DETR的转换"></a>Sparse RCNN到DETR的转换</h4><ul>
+<li>交替训练方式<ul>
+<li>虽然Sparse RCNN和DETR有许多的相似之处，但其在训练策略（训练方式）上依旧有所不同。如分类损失、object query的数量，学习率和梯度剪切。本文首先通过将Sparse RCNN的训练策略用DETR的训练策略替代，我们发现Sparse RCNN用DETR的训练策略进行训练时，其在50 epoch时表现稍好，但在300epoch时表现较差。消除训练策略的差异可以帮助我们关注与影响数据效率的更核心的因素。</li>
+</ul>
+</li>
+<li>移除FPN：<ul>
+<li>多尺度特征融合已经被证明对目标检测是有效的。当CNN类的FPN neck可以实现在较小的计算代价的情况下完成多尺度特征融合，注意力机制有输入图像尺寸的平方的计算复杂度，使在DETR中对多尺度特征融合代价昂贵。因此DETR只采用了原图像经过32倍下采样的单尺度特征进行预测。在这个阶段，我们移除了FPN neck部分，并只将经过32倍下采样的特征传入检测头。模型在50epoch的情况下性能明显的下降了7.3AP</li>
+</ul>
+</li>
+<li>引入transformer encoder：<ul>
+<li>在DETR中，transformer encoder可以被认为是检测器的neck部分，其被用来处理被backbone提取出的特征。在移除了FPN neck之后，我们加入transformer encoder作为网络的neck。与在DETR中相似，backbone提取出的特征投影和位置编码同样被引入。试验结果表明AP在50epoch的时候有所下降，在300eopch的时候有所上升。我们推测其与ViT中相似，注意力机制因为其平方项的复杂度和缺少先验知识，其需要更长的训练epoch去收敛和发展其的优势。</li>
+</ul>
+</li>
+<li>使用cross-attention替代dynamic convolutions<ul>
+<li>在Sparse RCNN中的dynamic convolutions（动态卷积）和DETR中的cross-attention（互注意力）的作用相似。它们都基于图像特征的相似性自适应地将上下文聚合到候选对象。在这个步骤中，我们将dynamic convolutions替换为带有可学习的query positional embedding，其结果反直觉的表示：大量可学习的参数不一定会让模型需要更多的数据。事实上，动态卷积的70M的参数可以展现出相较于cross-attention而言更好的数据效率。</li>
+</ul>
+</li>
+<li>对齐解码器中的dropout设置<ul>
+<li>在Sparse RCNN和DETR中的decoder是非常相似的。在将dynamic convolution 用cross-attention替代之后，其可以被认为是transformer decoder。在其之间有一个轻微的不同是dropout layer在self-attention和FFN之间的使用。我们消除了这个影响。</li>
+</ul>
+</li>
+<li>移除级联边缘框细化<ul>
+<li>Sparse RCNN遵循了Cascade RCNN中的级联边缘框回归，其中每个decoder层都迭代的细化前一层做的边缘框预测。本文移除了这个步骤，模型性能有所下降。虽然级联边缘框细化没有被大多数的DETR类的检测器所使用，但其可以自然的被级联解码器所包含。</li>
+</ul>
+</li>
+<li>移除ROIAlign<ul>
+<li>Sparse RCNN和其余RCNN类的检测其相同，从感兴趣的局部区域采样特征，然后根据采样的稀疏特征进行预测。而每个DETR中的内容查询直接从全局的特征图中聚合特定于对象的信息。在这个步骤中，我们移除了Sparse RCNN中的ROIAlign，box target transformation也被移除。我们可以发现，模型的性能出现了明显的下降，在50epoch的情况下出现了8.4Ap的下降。我们推测从整个特征图上学习到局部对象区域的代价较大，所以模型需要更多的数据和训练epoch去获取局部属性。</li>
+</ul>
+</li>
+<li>移除初始的proposals<ul>
+<li>最终，DETR直接预测了目标的bounding box，RCNN类预测使用了一些初始化的先验。在这个步骤中，我们通过移除初始的proposals消除了影响。预料之外的是，这个小改变使模型性能出现了明显的下降。我们人文初始的proposals作为空间上的先验，帮助模型聚焦于局部空间信息，从而减少了从大量训练数据中学习局部性的需要</li>
+</ul>
+</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>如上所示，从Sparse RCNN转换为DETR的结果和分析如下所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png" alt="image-20220812084137035"></p>
+<p>其在更改之后对AP影响大于5AP的本文认为是影响数据效率的关键因素，如下所示：</p>
+<ol>
+<li>局部稀疏特征采样</li>
+<li>依赖稀疏特征采样的多尺度特征拥有可接受的计算复杂度</li>
+<li>依赖于空间先验的预测</li>
+</ol>
+<p>其中，1和3有助于模型关注局部对象区域，减轻从大量数据中学习局部性的需求，而2有助于更全面地利用和增强图像特征，但它也依赖于稀疏特征。</p>
+<p>DeformDETR是在DETR中特殊的一种，其表现出了与Sparse RCNN相比而言有可比性的数据效率。我们从Sparse RCNN到DETR的变换过程中可以对DeformDETR的数据效率进行解释：multi-scale deformable attention从图像的局部区域采样稀疏特征并利用多尺度特征。 模型的预测是相对于初始参考点的。 因此，DeformDETR 尽管没有专门设计在小型数据集上实现数据高效，但其满足了所有三个关键因素。</p>
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><p>本节主要利用现有的DETR类方法，在对原始的设计做最小的改变的前提下提升数据效率。</p>
+<ul>
+<li>本文重新对现有的DETR类算法进行了审视思考</li>
+<li>基于前文的实验和分析，对现有的数据需求量巨大的DETR类模型做最少的改变并显著的提升他们的数据效率。</li>
+<li>提供一种简单但有效的标签增强方法，从而为DETR提供更丰富的监督信号提升数据效率。</li>
+</ul>
+<h4 id="对DETR的重新审视"><a href="#对DETR的重新审视" class="headerlink" title="对DETR的重新审视"></a>对DETR的重新审视</h4><h5 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h5><p>DETR通常来说，由backbone，transformer encoder，transformer decoder，prediction head构成。</p>
+<ul>
+<li><p>backbone：backbone首先从输入图片中提取多尺度的特征，被称作$\{f^l\}^L_{l=1}$，其中$f^l \in R^{H ×W ×C}$。最后一个特征曾有着最小的分辨率，将其展平并嵌入以获得$z^L \in R^{S^L \times D}$，其中$S^L =H^L \times W^L$是序列长度，$D$是特征维度。相应的，位置编码嵌入被表示为$p^L \in R^{S^L\times D}$。</p>
+</li>
+<li><p>transformer encoder：之后单尺度序列特征被transformer编码，并获得$Z^L_e \in R^{S^L \times D}$。</p>
+</li>
+<li><p>transformer decoder：decoder包含了$L_d$层的decoder layers。 查询内容的嵌入表示被初始化为$q_0\in R^{N\times D}$，其中$N$是查询的数量。每个decoder层 $DecoderLayer_l$采用上一个decoder的输出$q_{l-1}$，查询位置编码$p_l$，图像序列特征$z_l$和其位置嵌入$p_l$作为输入，输出为解码序列特征。即</p>
+<p>$q _l= DecoderLayer_l (q_{l−1} , p_q , z_l, p_l),= 1 . . . L_d $</p>
+<p>在大多数DETR类检测器中，例如DETR和CondDETR，单尺度的图像特征被解码器所利用，因此$z_l=z^L_e$、$p_l=p^L$，其中$l=1…L_d$</p>
+<ul>
+<li>prediction head ：DETR的head是使用的单纯的FFN前馈网络加上softmax进行的判断</li>
+</ul>
+</li>
+</ul>
+<h5 id="标签分配"><a href="#标签分配" class="headerlink" title="标签分配"></a>标签分配</h5><p>DETR将目标检测任务视作集合预测的问题，并对每个解码器层的预测执行深度监督。在这个过程中，标签集可以被表示如下：$y=\{y_1,…,y_M,\emptyset,…,\emptyset\}$，其中$M$为前景物体的在图像中的数量，$\emptyset$(no object)被填充到标签集合里，使标签集合的大小为$N$。相应的，每个decoder的输出可以被写作$\hat y = \{\hat y\}_{i=1}$。在标签分配的过程中，DETR搜寻一个最优的$τ \in T_N$，使得下述的匹配损失最小：</p>
+<script type="math/tex; mode=display">
+\hat τ= argmin_{$τ \in T_N}\sum^N_iL_{ match} (y_i , \hat y_{τ (i)})</script><p>其中$L_{ match} (y_i , \hat y_{τ (i)})$为在ground truth和index为$τ (i)$的预测之间的配对损失。</p>
+<h4 id="模型的提升"><a href="#模型的提升" class="headerlink" title="模型的提升"></a>模型的提升</h4><h5 id="系数特征采样"><a href="#系数特征采样" class="headerlink" title="系数特征采样"></a>系数特征采样</h5><p>根据上述RCNN类算法与DETR类算法的不同之处分析，我们分析可得局部特征采样对数据效率是非常关键的。幸运的是，在DETR中，物体位置是在每个decoder layer之后预测得出的，因此，我们可以在上一个decoder预测的bounding box的指导下不需要引入新的参数的采样局部特征。如下图所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/vz2GLTd9Ylg5q.png" alt="img"></p>
+<p>虽然有更复杂的局部特征采样方法可以使用，本文只采用了最常用的RoIAlign。采样操作可以被写成如下形式：</p>
+<p>$z_L = RoIAlign(z^L_e , b_{l-1}),\ \ \ l=2…L_d$</p>
+<p>其中$b_{l-1}$是上一层预测得出的边缘框，$z_l^L\in R^{N\times K^2\times D}$是被采样的特征，$K$是在RoIAlign采样的特征分辨率。注意reshape操作和flatten操作在上式中被省略。类似的，可以得到对应的position embedding  $p^L_l$。</p>
+<p>在DETR中的级联结构使使用逐层边界框细化来提升检测性能很自然。本文在RCNN类算法与DETR类算法的不同之处分析处也验证了迭代细化和对初始空间参考进行预测的有效性。因此，本文如CondDETR一样引进了边缘框细化和在实施过程中的初始参考点。</p>
+<h5 id="结合多尺度特征"><a href="#结合多尺度特征" class="headerlink" title="结合多尺度特征"></a>结合多尺度特征</h5><p>我们的系数特征采样使DETR以较小的计算花销使用多尺度特征变得可能。为了达到这个目的，本文使用backbone从被展平和嵌入之后的高分辨率特征提取特征以得到$\{z^l\}^{L-1}_{l=1} \in \R^{S^l \times D}$，从而进行局部特征采样。然而这些特征不被transformer encoder处理。虽然可以使用更复杂的技术，这些单尺度的被RoIAlign所采样的特征被简单的拼接，从而形成我们的多尺度的特征。这些特征可以被自然的利用cross-attention机制在decoder中被融合。</p>
+<p>$z^{ms}_l=[z^1_l],[z^2_l],…,[z^L_l],l=2…L_d$</p>
+<p>其中$z^{ms}_l \in \R^{N \times LK^2 \times D}$为多尺度特征，$z^l_L=RoIAlign(z^l,b_{l-1}),l-1…L-1$是。对应的位置嵌入$p^{ms}_l$用相似的方式得到。解码过程和原始的DETR是相同的。唯一的区别在于$z_l=z^{ms}_l$以及$p_l=p^{ms}_l$。</p>
+<h4 id="标签增强"><a href="#标签增强" class="headerlink" title="标签增强"></a>标签增强</h4><p>DETR展现出了标签分配的一对一的分配方式。尽管拥有避免重复删除过程的优点，但只有少数检测候选者在每次迭代中都被提供了一个积极的监督信号。这样会导致模型需要更大数量的数据或者更多论次的训练，从而获得足够的监督。</p>
+<p>为了缓解这个问题，本文提出了一种标签增强的策略为DETR提供更丰富的监督信号，即通过在二部图匹配的过程中重复positive labels。如下图所示：</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/kITnuhEstBzQy.png" alt="img"></p>
+<p>我们为每个前景样本$y_i$重复labels $R_i$次，并使label set $N$的总长度不变。</p>
+<p>$y=\{ y^1_1,y^2_1,…,y^{R_1}_1,…y^1_M,y^2_M,…,y^{R_M}_M,…,\emptyset,…,\emptyset    \}$</p>
+<p>label assignment的其余公式与DETR中相同。</p>
+<p>在实际操作的过程中，考虑以下两种重复策略：</p>
+<ul>
+<li>固定重复次数：所有positive的label都被重复相同的次数</li>
+<li>固定positive采样比例：positive的labels被重复采样，从而确保有$r$个positive样本在label set中。</li>
+</ul>
+<p>特别的$F=N\times r$是重复标签后的预期正样本数。 我们首先将每个正标签重复 $F//M$次，然后随机抽取 $F \% M $个正标签而不重复。 默认情况下，我们使用固定重复次数策略，因为它更容易实现并且生成的标签集是确定性的。</p>
+<h3 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h3><h4 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h4><p>本文重点关注DETR的数据效率。因此，我们的大多数实验都是在 Cityscapes 和下采样 COCO 2017在内的小型数据集上进行的。具体来说，Cityscapes 数据集包含2,975 张用于训练的图像和500 张用于评估的图像。对于下采样的 COCO 2017 数据集，训练图像随机下采样0.1、0.05、0.02 和0.01，而评估集保持不变。此外，我们还验证了我们的方法在具有118K 训练图像的全尺寸 COCO 2017 数据集上的有效性。</p>
+<h4 id="实施细节"><a href="#实施细节" class="headerlink" title="实施细节"></a>实施细节</h4><p>默认情况下，我们的特征采样实现为 RoIAlign，特征分辨率为4。包括三个不同的特征级别用于多尺度特征融合。我们的标签增强采用固定重复次数，并且使用阈值为0.7 的非极大值抑制(NMS)来去除重复。所有模型都训练了50 个 epoch，并且除非另有说明，否则学习率会在40 个 epoch 后衰减。在 ImageNet-1K 上预训练的 ResNet-50用作主干。为了保证足够的训练迭代次数，所有关于 Cityscapes 和下采样 COCO2017 数据集的实验都以8 的batch size进行训练。结果是使用不同的随机种子重复运行五次的平均值。我们的数据高效检测转换器仅对现有方法进行轻微修改。除非另有说明，否则我们遵循相应基线方法的原始实现细节。运行时间在 NVIDIA A100 GPU 上进行评估。</p>
+<h4 id="主要结果"><a href="#主要结果" class="headerlink" title="主要结果"></a>主要结果</h4><h5 id="基于Cityscapes"><a href="#基于Cityscapes" class="headerlink" title="基于Cityscapes"></a>基于Cityscapes</h5><p>在本节中，我们将我们的方法与现有的DETR进行比较。 如下表所示，大多数检测变压器都存在数据效率问题。 尽管如此，通过对 CondDETR 模型进行微小更改，我们的 DE-CondDETR 能够实现与 DeformDETR 相当的数据效率。 此外，通过标签增强提供的更丰富的监督，我们的 DELA-CondDETR 超过了 DeformDETR 2.2 AP。 此外，我们的方法可以与其他检测转换器相结合，以显着提高它们的数据效率，例如，我们训练了 50 个 epoch 的 DE-DETR 和 DELA-DETR 的性能明显优于训练了 500 个 epoch 的 DETR。另外，我们的方法依旧提高了DeformDETR的数据效率。见下</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812145944038.png" alt="image-20220812145944038"></p>
+<p>上表为DETR在Cityscapes上的比较，DE前缀表明使用了本文的data-efficient，LA表明使用了label增强。</p>
+<hr>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151829137.png" alt="image-20220812151829137"></p>
+<p>上表为DeformDETR使用了LA之后的效果对比。</p>
+<hr>
+<h5 id="基于下采样的COCO2017数据集"><a href="#基于下采样的COCO2017数据集" class="headerlink" title="基于下采样的COCO2017数据集"></a>基于下采样的COCO2017数据集</h5><p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151508333.png" alt="image-20220812151508333"></p>
+<p>下采样的 COCO 2017 数据集分别包含 11,828 (10%)、5,914 (5%)、2,365 (2%) 和 1,182 (1%) 训练图像。 如上图 所示，我们的方法在很大程度上始终优于基线方法。 特别是，仅用 ∼1K 图像训练的 DELA-DETR 显着优于 DETR 基线，训练数据是训练数据的五倍。 同样，DELA-CondDETR 始终优于使用两倍数据量训练的 CondDETR 基线。</p>
+<hr>
+<h4 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h4><p>在本节中，我们进行消融实验以更好地理解我们方法的每个组成部分。 所有消融研究都是在 DELACondDETR 和 Cityscapes 数据集上实施的，而更多基于 DELADETR 的消融研究可以在我们的附录中找到。</p>
+<hr>
+<h5 id="每个模块的有效性"><a href="#每个模块的有效性" class="headerlink" title="每个模块的有效性"></a>每个模块的有效性</h5><p>我们首先消融了我们方法中每个模块的作用，如下表所示。使用局部特征采样和多尺度特征融合将模型的性能分别显着提高了 8.3 和 6.4 AP。 此外，标签增强进一步将性能提高了 2.7 AP。 此外，单独使用标签增强也带来了 2.6 AP 的性能增益。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152636147.png" alt="image-20220812152636147"></p>
+<hr>
+<h5 id="RoIAlign-的特征分辨率"><a href="#RoIAlign-的特征分辨率" class="headerlink" title="RoIAlign 的特征分辨率"></a>RoIAlign 的特征分辨率</h5><p>通常，RoIAlign 中较大的样本分辨率可提供更丰富的信息，从而提高检测性能。 然而，采样更大的特征分辨率也更耗时，并且增加了解码过程的计算成本。 如下表所示，当分辨率从 1 增加到 4 时，模型性能显着提高了 5.6 AP。但是，当分辨率进一步增加到 7 时，改进很小，并且增加了 FLOPs 和延迟。 为此，我们将 RoIAlign 的特征分辨率默认设置为 4。</p>
+<h5 id="多尺度特征的数量"><a href="#多尺度特征的数量" class="headerlink" title="多尺度特征的数量"></a>多尺度特征的数量</h5><p>为了结合多尺度特征，我们还从主干中采样了 8 倍和 16 倍的下采样特征来构建3个不同级别的多尺度特征。 从上表可以看出，它显着提高了模型性能 6.4 AP。 然而，当我们进一步为多尺度融合添加 64 倍下采样特征时，性能下降了 0.5 AP。 默认情况下，我们使用 3 个特征级别进行多尺度特征融合。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152843982.png" alt="image-20220812152843982"></p>
+<hr>
+<h5 id="标签增强的策略"><a href="#标签增强的策略" class="headerlink" title="标签增强的策略"></a>标签增强的策略</h5><p>在本节中，我们消融了提出的两种标签增强策略，即固定重复时间和固定正样本比率。 如下左表 所示，使用不同的固定重复次数可以持续提高 DE-DETR 基线的性能，但性能增益会随着重复次数的增加而降低。 因此，默认采用固定重复时间 2。 此外，如下右表 所示，虽然使用不同的比率可以提高 AP，但在正负样本比率为 1:3 时性能最佳，有趣的是，这也是Faster RCNN中最常用的正负采样比率。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812154348539.png" alt="image-20220812154348539"></p>
+<h4 id="泛化到特征丰富的数据集"><a href="#泛化到特征丰富的数据集" class="headerlink" title="泛化到特征丰富的数据集"></a>泛化到特征丰富的数据集</h4><p>虽然上述实验表明，我们的方法可以在只有有限的训练数据可用时提高模型性能，但不能保证我们的方法在训练数据充足的情况下仍然有效。 为此，我们用足够多的数据在 COCO 2017 上评估了我们的方法。 从下表 中可以看出，我们的方法不会降低 COCO 2017 上的模型性能。相反，它提供了改进效果。 具体来说，DELA-DETR 和 DELA-CondDETR 分别将其相应的基线提高了 8.3 和 2.8 AP。</p>
+<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812153538482.png" alt="image-20220812153538482"></p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>在本文中，我们确定了DETR的数据效率问题。 通过从 Sparse RCNN 到 DETR 的逐步模型转换，我们发现局部区域的稀疏特征采样是数据效率的关键。基于这些，我们通过在预测的bounding box的指导下通过简单地采样多尺度特征在对原始模型的修改最少的前提下来改进现有的检测转换器。 此外，我们提出了一种简单而有效的标签增强策略，以提供更丰富的监督，从而进一步缓解数据效率问题。 大量实验验证了我们方法的有效性。 随着Transformer在视觉任务中越来越流行，我们希望我们的工作能够激发大家探索Transformer在不同任务中的数据效率。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Transformer/" rel="tag"># Transformer</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/08/22/Deformable%20DETR/" rel="prev" title="Deformable DETR">
+      <i class="fa fa-chevron-left"></i> Deformable DETR
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Towards-Data-Efficient-Detection-Transformers"><span class="nav-number">1.</span> <span class="nav-text">Towards Data-Efficient Detection Transformers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.3.</span> <span class="nav-text">相关工作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B"><span class="nav-number">1.3.1.</span> <span class="nav-text">目标检测</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E4%B8%AD%E7%9A%84%E6%A0%87%E7%AD%BE%E5%88%86%E9%85%8D"><span class="nav-number">1.3.2.</span> <span class="nav-text">目标检测中的标签分配</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%86%E8%A7%89transformer%EF%BC%88ViT%EF%BC%89%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%95%88%E7%8E%87"><span class="nav-number">1.3.3.</span> <span class="nav-text">视觉transformer（ViT）中的数据效率</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RCNN%E7%B1%BB%E7%AE%97%E6%B3%95%E4%B8%8EDETR%E7%B1%BB%E7%AE%97%E6%B3%95%E7%9A%84%E4%B8%8D%E5%90%8C%E4%B9%8B%E5%A4%84%E5%88%86%E6%9E%90"><span class="nav-number">1.4.</span> <span class="nav-text">RCNN类算法与DETR类算法的不同之处分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E6%B5%8B%E5%99%A8%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">1.4.1.</span> <span class="nav-text">检测器的选择</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Sparse-RCNN%E5%88%B0DETR%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="nav-number">1.4.2.</span> <span class="nav-text">Sparse RCNN到DETR的转换</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.3.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">1.5.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9DETR%E7%9A%84%E9%87%8D%E6%96%B0%E5%AE%A1%E8%A7%86"><span class="nav-number">1.5.1.</span> <span class="nav-text">对DETR的重新审视</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84"><span class="nav-number">1.5.1.1.</span> <span class="nav-text">模型结构</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E5%88%86%E9%85%8D"><span class="nav-number">1.5.1.2.</span> <span class="nav-text">标签分配</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8F%90%E5%8D%87"><span class="nav-number">1.5.2.</span> <span class="nav-text">模型的提升</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%B3%BB%E6%95%B0%E7%89%B9%E5%BE%81%E9%87%87%E6%A0%B7"><span class="nav-number">1.5.2.1.</span> <span class="nav-text">系数特征采样</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%BB%93%E5%90%88%E5%A4%9A%E5%B0%BA%E5%BA%A6%E7%89%B9%E5%BE%81"><span class="nav-number">1.5.2.2.</span> <span class="nav-text">结合多尺度特征</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E5%A2%9E%E5%BC%BA"><span class="nav-number">1.5.3.</span> <span class="nav-text">标签增强</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">1.6.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">1.6.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E6%96%BD%E7%BB%86%E8%8A%82"><span class="nav-number">1.6.2.</span> <span class="nav-text">实施细节</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E7%BB%93%E6%9E%9C"><span class="nav-number">1.6.3.</span> <span class="nav-text">主要结果</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8ECityscapes"><span class="nav-number">1.6.3.1.</span> <span class="nav-text">基于Cityscapes</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E4%B8%8B%E9%87%87%E6%A0%B7%E7%9A%84COCO2017%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">1.6.3.2.</span> <span class="nav-text">基于下采样的COCO2017数据集</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">1.6.4.</span> <span class="nav-text">消融实验</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%AF%8F%E4%B8%AA%E6%A8%A1%E5%9D%97%E7%9A%84%E6%9C%89%E6%95%88%E6%80%A7"><span class="nav-number">1.6.4.1.</span> <span class="nav-text">每个模块的有效性</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#RoIAlign-%E7%9A%84%E7%89%B9%E5%BE%81%E5%88%86%E8%BE%A8%E7%8E%87"><span class="nav-number">1.6.4.2.</span> <span class="nav-text">RoIAlign 的特征分辨率</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%A4%9A%E5%B0%BA%E5%BA%A6%E7%89%B9%E5%BE%81%E7%9A%84%E6%95%B0%E9%87%8F"><span class="nav-number">1.6.4.3.</span> <span class="nav-text">多尺度特征的数量</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E5%A2%9E%E5%BC%BA%E7%9A%84%E7%AD%96%E7%95%A5"><span class="nav-number">1.6.4.4.</span> <span class="nav-text">标签增强的策略</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B3%9B%E5%8C%96%E5%88%B0%E7%89%B9%E5%BE%81%E4%B8%B0%E5%AF%8C%E7%9A%84%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">1.6.5.</span> <span class="nav-text">泛化到特征丰富的数据集</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">1.7.</span> <span class="nav-text">结论</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
