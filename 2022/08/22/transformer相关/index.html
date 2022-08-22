@@ -20,17 +20,30 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="选择大于努力">
+  <meta name="description" content="Transformer相关要了解transformer，首先需要对其发展有一定的了解，即从RNN开始。 经典RNN（N vs N）个人在搜寻资料过程中，认为以下两个链接讲得很好，就不再赘述，直接贴链接了。  NLP中的RNN、Seq2Seq与attention注意力机制 完全图解RNN、RNN变体、Seq2Seq、Attention机制 Attention详解 Transformer详解)  总而">
 <meta property="og:type" content="article">
 <meta property="og:title" content="transformer相关">
 <meta property="og:url" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/index.html">
 <meta property="og:site_name" content="凯_kaiii">
-<meta property="og:description" content="选择大于努力">
+<meta property="og:description" content="Transformer相关要了解transformer，首先需要对其发展有一定的了解，即从RNN开始。 经典RNN（N vs N）个人在搜寻资料过程中，认为以下两个链接讲得很好，就不再赘述，直接贴链接了。  NLP中的RNN、Seq2Seq与attention注意力机制 完全图解RNN、RNN变体、Seq2Seq、Attention机制 Attention详解 Transformer详解)  总而">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/v2-77e8a977fc3d43bec8b05633dc52ff9f_720w.jpg">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/1.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/v2-9407244671e4bc4fa32da7e66fba25bf_720w.jpg">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/2.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/3.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/4.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/20200322200849586.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/5.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/6.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/7.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/attention.png">
+<meta property="og:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/BNLN.png">
 <meta property="article:published_time" content="2022-08-22T12:55:36.000Z">
-<meta property="article:modified_time" content="2022-08-22T12:55:36.772Z">
+<meta property="article:modified_time" content="2022-08-22T13:34:52.037Z">
 <meta property="article:author" content="凯">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/v2-77e8a977fc3d43bec8b05633dc52ff9f_720w.jpg">
 
 <link rel="canonical" href="http://example.com/2022/08/22/transformer%E7%9B%B8%E5%85%B3/">
 
@@ -173,8 +186,9 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2022-08-22 20:55:36" itemprop="dateCreated datePublished" datetime="2022-08-22T20:55:36+08:00">2022-08-22</time>
+              <time title="创建时间：2022-08-22 20:55:36 / 修改时间：21:34:52" itemprop="dateCreated datePublished" datetime="2022-08-22T20:55:36+08:00">2022-08-22</time>
             </span>
 
           
@@ -188,7 +202,118 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        
+        <h2 id="Transformer相关"><a href="#Transformer相关" class="headerlink" title="Transformer相关"></a>Transformer相关</h2><p>要了解transformer，首先需要对其发展有一定的了解，即从RNN开始。</p>
+<h3 id="经典RNN（N-vs-N）"><a href="#经典RNN（N-vs-N）" class="headerlink" title="经典RNN（N vs N）"></a>经典RNN（N vs N）</h3><p>个人在搜寻资料过程中，认为以下两个链接讲得很好，就不再赘述，直接贴链接了。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/52119092">NLP中的RNN、Seq2Seq与attention注意力机制</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/28054589">完全图解RNN、RNN变体、Seq2Seq、Attention机制</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/Tink1995/article/details/105012972">Attention详解</a></li>
+<li><a href="[https://blog.csdn.net/Tink1995/article/details/105080033?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-1-105080033-blog-104374257.pc_relevant_vip_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-1-105080033-blog-104374257.pc_relevant_vip_default&amp;utm_relevant_index=2](https://blog.csdn.net/Tink1995/article/details/105080033?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~default-1-105080033-blog-104374257.pc_relevant_vip_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~default-1-105080033-blog-104374257.pc_relevant_vip_default&amp;utm_relevant_index=2">Transformer详解</a>)</li>
+</ul>
+<p>总而言之，经典RNN是存储并利用了历史信息的网络，其输入和输出必须相同。</p>
+<h3 id="seq2seq模型（N-vs-M）"><a href="#seq2seq模型（N-vs-M）" class="headerlink" title="seq2seq模型（N vs M）"></a>seq2seq模型（N vs M）</h3><p>seq2seq模型为RNN的一种变种，其输入输出不定，也叫做Encoder-Decoder模型，但其是不存在注意力机制的。</p>
+<p>Encoder和Decoder均可以看做一个独立的有记忆系统的网络（RNN、LSTM等）</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/v2-77e8a977fc3d43bec8b05633dc52ff9f_720w.jpg" alt="img"></p>
+<p>如上图所示，输入x1～x4，通过Encoder生成h1～h4。则最终生成的语义编码c依据其具体定义可得为h1～h4的组合，即可表示为$C=q(h1,h2,h3,h4)$，C最终为一个固定长度的语义向量。在Decoder阶段，将C作为输入，Decoder将其解码成所需的序列数据。解码过程如下所示：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/1.png" alt="在这里插入图片描述"></p>
+<p>生成的语义编码C,在计算每一时刻的输出$y_t$的时候均作为独立的输入，即其对应的公式可表示为如下所示：</p>
+<script type="math/tex; mode=display">
+y_t=f(C,y_1,y_2.....y_{t-1})</script><p>有另一种解码方式是C只在$y_1$的时候作为输入，并不对其余的$y_t$输入。</p>
+<p>这两种解码方式均有以下缺点：</p>
+<ul>
+<li><p>在生成对应的$y_t$的时候，其使用的C是相同的，即无论生成哪个单词，其输入序列中的任意组成部分对目标的影响力是相同的，没有区别</p>
+</li>
+<li><p>将整个序列的信息压缩在了一个语义编码C中，导致序列长度极长，容易引起梯度消失，信息损失等问题。</p>
+</li>
+</ul>
+<h3 id="Attention-注意力机制"><a href="#Attention-注意力机制" class="headerlink" title="Attention 注意力机制"></a>Attention 注意力机制</h3><p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/v2-9407244671e4bc4fa32da7e66fba25bf_720w.jpg" alt="img"></p>
+<p>故引入Attention 注意力机制：’’机器学习’’翻译而得’machine learning’ ，我们显然希望在翻译得到machine的时候，机器的权重较大，得到learning的时候学习的权重较大。对应到上图及为红色的权重大。这样的权重机制便可理解为注意力机制</p>
+<p>对应的模型框图如下所示：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/2.png" alt="在这里插入图片描述"></p>
+<p>即不再使用一个单一的语义编码C，而是使用多个$C_1,C_2..C_N$的编码，预测Y的时候，Y的注意力集中在语义编码$C_i$上，则使用对应的$C_i$，从而模拟人的注意力机制。那如何计算对应的$C_1,C_2..C_N$，假设$\alpha_{ij}$表示权值分布，$h_j$表示第j个输入对应的隐藏层输出，则$C_i$公式可如下所示：</p>
+<script type="math/tex; mode=display">
+C_i=\sum_{j=1}^n\alpha_{ij}h_j</script><p>那问题就转变为了$\alpha_{ij}$的计算</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/3.png" alt="在这里插入图片描述"></p>
+<p>$\alpha_{ij}$的计算：decoder上一时刻的输出值$Y_{i-1}$与上一时刻传入的隐藏层的值$S_{i-1}$进行计算生成$H_i$，然后计算$H_i$与$h_1，h_2，h_3…h_m$的相关性，得到相关性评分$[f_1,f_2,f_3…f_m]$，然后对$F_i$进行softmax就得到注意力分配$α_{ij}$。然后将encoder的输出值h与对应的概率分布αij进行点乘求和，就能得到注意力attention值了。</p>
+<h4 id="Attention机制的本质思想"><a href="#Attention机制的本质思想" class="headerlink" title="Attention机制的本质思想"></a>Attention机制的本质思想</h4><p>为更深刻的了解上述过程，Attention机制的本质思想可如下所示：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/4.png" alt="在这里插入图片描述"></p>
+<p>即对于source而言，其由Key和Value构成的数据对构成，给定Target中的某个元素query，通过计算query与key的相似度从而得到query和key之间的相似性或者相关性，从而得到对应的权重系数。然后按照权重系数对value进行加权求和。</p>
+<p>上述所提到的相似度计算一般有如下三种方式：点积、cosine相似性和MLP网络，对应的计算公式如下所示：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/20200322200849586.png" alt="在这里插入图片描述"></p>
+<h4 id="Attension框图"><a href="#Attension框图" class="headerlink" title="Attension框图"></a>Attension框图</h4><p>Attention过程总体上均可如下图所示：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/5.png" alt="在这里插入图片描述"></p>
+<p>阶段1：Query与每一个Key计算相似性得到相似性评分s<br>阶段2：将s评分进行softmax转换成[0,1]之间的概率分布$\alpha$<br>阶段3：将[$\alpha_1,\alpha_2,\alpha_3….\alpha_n$]作为权值矩阵对Value进行加权求和得到最后的Attention值</p>
+<h4 id="Attension的优缺点"><a href="#Attension的优缺点" class="headerlink" title="Attension的优缺点"></a>Attension的优缺点</h4><ul>
+<li>优点：<ul>
+<li>速度快。Attention机制不再依赖于RNN，解决了RNN不能并行计算的问题。这里需要说明一下，基于Attention机制的seq2seq模型，因为是有监督的训练，所以咱们在训练的时候，在decoder阶段并不是说预测出了一个词，然后再把这个词作为下一个输入，因为有监督训练，咱们已经有了target的数据，所以是可以并行输入的，可以并行计算decoder的每一个输出，但是再做预测的时候，是没有target数据地，这个时候就需要基于上一个时间节点的预测值来当做下一个时间节点decoder的输入。所以节省的是训练的时间。</li>
+<li>效果好。效果好主要就是因为注意力机制，能够获取到局部的重要信息，能够抓住重点。</li>
+</ul>
+</li>
+<li>缺点：<ul>
+<li>1.只能在Decoder阶段实现并行运算，Encoder部分依旧采用的是RNN，LSTM这些按照顺序编码的模型，Encoder部分还是无法实现并行运算，不够完美。</li>
+<li>2.就是因为Encoder部分目前仍旧依赖于RNN，所以对于中长距离之间，两个词相互之间的关系没有办法很好的获取。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Self-Attension"><a href="#Self-Attension" class="headerlink" title="Self-Attension"></a>Self-Attension</h3><p>针对于Attension的缺点，提出Self-Attension，其输入sourve与输出Target的内容是相同的，其具体的计算过程与基本原理与Attension是完全相同的，其的Key=Value=Query。其优点为：可以捕获句子中长距离的相互关联的特征，可以通过一个计算步骤直接将其联系起来。且其可以增加计算的并行性，一次性解决了Attension的两个缺点。</p>
+<h3 id="Transformer"><a href="#Transformer" class="headerlink" title="Transformer"></a>Transformer</h3><p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/6.png" alt="在这里插入图片描述"></p>
+<p>Transformer的结构如上所示，主要由四个部分组成：Input、Encoder、Decoder、Output。其中最为重要的为encoder和decoder部份。对于Transformer而言，其的超参数只有两个，一个为N，即Encoder block重复几次，另一个为每一层对应的长度，在transformer中，其将每一层的长度限制为512不变。所以整个Transformer中只有两个超参数。</p>
+<h4 id="Input"><a href="#Input" class="headerlink" title="Input"></a>Input</h4><p>对于Input部分，一般而言其输入都是将文字序列转化为vector，即经过word2vec、one-hot等形式的编码之后得到的向量。由于transformer的方法在整个计算过程中完全是基于self-Attension的，其整个计算过程中是没办法获取词语位置信息的。而词语的位置信息对句子的意思有巨大的影响。为了强调位置在输入之中的重要性，我们需要给每一个词向量添加一个位置编码，即上图中所示的Positional Encoding。</p>
+<p>Positional Encoding的常用方式有以下两种：</p>
+<ul>
+<li>通过数据学习的到positional Encoding ，如google所提出的bert</li>
+<li>通过正余弦位置编码等编码方式进行编码，如Attension is all you need中。位置编码通过使用不同频率的正弦、余弦函数生成，然后和对应的位置的词向量相加，位置向量维度必须和词向量的维度一致。过程如上图，PE（positional encoding）计算公式如下：</li>
+</ul>
+<script type="math/tex; mode=display">
+P E (pos,2i) = sin(pos/10000^{2i/d_{model}} )\\
+P E (pos,2i+1) = cos(pos/10000^{2i/d_{model}} )</script><p>在上述公式中，pos为绝对位置，$d_{model}$为词向量的维度。</p>
+<h4 id="Encoder"><a href="#Encoder" class="headerlink" title="Encoder"></a>Encoder</h4><h5 id="Multi-Head-Attention"><a href="#Multi-Head-Attention" class="headerlink" title="Multi-Head Attention"></a>Multi-Head Attention</h5><p>假设经过Input之后输出的Embedding Vector为$X_1,X_2….$，在Attention计算的的时候，需要$X_i$所对应的Query、Keys、Values向量，这些向量由Input$X_i$与三个权值矩阵$W^Q,W^K,W^V$相乘求得，其对应图示如下所示：其中权值矩阵是可以通过学习优化的</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/7.png" alt="在这里插入图片描述"></p>
+<p>其中X的每一行代表一个输入，一行的长度代表了Embedding的长度。</p>
+<p>依据之前对attention的描述，以及上图的对$X,W,Q,K,V$的描述，我们可以类似的将其的计算过程表示为如下图所示：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/attention.png" alt="在这里插入图片描述"></p>
+<p>其具体计算过程可概括如下：</p>
+<ol>
+<li>输入序列中每个单词之间的相关性得分，在Transformer中使用的是点积法，就是用Q中每一个向量与K中每一个向量计算点积，具体到矩阵的形式为：$s c o r e = Q ⋅ K^T$ socre是一个(2,2)的矩阵</li>
+<li>对于输入序列中每个单词之间的相关性得分进行归一化，归一化的目的主要是为了训练时梯度能够稳定。$score = score/\sqrt{d_k}$ ，dk就是K的维度</li>
+<li>通过softmax函数，将每个单词之间的得分向量转换成[0,1]之间的概率分布，同时更加凸显单词之间的关系。经过softmax后，score转换成一个值分布在[0,1]之间的(2,2)α概率分布矩阵</li>
+<li>根据每个单词之间的概率分布，然后乘上对应的Values值，α与V进行点积， $Z = softmax(score)\cdot V$，V的为维度是(2,64)，(2,2)x(2,64)最后得到的Z是(2,64)维的矩阵</li>
+</ol>
+<p>从self-attention到transformer中的multi-head attention，可以对其简单的理解为从：通过Embedding之后生成的vector X通过与多组的不同的权值矩阵$W^Q,W^K,W^V$相乘，求得多组的Query、keys、values。然后依据上述计算过程计算得出多个Z，然后将上述得到的多个Z矩阵进行拼接求得最终的输出矩阵。</p>
+<h5 id="Add-amp-Norm"><a href="#Add-amp-Norm" class="headerlink" title="Add  &amp; Norm"></a>Add  &amp; Norm</h5><p>在multihead attention之后的是Add &amp; Norm层，其中Add层采用的是resnet的想法，残差链接。Norm层采用的是Layer Normalization（LN）。一般常采用的还有另一种Normalization方法是Batch Normalization，其的对比如下图：</p>
+<p><img src="/2022/08/22/transformer%E7%9B%B8%E5%85%B3/BNLN.png" alt="在这里插入图片描述"></p>
+<h5 id="Feed-Forward-Networks"><a href="#Feed-Forward-Networks" class="headerlink" title="Feed-Forward Networks"></a>Feed-Forward Networks</h5><p>在Add&amp;Norm之后的是Feed-Forward Networks，即一个前馈神经网络，在Transformer中直接使用了一个两层的神经网络，激活函数使用的Relu引入非线性因素，并在最终计算之后的结果输入encoder中。其公式大致如下所示</p>
+<script type="math/tex; mode=display">
+FFN(x)=max(0,x W_1+b_1 )W_2     +b_2</script><h4 id="Decoder"><a href="#Decoder" class="headerlink" title="Decoder"></a>Decoder</h4><h5 id="Decoder在不同模式下的输入"><a href="#Decoder在不同模式下的输入" class="headerlink" title="Decoder在不同模式下的输入"></a>Decoder在不同模式下的输入</h5><p>Decoder在训练和预测的情况下，其对应的输入是有所不同的，如之前的transformer模型结构所示，其中的Outputs(shifted right)的输入只有在训练的时候输入。在训练的时候，假设任务为中译英，Inputs为我爱你，在训练的时候，Outputs则应输入I love you，而在预测的时候 ，Outputs初始输入为起始符，然后每次的输入是上一时刻的Transformer的输出。</p>
+<h5 id="Masked-Multi-Head-Attention"><a href="#Masked-Multi-Head-Attention" class="headerlink" title="Masked Multi-Head Attention"></a>Masked Multi-Head Attention</h5><p>与Encoder的Multi-Head Attention计算原理一样，只是多加了一个mask码。mask 表示掩码，它对某些值进行掩盖，使其在参数更新时不产生效果。Transformer 模型里面涉及两种 mask，分别是 padding mask 和 sequence mask。</p>
+<ol>
+<li><p>padding mask</p>
+<p>padding mask 实际上在encoder和decoder两个模块中都存在，padding mask主要处理的问题是输入序列长度不一致的问题。所以我们要对输入序列进行对齐。具体来说，就是给在较短的序列后面填充 0。但是如果输入的序列太长，则是截取左边的内容，把多余的直接舍弃。因为这些填充的位置，其实是没什么意义的，所以我们的attention机制不应该把注意力放在这些位置上，所以我们需要进行一些处理。<br>具体的做法是，把这些位置的值加上一个非常大的负数(负无穷)，这样的话，经过 softmax，这些位置的概率就会接近0！</p>
+</li>
+<li><p>sequence mask</p>
+<p>sequence mask 只存在于decoder的第一个Masked Multi-Head Attention 中。这样做是为了使得 decoder 不能看见未来的信息。也就是对于一个序列中的第i个token解码的时候只能够依靠i时刻之前(包括i)的的输出，而不能依赖于i时刻之后的输出。因此我们要采取一个遮盖的方法(Mask)使得其在计算self-attention的时候只用i个时刻之前的token进行计算。<br>那么具体的做法为：产生一个上三角矩阵，上三角的值全为0。把这个矩阵作用在每一个序列上，就可以达到我们的目的。</p>
+</li>
+</ol>
+<h5 id="Add＆Normalize"><a href="#Add＆Normalize" class="headerlink" title="Add＆Normalize"></a>Add＆Normalize</h5><p>Add＆Normalize与Encoder中一样</p>
+<h5 id="Multi-Head-Attention-1"><a href="#Multi-Head-Attention-1" class="headerlink" title="Multi-Head Attention"></a>Multi-Head Attention</h5><p>这是decoder中的第二个Multi-Head Attention。这个Multi-Head Attention相对于encoder中的Multi-Head Attention而言，其不是Self Attention的。在decoder中，它的输入Query来自于Masked Multi-Head Attention的输出，Keys和Values来自于Encoder中最后一层的输出。</p>
+<p>对于decoder中的两个Multi-Head Attention而言：</p>
+<ul>
+<li>第一个Masked Multi-Head Attention是为了得到之前已经预测输出的信息，相当于记录当前时刻的输入之间的信息的意思。</li>
+<li>第二个Multi-Head Attention是为了通过当前输入的信息得到下一时刻的信息，也就是输出的信息，是为了表示当前的输入与经过encoder提取过的特征向量之间的关系来预测输出。</li>
+</ul>
+<p>经过了第二个Multi-Head Attention之后的Feed Forward Network与Encoder中一样，然后就是输出进入下一个decoder，如此经过6层decoder之后到达最后的输出层。</p>
+<h4 id="Output"><a href="#Output" class="headerlink" title="Output"></a>Output</h4><p>最终我们所得到的Decoder的输出为vector，我们将其通过Linear进行线性变换，然后经过SoftMax得到对应的概率分布，然后将其通过词典对应从而输出概率最大的对象作为我们的预测输出。</p>
+<h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>效果好且可以并行训练，速度快</li>
+<li>其设计已经足够有创新，因为其抛弃了在NLP中最根本的RNN或者CNN并且取得了非常不错的效果，算法的设计非常精彩</li>
+<li>Transformer的设计最大的带来性能提升的关键是将任意两个单词的距离是1，这对解决NLP中棘手的长期依赖问题是非常有效的。</li>
+<li>Transformer不仅仅可以应用在NLP的机器翻译领域，甚至可以不局限于NLP领域，是非常有科研潜力的一个方向。</li>
+</ol>
+<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4><ol>
+<li>完全基于self-attention，对于词语位置之间的信息有一定的丢失，虽然加入了positional encoding来解决这个问题，但也还存在着可以优化的地方。</li>
+<li>粗暴的抛弃RNN和CNN虽然非常炫技，但是它也使模型丧失了捕捉局部特征的能力，RNN + CNN + Transformer的结合可能会带来更好的效果。</li>
+</ol>
+
     </div>
 
     
@@ -268,6 +393,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Transformer%E7%9B%B8%E5%85%B3"><span class="nav-number">1.</span> <span class="nav-text">Transformer相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%8F%E5%85%B8RNN%EF%BC%88N-vs-N%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">经典RNN（N vs N）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#seq2seq%E6%A8%A1%E5%9E%8B%EF%BC%88N-vs-M%EF%BC%89"><span class="nav-number">1.2.</span> <span class="nav-text">seq2seq模型（N vs M）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attention-%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">1.3.</span> <span class="nav-text">Attention 注意力机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Attention%E6%9C%BA%E5%88%B6%E7%9A%84%E6%9C%AC%E8%B4%A8%E6%80%9D%E6%83%B3"><span class="nav-number">1.3.1.</span> <span class="nav-text">Attention机制的本质思想</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Attension%E6%A1%86%E5%9B%BE"><span class="nav-number">1.3.2.</span> <span class="nav-text">Attension框图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Attension%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="nav-number">1.3.3.</span> <span class="nav-text">Attension的优缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Self-Attension"><span class="nav-number">1.4.</span> <span class="nav-text">Self-Attension</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Transformer"><span class="nav-number">1.5.</span> <span class="nav-text">Transformer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Input"><span class="nav-number">1.5.1.</span> <span class="nav-text">Input</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Encoder"><span class="nav-number">1.5.2.</span> <span class="nav-text">Encoder</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Multi-Head-Attention"><span class="nav-number">1.5.2.1.</span> <span class="nav-text">Multi-Head Attention</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Add-amp-Norm"><span class="nav-number">1.5.2.2.</span> <span class="nav-text">Add  &amp; Norm</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Feed-Forward-Networks"><span class="nav-number">1.5.2.3.</span> <span class="nav-text">Feed-Forward Networks</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Decoder"><span class="nav-number">1.5.3.</span> <span class="nav-text">Decoder</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Decoder%E5%9C%A8%E4%B8%8D%E5%90%8C%E6%A8%A1%E5%BC%8F%E4%B8%8B%E7%9A%84%E8%BE%93%E5%85%A5"><span class="nav-number">1.5.3.1.</span> <span class="nav-text">Decoder在不同模式下的输入</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Masked-Multi-Head-Attention"><span class="nav-number">1.5.3.2.</span> <span class="nav-text">Masked Multi-Head Attention</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Add%EF%BC%86Normalize"><span class="nav-number">1.5.3.3.</span> <span class="nav-text">Add＆Normalize</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Multi-Head-Attention-1"><span class="nav-number">1.5.3.4.</span> <span class="nav-text">Multi-Head Attention</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Output"><span class="nav-number">1.5.4.</span> <span class="nav-text">Output</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E7%82%B9"><span class="nav-number">1.5.5.</span> <span class="nav-text">优点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9"><span class="nav-number">1.5.6.</span> <span class="nav-text">缺点</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -372,6 +498,61 @@
   
 
   
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
 
   
 
