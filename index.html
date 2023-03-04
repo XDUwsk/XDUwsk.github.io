@@ -148,6 +148,224 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/" class="post-title-link" itemprop="url">未命名</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-03-04 15:27:13 / 修改时间：15:20:59" itemprop="dateCreated datePublished" datetime="2023-03-04T15:27:13+08:00">2023-03-04</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="RK3588s部署相关"><a href="#RK3588s部署相关" class="headerlink" title="RK3588s部署相关"></a>RK3588s部署相关</h1><p>目前无人机上开发板为ROC-RK3588S-PC，为在其上进行深度学习模型的推理，需要对板载的NPU进行配置使用。为使用该NPU，需要下载<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">RKNN SDK</a>，RKNN SDK为RK3588s提供编程接口，帮助用户部署使用通过RKNN-Toolkit2导出的RKNN模型。</p>
+<p>下列代码输出的是rk3588机载npu的使用率，从而可以验证板载npu是否被使用</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat /sys/kernel/debug/rknpu/load</span><br></pre></td></tr></table></figure>
+<p>目前3588的部署方式大致有两种，一为利用RKNN官方支持的方式进行部署，另一为利用FastDeploy，其在RKNN官方的基础上加了一层进行后续部署。</p>
+<h2 id="基本组件及功能介绍"><a href="#基本组件及功能介绍" class="headerlink" title="基本组件及功能介绍"></a>基本组件及功能介绍</h2><h3 id="RKNN-Toolkit2与RKNN-Toolkit-Lite2套件介绍"><a href="#RKNN-Toolkit2与RKNN-Toolkit-Lite2套件介绍" class="headerlink" title="RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍"></a><strong>RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍</strong></h3><h4 id="RKNN-Toolkit2"><a href="#RKNN-Toolkit2" class="headerlink" title="RKNN-Toolkit2"></a>RKNN-Toolkit2</h4><p>RKNN-Toolkit2是为用户提供在PC平台上进行Rockchip芯片NPU模型转换、推理和性能评估的开发套件。用户通过该工具提供的Python 接口可以便捷地完成以下功能：</p>
+<ol>
+<li>模型转换：支持Caffe、TensorFlow、TensorFlow Lite、ONNX、DarkNet、PyTorch 等模型转为RKNN 模型，并支持RKNN 模型导入导出，RKNN 模型能够在Rockchip NPU 平台上加载使用。</li>
+<li>量化功能：支持将浮点模型量化为定点模型，目前支持的量化方法为非对称量化（ asymmetric_quantized-8 及asymmetric_quantized-16 ） ， 并支持混合量化功能。</li>
+<li>模型推理：能够在PC 上模拟Rockchip NPU 运行RKNN 模型并获取推理结果；或将RKNN模型分发到指定的NPU 设备上进行推理并获取推理结果。</li>
+<li>性能和内存评估：将RKNN 模型分发到指定NPU 设备上运行，以评估模型在实际设备上运行时的性能和内存占用情况。</li>
+<li>量化精度分析：该功能将给出模型量化前后每一层推理结果与浮点模型推理结果的余弦距离，以便于分析量化误差是如何出现的，为提高量化模型的精度提供思路。</li>
+</ol>
+<p><strong>即，该部分需要在linux-ubuntu的电脑上进行安装，从而完成模型的转换和模型的量化等功能</strong></p>
+<h4 id="RKNN-Toolkit-Lite2"><a href="#RKNN-Toolkit-Lite2" class="headerlink" title="RKNN -Toolkit-Lite2"></a>RKNN -Toolkit-Lite2</h4><p>RKNN -Toolkit-Lite2为RKNN-Toolkit-lite2的一部分，为带有瑞芯NPU平台提供Python编程接口，帮助用户部署使用RKNN-Toolkit2导出的RKNN模型。</p>
+<h4 id="rknpu2"><a href="#rknpu2" class="headerlink" title="rknpu2"></a>rknpu2</h4><p>rknpu2为带有瑞芯NPU平台提供c语言编程接口，帮助用户部署使用 RKNN-Toolkit2 导出的 RKNN 模型。</p>
+<p><strong>即RKNN -Toolkit-Lite2和rknpu2分别为板载上使用python或c++调用npu的接口，需要在板子上进行安装从而完成对应的npu的调用</strong></p>
+<h4 id="FastDeploy"><a href="#FastDeploy" class="headerlink" title="FastDeploy"></a>FastDeploy</h4><p>FastDeploy是百度推出的一款AI算法推理部署的工具。其为在RKNN官方的库的基础上进行二次开发及封装，从而实现更方便的一种算法部署方式。但是其由于目前依旧为develop阶段，很多接口尚未完全开发完毕。</p>
+<p><strong>即FastDeploy需要在ubuntu服务器端和板载端均进行安装，目前正在快速开发中，交流群内较为活跃，遇到问题好解决</strong></p>
+<h2 id="使用RKNN官方例程"><a href="#使用RKNN官方例程" class="headerlink" title="使用RKNN官方例程"></a>使用RKNN官方例程</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><h4 id="服务器端环境"><a href="#服务器端环境" class="headerlink" title="服务器端环境"></a>服务器端环境</h4><p>首先在<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">firefly官网中的RK3588S中的NPU使用</a>中或者<a href="wget https://bj.bcebos.com/fastdeploy/third_libs/rknpu2_device_install_1.4.0.zip">百度提供的下载链接</a>下载RKNN SDK，然后由于目前RKNN ToolKit2只支持python3.6或者python3.8，所以在linux-ubuntu的电脑运行如下代码，安装对应代码</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 创建python3.<span class="number">8</span>环境</span><br><span class="line">conda create -n rknn2 python=<span class="number">3</span>.<span class="number">8</span></span><br><span class="line">conda activate rknn2</span><br><span class="line"></span><br><span class="line"># 安装 rknn-toolkit2</span><br><span class="line">pip install numpy==<span class="number">1</span>.<span class="number">16</span>.<span class="number">6</span></span><br><span class="line">sudo apt-get install libxslt1-dev zlib1g zlib1g-dev libglib2.<span class="number">0</span>-<span class="number">0</span> libsm6 libgl1-mesa-glx libprotobuf-dev gcc g++</span><br><span class="line">pip install rknn-toolkit2/packages/rknn_toolkit2-<span class="number">1</span>.<span class="number">3</span>.<span class="number">0</span>_11912b58-cp38-cp38-linux_x86_64.whl</span><br><span class="line"></span><br><span class="line"># 安装yaml</span><br><span class="line">pip install pyyaml</span><br></pre></td></tr></table></figure>
+<h4 id="板端环境"><a href="#板端环境" class="headerlink" title="板端环境"></a>板端环境</h4><p>首先将板子从原生的安卓刷系统为ubuntu系统，然后在<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">firefly官网中的RK3588S中的NPU使用</a>中下载RKNN SDK，由于目前的rknn_toolkit2_lite2只支持python3.7或者python3.9，所以输入下列代码安装rknn_toolkit2_lite2</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> rknpu2_device_install</span><br><span class="line"># RK3588运行以下代码</span><br><span class="line">sudo rknn_install_rk3588.sh</span><br></pre></td></tr></table></figure>
+<h3 id="模型转换步骤"><a href="#模型转换步骤" class="headerlink" title="模型转换步骤"></a>模型转换步骤</h3><ul>
+<li><p>首先通过任务的不同需求训练出神经网络</p>
+</li>
+<li><p>通过各类转换工具将模型转换为onnx</p>
+</li>
+<li><p>将onnx模型通过PKNN-Toolkit2转换为RKNN格式</p>
+<ul>
+<li><p>利用RKNN-Toolkit2的Python API接口导出RKNN格式的模型。操作流程如下</p>
+<p>1、 创建RKNN对象，初始化RKNN SDK环境。</p>
+<p>2、 调用config接口设置模型预处理参数。</p>
+<p>3、 调用对应加载第3方框架接口，加载TensorFlow、Pytorch、ONNX模型。</p>
+<p>4、 调用build接口构建RKNN模型。</p>
+<p>5、 调用export_rknn接口导出RKNN模型</p>
+</li>
+</ul>
+<p>对应文档查看下载包内的<strong>Rockchip_User_Guide_RKNN_Toolkit2_CN</strong></p>
+</li>
+</ul>
+<h3 id="默认转换好的模型在RK3588s上的使用（RKNPU2）"><a href="#默认转换好的模型在RK3588s上的使用（RKNPU2）" class="headerlink" title="默认转换好的模型在RK3588s上的使用（RKNPU2）"></a>默认转换好的模型在RK3588s上的使用（RKNPU2）</h3><ul>
+<li>首先针对于自身平台下载gcc交叉编译器 gcc-9.3.0-x86_64_arrch64-linux-gnu</li>
+<li>然后进入/rknpu2_1.3.0/examples 文件夹</li>
+<li>假定想要测试转换好了的yolov5，则进入对应的rknn_yolov5_demo文件夹</li>
+<li>使用./build-linux_RK3588.sh进行编译</li>
+<li>进入./install/rknn_yolov5_demo_linux 文件夹使用./rknn_yolov5_demo ./model/RK3588/yolov5s-640-640.rknn ./model/bus.jpg 进行测试</li>
+</ul>
+<h3 id="默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）"><a href="#默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）" class="headerlink" title="默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）"></a>默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）</h3><ul>
+<li>利用conda 创建py36或者py38的环境</li>
+<li>进入rknn-toolkit2-1.3.0/rknn_toolkit_lite2文件夹，进入package文件夹安装对应的whl</li>
+<li>进入examples/inference_with_lite文件夹，使用python test.py进行测试</li>
+</ul>
+<h2 id="使用百度-Fast-Deploy相关工具进行部署"><a href="#使用百度-Fast-Deploy相关工具进行部署" class="headerlink" title="使用百度 Fast Deploy相关工具进行部署"></a>使用百度 Fast Deploy相关工具进行部署</h2><p>官方视频例程大都是老版本的配置，其在现有的工程下的使用比较落后。故大致步骤可和<a target="_blank" rel="noopener" href="https://aistudio.baidu.com/aistudio/education/preview/3610910">官方视频</a>内相同，但具体节点的使用方式有所差异。</p>
+<h3 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h3><p>对应部署的环境配置分为板载RK3588s上的环境配置和个人PC上的环境配置，对应需要配置的环境如下所示</p>
+<p><img src="/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/image-20230221221155971.png" alt="image-20230221221155971"></p>
+<p>RKNN官方例程中的服务器端环境和板端环境均需要进行配置，然后针对于FastDeploy进行环境配置。</p>
+<p>FastDeploy在板端的安装（c++）</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br><span class="line"><span class="built_in">cd</span> FastDeploy</span><br><span class="line"><span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build</span><br><span class="line"></span><br><span class="line"># Only a few key configurations are introduced here, see README.<span class="built_in">md</span> <span class="keyword">for</span> details.</span><br><span class="line"># -DENABLE_ORT_BACKEND:     Whether to enable ONNX model, default OFF</span><br><span class="line"># -DENABLE_RKNPU2_BACKEND:  Whether to enable RKNPU model, default OFF</span><br><span class="line"># -RKNN2_TARGET_SOC:        Compile the SDK board model. Enter RK356X or RK3588 with case sensitive required.</span><br><span class="line">cmake ..  -DENABLE_ORT_BACKEND=ON \</span><br><span class="line">	      -DENABLE_RKNPU2_BACKEND=ON \</span><br><span class="line">	      -DENABLE_VISION=ON \</span><br><span class="line">	      -DRKNN2_TARGET_SOC=RK3588 \</span><br><span class="line">          -DCMAKE_INSTALL_PREFIX=$&#123;PWD&#125;/fastdeploy-<span class="number">0</span>.<span class="number">0</span>.<span class="number">3</span></span><br><span class="line">make -j8</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>FastDeploy在板端的安装（python）</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br><span class="line"><span class="built_in">cd</span> FastDeploy</span><br><span class="line"><span class="built_in">cd</span> python</span><br><span class="line"></span><br><span class="line">export ENABLE_ORT_BACKEND=ON</span><br><span class="line">export ENABLE_RKNPU2_BACKEND=ON</span><br><span class="line">export ENABLE_VISION=ON</span><br><span class="line">export RKNN2_TARGET_SOC=RK3588</span><br><span class="line">python3 setup.py build</span><br><span class="line">python3 setup.py bdist_wheel</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> dist</span><br><span class="line"></span><br><span class="line">pip3 install fastdeploy_python-<span class="number">0</span>.<span class="number">0</span>.<span class="number">0</span>-cp39-cp39-linux_aarch64.whl</span><br></pre></td></tr></table></figure>
+<p>个人PC环境配置及模型转换</p>
+<p>本次尝试在对应远程服务器上进行环境部署，该服务器主要负责对应模型的训练，模型的转换，目前要求为linux-64bit环境。</p>
+<ul>
+<li><p>假定使用的是paddleDetection训练得到想要的模型，首先使用PaddleDetection中的/tools/export_model.py对训练得出的模型进行导出，将Paddle动态图转换为静态图，对应转换模型代码为</p>
+<ul>
+<li>```cmd<br>python ./tools/export_model.py —config configs/picodet/picodet_s_416_visdrone.yml<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 转换后的模型会存放于</span><br><span class="line"></span><br><span class="line">- ```cmd</span><br><span class="line">  ./output_inference/picodet_s_416_visdrone</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>进一步将模型从静态的paddle模型转化到onnx模型，需要使用Paddle2ONNX库，该库的安装命令使用</p>
+<ul>
+<li><p>```cmd<br>pip install paddle2onnx    </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 对应的模型的转换，从静态paddle模型转换为onnx格式，使用命令，对应[官网](https://github.com/PaddlePaddle/Paddle2ONNX)，（在Paddle2ONNX文件夹内使用）</span><br><span class="line"></span><br><span class="line">- ```cmd</span><br><span class="line">  #静态图转onnx模型</span><br><span class="line">  paddle2onnx --model_dir picodet_s_416_coco_lcnet --model_filename model.pdmodel --params_filename model.pdiparams --save_file  picodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx --enable_dev_version True</span><br><span class="line">  #固定模型输入形状，改为静态shape</span><br><span class="line">  python -m paddle2onnx.optimize \--input_modelpicodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx \--output_modelpicodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx \--input_shape_dict&quot;&#123;&#x27;image&#x27;:[1,3,416,416]&#125;&quot;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>注意，若ONNX不支持对应的算子，如自适应池化层，需要对得到的模型进行输入的固定，即改为静态shape。对应的查看方式为转换为onnx格式文件之后，使用[onnx结构查询——netron][<a target="_blank" rel="noopener" href="https://netron.app/]对onnx模型结构进行查看。">https://netron.app/]对onnx模型结构进行查看。</a></p>
+</li>
+</ul>
+</li>
+<li><p>然后将得到的onnx模型转换为对应的rknn模型，需要书写转换用到的yaml文件</p>
+<ul>
+<li><p>转换的yaml书写要点可见<a target="_blank" rel="noopener" href="https://www.github.com/PaddlePaddle/FastDeploy/blob/develop/docs/cn/faq/rknpu2/export.md">官网</a></p>
+<ul>
+<li><p>大体上如下所示</p>
+</li>
+<li><p>```cmd<br>mean:<br>  -</p>
+<pre><code>- 128.5
+- 128.5
+- 128.5
+</code></pre><p>std:<br>  -</p>
+<pre><code>- 128.5
+- 128.5
+- 128.5
+</code></pre><p>model_path: “./scrfd_500m_bnkps_shape640x640.onnx”<br>outputs_nodes:<br>do_quantization: True<br>dataset: “./datasets.txt”<br>output_folder: “./“</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 转换用的语句为</span><br><span class="line"></span><br><span class="line">  - ```cmd</span><br><span class="line">    python tools/rknpu2/export.py --config_path tools/rknpu2/config/RK3588/picodet_s_416_coco_lcnet.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>对应使用的为fastdeploy内的对rknpu2的export函数，得到对应的rknn模型</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="RK3588s环境配置及实机程序运行"><a href="#RK3588s环境配置及实机程序运行" class="headerlink" title="RK3588s环境配置及实机程序运行"></a>RK3588s环境配置及实机程序运行</h3><ul>
+<li><p>将对应的rknn模型和cfg，对应图像拷贝到RK3588板子上，并运行<a target="_blank" rel="noopener" href="https://github.com/PaddlePaddle/FastDeploy/tree/develop/examples/vision/detection/paddledetection/rknpu2/python">官网</a>提供的infer代码进行推理检测</p>
+<ul>
+<li>```python<br>import fastdeploy as fd<br>import cv2<br>import os</li>
+</ul>
+</li>
+</ul>
+<pre><code>def parse_arguments():
+    import argparse
+    import ast
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        &quot;--model_file&quot;,
+        default=&quot;./picodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet_rk3588_unquantized.rknn&quot;,
+        help=&quot;Path of rknn model.&quot;)
+    parser.add_argument(
+        &quot;--config_file&quot;,
+        default=&quot;./picodet_s_416_coco_lcnet/infer_cfg.yml&quot;,
+        help=&quot;Path of config.&quot;)
+    parser.add_argument(
+        &quot;--image&quot;,
+        type=str,
+        default=&quot;./000000014439.jpg&quot;,
+        help=&quot;Path of test image file.&quot;)
+    return parser.parse_args()
+
+
+if __name__ == &quot;__main__&quot;:
+    args = parse_arguments()
+
+    model_file = args.model_file
+    params_file = &quot;&quot;
+    config_file = args.config_file
+
+    # 配置runtime，加载模型
+    runtime_option = fd.RuntimeOption()
+    runtime_option.use_rknpu2()
+
+    model = fd.vision.detection.PPYOLOE(
+        model_file,
+        params_file,
+        config_file,
+        runtime_option=runtime_option,
+        model_format=fd.ModelFormat.RKNN)
+    model.preprocessor.disable_normalize()
+    model.preprocessor.disable_permute()
+    model.postprocessor.apply_decode_and_nms()
+
+    # 预测图片分割结果
+    im = cv2.imread(args.image)
+    result = model.predict(im)
+    print(result)
+
+    # 可视化结果
+    vis_im = fd.vision.vis_detection(im, result, score_threshold=0.5)
+    cv2.imwrite(&quot;visualized_result.jpg&quot;, vis_im)
+    print(&quot;Visualized result save in ./visualized_result.jpg&quot;)
+```
+</code></pre>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1766,245 +1984,6 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">目标检测相关</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-19 10:53:23" itemprop="dateCreated datePublished" datetime="2022-04-19T10:53:23+08:00">2022-04-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-05-19 17:30:05" itemprop="dateModified" datetime="2022-05-19T17:30:05+08:00">2022-05-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="目标检测相关"><a href="#目标检测相关" class="headerlink" title="目标检测相关"></a>目标检测相关</h1><p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAUmFuYWxkX1hpZQ==,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/v2-e0a477f5a1fb362f72123676ef403894_720w.jpg" alt="img" style="zoom:150%;"></p>
-<p>传统的图片分类的深度学习的功能组成可以分为两个部分，一个为通过多重卷积层进行图片特征的学习，第二个为通过softmax进行图片的分类。</p>
-<h2 id="传统目标检测算法"><a href="#传统目标检测算法" class="headerlink" title="传统目标检测算法"></a>传统目标检测算法</h2><p>传统目标检测算法主要基于手工提取特征：算法流程如下：</p>
-<ol>
-<li>选取感兴趣的区域，选取可能包含物体的区域</li>
-<li>对可能包含物体的区域进行特征提取</li>
-<li>对提取的特征进行检测分类</li>
-</ol>
-<h3 id="Viola-Jones-Detector"><a href="#Viola-Jones-Detector" class="headerlink" title="Viola Jones Detector"></a>Viola Jones Detector</h3><p>VJ (Viola Jones)检测器采用滑动窗口的方式以检查目标是否存在窗口之中，该检测器看起来似乎很简单稳定，但由于计算量庞大导致时间复杂度极高，为了解决该项问题，VJ检测器通过合并三项技术极大提高了检测速度，这三项技术分别是：1)特征的快速计算方法-积分图，2)有效的分类器学习方法-AdaBoost，以及3)高效的分类策略-级联结构的设计。</p>
-<h3 id="HOG-Detector"><a href="#HOG-Detector" class="headerlink" title="HOG Detector"></a>HOG Detector</h3><p>HOG(Histogram of Oriented Gradients)检测器于2005年提出，是当时尺度特征不变性(Scale Invariant Feature Transform)和形状上下文(Shape Contexts)的重要改进，为了平衡特征不变性(包括平移，尺度，光照等)和非线性(区分不同的对象类别)，HOG通过在均匀间隔单元的密集网格上计算重叠的局部对比度归一化来提高检测准确性，因此HOG检测器是基于本地像素块进行特征直方图提取的一种算法，它在目标局部变形和受光照影响下都有很好的稳定性。HOG为后期很多检测方法奠定了重要基础，相关技术被广泛应用于计算机视觉各大应用。</p>
-<h3 id="DPM-Detector"><a href="#DPM-Detector" class="headerlink" title="DPM Detector"></a>DPM Detector</h3><p>作为VOC 2007-2009目标检测挑战赛的冠军，DPM(Deformable Parts Model)是目标检测传统算法中当之无愧的SOTA(State Of The Art)算法。DPM于2008年提出，相比于HOG，DPM作了很多改进，因此该算法可以看作HOG的延申算法。DPM算法由一个主过滤器(Root-filter)和多个辅过滤器(Part-filters)组成，通过硬负挖掘(Hard negative mining)，边框回归(Bounding box regression)和上下文启动(Context priming)技术改进检测精度。作为传统目标检测算法的SOTA，DPM方法运算速度快，能够适应物体形变，但它无法适应大幅度的旋转，因此稳定性差。</p>
-<h3 id="局限性"><a href="#局限性" class="headerlink" title="局限性"></a>局限性</h3><p>基于手工提取特征的传统目标检测算法主要有以下三个缺点：</p>
-<ol>
-<li>识别效果不够好，准确率不高</li>
-<li>计算量较大，运算速度慢</li>
-<li>可能产生多个正确识别的结果</li>
-</ol>
-<h2 id="深度学习目标检测算法"><a href="#深度学习目标检测算法" class="headerlink" title="深度学习目标检测算法"></a>深度学习目标检测算法</h2><p>算法大致性能可见<a target="_blank" rel="noopener" href="https://cv.gluon.ai/model_zoo/detection.html">链接</a></p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410144648473.png" alt="image-20220410144648473"></p>
-<p>Tips：Anchor的理解：anchor直译是锚，其在目标识别里面的本质即为一个多尺度的滑动窗口，在实际中大多为计算机随机生成的预测物体在哪的一个框。anchor boxes指预定义的框集合。</p>
-<h3 id="Anchor-Based"><a href="#Anchor-Based" class="headerlink" title="Anchor-Based"></a>Anchor-Based</h3><p>Tips：</p>
-<ul>
-<li>IoU-交并比，用来计算两个框之间的的相似度，0表示无重叠，1表示重合</li>
-</ul>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220409195243183.png" alt="image-20220409195243183"></p>
-<ul>
-<li>NMS-非极大值抑制输出，每个锚框预测一个边缘框，NMS可以合并相似的预测：选中非背景类的最大预测值，去掉所有其他和它IoU值大于阈值的预测，重复进行直到所有预测要么被选中，要么被去掉。</li>
-</ul>
-<h4 id="Two-state"><a href="#Two-state" class="headerlink" title="Two-state"></a>Two-state</h4><p>二阶段检测算法主要分为以下两个阶段<br><strong>Stage1</strong>：从图像中生成region proposals<br><strong>Stage2</strong>：从region proposals生成最终的物体边框。</p>
-<h5 id="RCNN"><a href="#RCNN" class="headerlink" title="RCNN"></a>RCNN</h5><p>RCNN算法流程如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- 一张图片生成1k-2k个候选区域(使用Selective Search方法)，其候选区域通常是在多个尺度下生成选取的，具有不同的形状和大小。</span><br><span class="line">- 对每个候选区域，使用深度网络提取特征</span><br><span class="line">- 特征送入每一类的SVM分类器，判别是否属于该类</span><br><span class="line">- 使用回归精细修正候选框位置</span><br></pre></td></tr></table></figure>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410102221484.png" alt="image-20220410102221484"></p>
-<p>为了处理选取锚框大小不同的问题，使用兴趣区域（ROI）池化层，即将给定的任何一个锚框均匀分割成n*m块，输出每块中的最大值，不管锚框的大小，总是输出nm个值，样例如下：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/9d7d2cb8c875c42a1b87834fa38502f70d018a26.png" alt="img"></p>
-<p>兴趣区域汇聚层（RoI Pooing）与一般的汇聚层有什么不同：</p>
-<ul>
-<li>在一般的汇聚层中，通过设置汇聚窗口、填充和步幅的大小来间接控制输出形状</li>
-<li>在兴趣区域汇聚层中，对每个区域的输出形状是可以直接指定的 </li>
-</ul>
-<p>网络结构：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220328191033301.png" alt="image-20220328191033301"></p>
-<p>问题：计算量大，导致测试速度慢、训练速度慢、训练所需空间大</p>
-<h5 id="Fast-RCNN"><a href="#Fast-RCNN" class="headerlink" title="Fast-RCNN"></a>Fast-RCNN</h5><p>RCNN的主要性能瓶颈在于其对于每一个提议区域，其CNN的前向传播是独立的。anchor之间通常有重叠，存在重复计算的情况。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- 一张图片生成1k-2k个候选区域(使用Selective Search方法)</span><br><span class="line">- 将图片输入网络得到相应的特征图，将SS算法生成的候选框投影到特征图上获得相应的特征矩阵</span><br><span class="line">- 将每个特征矩阵通过ROI pooling缩放到7x7大小的特征图，接着将特征图展平通过一系列全连接层得到预测结果</span><br></pre></td></tr></table></figure>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/66a6d7b1dc3414493a3e7114c12d31bc483a7539.png" alt="img"></p>
-<p>Faste R-CNN 的改进是：</p>
-<ul>
-<li>在拿到一张图片之后，首先使用 CNN 对图片进行特征提取（不是对图片中的锚框进行特征提取，而是对整张图片进行特征提取，仅在整张图像上执行卷积神经网络的前向传播），最终会得到一个 7 <em> 7 或者 14 </em> 14 的 feature map</li>
-<li>抽取完特征之后，再对图片进行锚框的选择（selective search），搜索到原始图片上的锚框之后将其（按照一定的比例）映射到 CNN 的输出上</li>
-<li>映射完锚框之后，再使用 RoI pooling 对 CNN 输出的 feature map 上的锚框进行特征抽取，生成固定长度的特征（将 n * m 的矩阵拉伸成为 nm 维的向量），之后再通过一个全连接层（这样就不需要使用SVM一个一个的操作，而是一次性操作了）对每个锚框进行预测：物体的类别和真实的边缘框的偏移</li>
-<li>Fast R-CNN 相对于 R-CNN 更快的原因是：Fast R-CNN 中的 CNN 不再对每个锚框抽取特征，而是对整个图片进行特征的提取（这样做的好处是：不同的锚框之间可能会有重叠的部分，如果对每个锚框都进行特征提取的话，可能会对重叠的区域进行多次重复的特征提取操作），然后再在整张图片的feature中找出原图中锚框对应的特征，最后一起做预测</li>
-</ul>
-<p>网络结构：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220328200535046.png" alt="image-20220328200535046"></p>
-<h5 id="Faster-RCNN"><a href="#Faster-RCNN" class="headerlink" title="Faster-RCNN"></a>Faster-RCNN</h5><p>使用一个区域提议网络（即RPN）来替代Selective Search算法来获得更好的锚框。模型的其余部分保持不变，从而减少区域的生成数量并且同时保证精度。</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410142553061.png" alt="image-20220410142553061"></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- 将图片输入网络得到相应的特征图</span><br><span class="line">- 使用RPN结构生成候选框，将RPN生成的候选框投影到特征图上获得相应的特征矩阵，RPN可以看作一个小一点的，粗糙一点的目标检测算法，将提供给他的anchor box细化，生成数量较少的高质量的anchor。</span><br><span class="line">- 将每个特征矩阵通过ROI pooling缩放到7x7大小的特征图，接着将特征图展平通过一系列全连接层得到预测结果</span><br></pre></td></tr></table></figure>
-<ul>
-<li>Faster R-CNN 的改进：使用 RPN 神经网络来替代 selective search </li>
-<li>RoI 的输入是CNN 输出的 feature map 和生成的锚框</li>
-<li>RPN 的输入是 CNN 输出的 feature map，输出是一些比较高质量的锚框（可以理解为一个比较小而且比较粗糙的目标检测算法： CNN 的输出进入到 RPN 之后再做一次卷积，然后生成一些锚框（可以是 selective search 或者其他方法来生成初始的锚框），再训练一个二分类问题：预测锚框是否框住了真实的物体以及锚框到真实的边缘框的偏移，最后使用 NMS 进行去重，使得锚框的数量变少）</li>
-<li>RPN 的作用是生成大量结果很差的锚框，然后进行预测，最终输出比较好的锚框供后面的网络使用（预测出来的比较好的锚框会进入 RoI pooling，后面的操作与 Fast R-CNN 类似）</li>
-<li>通常被称为两阶段的目标检测算法：RPN 做小的目标检测（粗糙），整个网络再做一次大的目标检测（精准）<br>Faster R-CNN 目前来说是用的比较多的算法，准确率比较高，但是速度比较慢。</li>
-</ul>
-<h5 id="Mask-R-CNN"><a href="#Mask-R-CNN" class="headerlink" title="Mask R-CNN"></a>Mask R-CNN</h5><p>如果有像素级别的标号，使用FCN来利用这些信息，并且利用这些信息进一步的提升目标检测的精度。</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410143209642.png" alt="image-20220410143209642"></p>
-<p>Mask R-CNN 是基于 Faster R-CNN 修改而来的，改进在于</p>
-<ul>
-<li>假设有每个像素的标号的话，就可以对每个像素做预测（FCN）</li>
-<li>将兴趣区域汇聚层替换成了兴趣区域对齐层（RoI pooling -&gt; RoI align），使用双线性插值（bilinear interpolation）保留特征图上的空间信息，进而更适于像素级预测：对于pooling来说，假如有一个3 <em> 3的区域，需要对它进行2 </em> 2的RoI pooling操作，那么会进行取整从而切割成为不均匀的四个部分，然后进行 pooling 操作，这样切割成为不均匀的四部分的做法对于目标检测来说没有太大的问题，因为目标检测不是像素级别的，偏移几个像素对结果没有太大的影响。但是对于像素级别的标号来说，会产生极大的误差；RoI align 不管能不能整除，如果不能整除的话，会直接将像素切开，切开后的每一部分是原像素的加权（它的值是原像素的一部分）</li>
-<li>兴趣区域对齐层的输出包含了所有与兴趣区域的形状相同的特征图，它们不仅被用于预测每个兴趣区域的类别和边界框，还通过额外的全卷积网络预测目标的像素级位置 </li>
-</ul>
-<p>RCNN大类的总结：</p>
-<ul>
-<li>R-CNN 是最早、也是最有名的一类基于锚框和 CNN 的目标检测算法（R-CNN 可以认为是使用神经网络来做目标检测工作的奠基工作之一），它对图像选取若干提议区域，使用卷积神经网络对每个提议区域执行前向传播以抽取其特征，然后再用这些特征来预测提议区域的类别和边框</li>
-<li>Fast/Faster R-CNN持续提升性能：Fast R-CNN 只对整个图像做卷积神经网络的前向传播，还引入了兴趣区域汇聚层（RoI pooling），从而为具有不同形状的兴趣区域抽取相同形状的特征</li>
-<li>Faster R-CNN 将 Fast R-CNN 中使用的选择性搜索替换为参与训练的区域提议网络，这样可以在减少提议区域数量的情况下仍然保持目标检测的精度</li>
-<li>Mask R-CNN 在 Faster R-CNN 的基础上引入了一个全卷积网络，从而借助目标的像素级位置进一步提升目标检测的精度</li>
-<li>Faster R-CNN 和 Mask R-CNN 是在追求高精度场景下的常用算法（Mask R-CNN 需要有像素级别的标号，所以相对来讲局限性会大一点，在无人车领域使用的比较多）</li>
-</ul>
-<h4 id="One-state"><a href="#One-state" class="headerlink" title="One-state"></a>One-state</h4><p>one-state算法的特点是一步到位，速度相对较快，仅需要送入网络一次就可以预测出所有的边界框，经典的one - state算法包括YOLO，SSD，SqueezeDet和DetectNet，其主要思想为：均匀的在图像的不同位置进行密集，不同长宽比的抽样，然后利用CNN提取特征后直接进行分类与回归。但其正样本与负样本数据不均衡，导致模型准确度偏低</p>
-<h5 id="SSD"><a href="#SSD" class="headerlink" title="SSD"></a>SSD</h5><ul>
-<li>将输入图片通过一个基础网络进行特征的抽取，然后对生成的图片生成锚框，然后对每个锚框进行种类的预测和与真实边框的回归。</li>
-<li>对输入，将其通过卷积层，使其高宽减半，并对减半之后的图像生成锚框，并对每个锚框进行种类的预测和与真是边框的回归。网络底层拟合小物体，顶层拟合大物体。</li>
-<li>重复该流程</li>
-</ul>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220410153453938.png" alt="image-20220410153453938"></p>
-<p>详细解释如下：</p>
-<ul>
-<li><p>输入图像之后，首先进入一个基础网络来抽取特征，抽取完特征之后对每个像素生成大量的锚框（每个锚框就是一个样本，然后预测锚框的类别以及到真实边界框的偏移）</p>
-</li>
-<li><p>SSD 在给定锚框之后直接对锚框进行预测，而不需要做两阶段（为什么 Faster RCNN 需要做两次，而 SSD 只需要做一次？SSD 通过做不同分辨率下的预测来提升最终的效果，越到底层的 feature map，就越大，越往上，feature map 越少，因此底层更加有利于小物体的检测，而上层更有利于大物体的检测）</p>
-</li>
-<li><p>SSD 不再使用 RPN 网络，而是直接在生成的大量样本（锚框）上做预测，看是否包含目标物体；如果包含目标物体，再预测该样本到真实边缘框的偏移</p>
-</li>
-</ul>
-<h5 id="YOLO系列-YOLOv1"><a href="#YOLO系列-YOLOv1" class="headerlink" title="YOLO系列-YOLOv1"></a>YOLO系列-YOLOv1</h5><p>yolo将物体检测的问题处理成回归问题，相对于滑动窗口方法和RPN的方法，yolo在每一次训练和预测中都是使用了整张图片的信息进行预测，且是端到端的网络。yolo的泛化性能较好。yolo会同时预测所有的候选框和类别的概率。</p>
-<ul>
-<li><p>将一幅图片分成SxS个网格，如果某个物体的中心落在这个网格中，则这个网格就负责预测这个物体。</p>
-</li>
-<li><p>每一个网格要预测B个bounding box，每个bounding box除了要预测位置之外，还要附带预测一个confidence，每个网格还要预测C个类别的分数。</p>
-<p>样例如下：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411162751719.png" alt="image-20220411162751719"></p>
-<p>即，如果对于一幅图片，将其分为7x7个网格，取B=2,总共有20种物体的情况下，最后生成的数据为7x7x30的特征矩阵。其中有20个class scores，即每个7x7对应的网格对应于分类成为每种物体的概率20个，以及2个4+1，4即为坐标信息（x,y,w,h)，（x,y）为相对应于网格而言的中心坐标，(w,h)为相对于整张图片而言的宽和高，1为confidence，confidence定义为<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411163358736.png" alt="image-20220411163358736">，即预测的目标与真实的目标的IoU乘以是否存在物体的Pr（Object)，反映了这个框包含了一个物体的自信程度以及其预测的位置的准确程度。</p>
-</li>
-</ul>
-<p>YOLOv1网络结构示意图</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411163937265.png" alt="image-20220411163937265"></p>
-<p>24个卷积层+2个全连接层。在3x3的卷积层之前使用1x1的卷积层，这样会减少参数数量。</p>
-<p>训练相关：使用预训练，使用224x224的图片（在ImageNet中有上百万张）进行预训练。 </p>
-<p>激活函数的选用：最后一层使用线性变换，其他层使用的是leaky ReLu，公式如下：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412193906840.png" alt="image-20220412193906840"></p>
-<p>损失函数：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220411164643885.png" alt="image-20220411164643885"></p>
-<p>tips:</p>
-<ul>
-<li>对于bounding box 损失：其中x，y为坐标，直接使用误差平方和，而w，h为对应于整张图片的宽和高，由于对于小目标和大目标而言，偏移相同的距离造成的影响是不一样的，所以不应该直接使用误差平方和，而是先开方，再使用误差平方和，这样可以使小目标在相较于大目标在偏移相同的距离的时候，其损失值更大。</li>
-<li>对于confidence损失和classes损失，分成正负样本分别使用误差平方和进行计算</li>
-<li><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412202919491.png" alt="image-20220412202919491">原文中参数设置如图，之所以$\lambda_{coord}$会是$\lambda_{noobj}$的十倍是因为我们更关心框选部分有物体的框，不那么关心没框到物体的框</li>
-<li><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412203615797.png" alt="image-20220412203615797">意为如果框是一个物体的时候为1，否则为0。</li>
-</ul>
-<p>在预测的时候，生成了SxSx（class num+B*（4+1））个框，过滤框的时候使用<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412214139769.png" alt="image-20220412214139769">，与设定的阈值进行对比并进行NMS，剩下来的就是我们最终获得的目标。</p>
-<p>yolov1存在的问题：</p>
-<ul>
-<li><p>对群体性的密集小目标的检测性能差（理由：对每个网格只预测2个bounding box，且属于同一个类）</p>
-</li>
-<li><p>当目标出现了新的尺寸和比例，预测效果较差（理由：主要错误原因为定位不准确，是因为使用了直接预测目标的位置信息，而不是使用anchor从而预测回归参数，所以从yolov2开始，重新使用anchor）</p>
-</li>
-<li><p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220412162538084.png" alt="image-20220412162538084"></p>
-<p>由于类别的预测是针对于每个网格而言的，所以当多个物体的中心出现重叠的时候会出现错误。</p>
-</li>
-<li><p>在判断某些物体时，有时不需要最后的高阶的特征，只需要较为底层，或者中层的特征就可以对物体进行判断。而yolov1的结构则全部使用了最抽象的特征进行判断，反而容易引入错误。</p>
-</li>
-</ul>
-<h5 id="YOLO系列-YOLOv2"><a href="#YOLO系列-YOLOv2" class="headerlink" title="YOLO系列-YOLOv2"></a>YOLO系列-YOLOv2</h5><p>yolov1主要存在的问题：定位误差大，召回率差。yolov2中相较于yolov1的各种尝试：</p>
-<ul>
-<li>Batch Normalization</li>
-<li>High Resolution Classifier</li>
-<li>Convolutional With Anchor Boxes</li>
-<li>Dimension Clusters</li>
-<li>Direct location prediction</li>
-<li>Fine-Grained Features</li>
-<li>Multi-Scale Training</li>
-</ul>
-<p><strong>Batch Normalization</strong>：显著的提升了训练收敛的速度，减少了所需的正则化程度。通过在每个卷积层之后添加BN层，模型提高了2％的map，且可以丢弃dropout层。</p>
-<p><strong>High Resolution Classifier</strong>：因为使用了pre train技术，在yolov1中我们使用的是Image Net的224x224图像进行训练，在预测的时候将输入的分辨率调为448x448。在yolov2中，使用448x448的Image Net的图片进行预训练，使map提升4％。</p>
-<p><strong>Convolutional With Anchor Boxes</strong>：在yolov1中对边界框的预测是直接用全连接层来预测的，是不基于anchor的。而这样会导致边界框的定位误差较大。所以yolov2认为，预测基于anchor的偏移会使这个问题较为简化，并且让这个网络更加容易学习收敛。所以YOLOV2采用了Faster R-CNN的方法，引入了anchor，在网络结构方面将原来网络的全连接层和最后一个pooling层去掉，使得最后的卷积层能输出更高分辨率的特征图。我们还缩减了网络，用416x416分辨率大小作为输入，而不是448x448。这样做的原因是希望得到的特征图有着奇数的宽和高，这样特征图的中心就只有一个，因为大的目标一般会占据图像的中心，所以最好在中心有一个单一的位置来预测这些目标。网络会经过32倍下采样，最后输入13x13大小的特征图使用anchor，模型的mAP值从69.5降到了69.2，下降了一丢丢，而召回率却从81%提高到了88%，模型的提升空间有了较大的提升。</p>
-<p><strong>Dimension Clusters</strong>使用了anchor的聚类。yolo网络是去学习bounding box的改变，而anchor的初始值的好坏会导致学习的速度以及学习的最终结果。如果最开始就选用了较好的anchor则会使网络效果更好。所以yolov2使用k-means聚类算法对训练集的boxes进行聚类，寻找合适的anchor。</p>
-<p><strong>Direct location prediction</strong>：模型在基于anchor的训练的早期的大部分的不稳定性是来自于预测box的中心坐标，faster RCNN公式如下$x=(t_x*w_a)+x_a$ </p>
-<p>$y=(t_y*h_a)+y_a$ 但这个公式没有对$t_x t_y$的值有所限制，会导致一次迭代更新之后的box中心值偏离网格，到其余网格去。我们更希望每个anchor仅能预测当前对应网格的物体，所以yolov2更新了迭代预测的公式，采用相对于网格的坐标位置进行预测，公式如下：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413110720861.png" alt="image-20220413110720861"></p>
-<p>其中参数定义如下图：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/anchor.png" alt="anchor"></p>
-<p><strong>Fine-Grained Features</strong>：由于最终的feature map是13x13，其对于小物体的识别方面能力有所不够，所以需要上一层的size较大的feature map同样进行训练。所以添加了Passthrough layer，作用为将最终层前面一层26x26的feature map与最终的13x13的feature map进行连接，类似于ResNet和FPN的思想。</p>
-<p>其中Passthrough layer的具体操作方式如下所示：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413112932061.png" alt="image-20220413112932061"></p>
-<p>将一个4x4x1的特征转化为2x2x4的特征。</p>
-<p><strong>Multi-Scale Training</strong>：为了提升yolov2系统的鲁棒性，将输入图片的图像进行动态的调整，以完成图片的多尺度训练。在实际的操作过程中，每隔10次迭代便随机的选择一个新图像大小进行输入，选择的大小为32的倍数。32为输入到输出的放缩倍数，从320到608进行选择。</p>
-<p>yolov2的backbone采用了darknet-19 其在ImageNet上用224x224进行训练，在top -5 accuracy取得了91.2％的准确率，其网络结构如下：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413113649802.png" alt="image-20220413113649802"></p>
-<p>yolov2的整个模型框架如下所示：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413113811030.png" alt="image-20220413113811030"></p>
-<p>B=5 ClassNum=20 </p>
-<p>关于网络训练细节：权重衰退weight decay设置0.0005，momentum设置为0.9，学习率在前160次设置为0.001，在60次和90次的时候，学习率减为原来的十分之一，采用了Faster RCNN和SSD的数据增强策略，如随机裁剪，颜色偏移，在COCO和VOC上的训练策略相同</p>
-<h5 id="YOLO系列-YOLOv3"><a href="#YOLO系列-YOLOv3" class="headerlink" title="YOLO系列-YOLOv3"></a>YOLO系列-YOLOv3</h5><p>YOLOv3放弃了YOLOv2的Darknet-19作为backbone，而采用了Darknet-53进行图片的特征提取。</p>
-<p>Darknet-53的网络结构如下所示：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/70.png" alt="img"></p>
-<p>YOLOv3的网络结构如下所示：</p>
-<p><img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/image-20220413193915663.png" alt="image-20220413193915663"></p>
-<p>YOLOv3在三个不同的尺度下对box进行预测，每个尺度上预测3个box，而box的先验信息由k-means算法进行计算，以COCO数据集为例，其预测出的bounding box priors的值为<img src="/2022/04/19/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E7%9B%B8%E5%85%B3/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM3NTQxMDk3,size_16,color_FFFFFF,t_70.png" alt="img"></p>
-<p>predict one大小为13x13一般提取较大的物体特征，predict two大小为26x26一般提取中等的物体特征，predict three一般提取较小的物体特征。</p>
-<p>假设将一个图片分为NxN，则我们在一个scale的情况下，总共预测得到的参数为<br>$ NxNx3x(4+1+80) $，其中80是类别数，4是box偏移量，1是confidence，3是每一个scale预测3个bounding box。即在yolov3中，不是每个网格进行类别的预测，而是使用每个box进行类别的预测。</p>
-<p>yolo将最后的多分类任务转换为多个二分类的任务，并且损失函数使用二分类对应的交叉熵累计计算。</p>
-<p>YOLOv3使用上采样的方式，将图片更粗颗粒感的因素与更细颗粒感的因素相结合进行融合预测。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2074,7 +2053,7 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-count">16</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -2106,7 +2085,7 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2022</span>
+  <span itemprop="copyrightYear">2023</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

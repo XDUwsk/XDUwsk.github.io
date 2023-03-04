@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="RK3588s部署相关目前无人机上开发板为ROC-RK3588S-PC，为在其上进行深度学习模型的推理，需要对板载的NPU进行配置使用。为使用该NPU，需要下载RKNN SDK，RKNN SDK为RK3588s提供编程接口，帮助用户部署使用通过RKNN-Toolkit2导出的RKNN模型。 下列代码输出的是rk3588机载npu的使用率，从而可以验证板载npu是否被使用 1cat &#x2F;sys&#x2F;ker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="凯_kaiii">
+<meta property="og:url" content="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="RK3588s部署相关目前无人机上开发板为ROC-RK3588S-PC，为在其上进行深度学习模型的推理，需要对板载的NPU进行配置使用。为使用该NPU，需要下载RKNN SDK，RKNN SDK为RK3588s提供编程接口，帮助用户部署使用通过RKNN-Toolkit2导出的RKNN模型。 下列代码输出的是rk3588机载npu的使用率，从而可以验证板载npu是否被使用 1cat &#x2F;sys&#x2F;ker">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/image-20230221221155971.png">
+<meta property="article:published_time" content="2023-03-04T07:27:13.218Z">
+<meta property="article:modified_time" content="2023-03-04T07:20:59.378Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/image-20230221221155971.png">
+
+<link rel="canonical" href="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title> | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-03-04 15:27:13 / 修改时间：15:20:59" itemprop="dateCreated datePublished" datetime="2023-03-04T15:27:13+08:00">2023-03-04</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RK3588s部署相关"><a href="#RK3588s部署相关" class="headerlink" title="RK3588s部署相关"></a>RK3588s部署相关</h1><p>目前无人机上开发板为ROC-RK3588S-PC，为在其上进行深度学习模型的推理，需要对板载的NPU进行配置使用。为使用该NPU，需要下载<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">RKNN SDK</a>，RKNN SDK为RK3588s提供编程接口，帮助用户部署使用通过RKNN-Toolkit2导出的RKNN模型。</p>
+<p>下列代码输出的是rk3588机载npu的使用率，从而可以验证板载npu是否被使用</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat /sys/kernel/debug/rknpu/load</span><br></pre></td></tr></table></figure>
+<p>目前3588的部署方式大致有两种，一为利用RKNN官方支持的方式进行部署，另一为利用FastDeploy，其在RKNN官方的基础上加了一层进行后续部署。</p>
+<h2 id="基本组件及功能介绍"><a href="#基本组件及功能介绍" class="headerlink" title="基本组件及功能介绍"></a>基本组件及功能介绍</h2><h3 id="RKNN-Toolkit2与RKNN-Toolkit-Lite2套件介绍"><a href="#RKNN-Toolkit2与RKNN-Toolkit-Lite2套件介绍" class="headerlink" title="RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍"></a><strong>RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍</strong></h3><h4 id="RKNN-Toolkit2"><a href="#RKNN-Toolkit2" class="headerlink" title="RKNN-Toolkit2"></a>RKNN-Toolkit2</h4><p>RKNN-Toolkit2是为用户提供在PC平台上进行Rockchip芯片NPU模型转换、推理和性能评估的开发套件。用户通过该工具提供的Python 接口可以便捷地完成以下功能：</p>
+<ol>
+<li>模型转换：支持Caffe、TensorFlow、TensorFlow Lite、ONNX、DarkNet、PyTorch 等模型转为RKNN 模型，并支持RKNN 模型导入导出，RKNN 模型能够在Rockchip NPU 平台上加载使用。</li>
+<li>量化功能：支持将浮点模型量化为定点模型，目前支持的量化方法为非对称量化（ asymmetric_quantized-8 及asymmetric_quantized-16 ） ， 并支持混合量化功能。</li>
+<li>模型推理：能够在PC 上模拟Rockchip NPU 运行RKNN 模型并获取推理结果；或将RKNN模型分发到指定的NPU 设备上进行推理并获取推理结果。</li>
+<li>性能和内存评估：将RKNN 模型分发到指定NPU 设备上运行，以评估模型在实际设备上运行时的性能和内存占用情况。</li>
+<li>量化精度分析：该功能将给出模型量化前后每一层推理结果与浮点模型推理结果的余弦距离，以便于分析量化误差是如何出现的，为提高量化模型的精度提供思路。</li>
+</ol>
+<p><strong>即，该部分需要在linux-ubuntu的电脑上进行安装，从而完成模型的转换和模型的量化等功能</strong></p>
+<h4 id="RKNN-Toolkit-Lite2"><a href="#RKNN-Toolkit-Lite2" class="headerlink" title="RKNN -Toolkit-Lite2"></a>RKNN -Toolkit-Lite2</h4><p>RKNN -Toolkit-Lite2为RKNN-Toolkit-lite2的一部分，为带有瑞芯NPU平台提供Python编程接口，帮助用户部署使用RKNN-Toolkit2导出的RKNN模型。</p>
+<h4 id="rknpu2"><a href="#rknpu2" class="headerlink" title="rknpu2"></a>rknpu2</h4><p>rknpu2为带有瑞芯NPU平台提供c语言编程接口，帮助用户部署使用 RKNN-Toolkit2 导出的 RKNN 模型。</p>
+<p><strong>即RKNN -Toolkit-Lite2和rknpu2分别为板载上使用python或c++调用npu的接口，需要在板子上进行安装从而完成对应的npu的调用</strong></p>
+<h4 id="FastDeploy"><a href="#FastDeploy" class="headerlink" title="FastDeploy"></a>FastDeploy</h4><p>FastDeploy是百度推出的一款AI算法推理部署的工具。其为在RKNN官方的库的基础上进行二次开发及封装，从而实现更方便的一种算法部署方式。但是其由于目前依旧为develop阶段，很多接口尚未完全开发完毕。</p>
+<p><strong>即FastDeploy需要在ubuntu服务器端和板载端均进行安装，目前正在快速开发中，交流群内较为活跃，遇到问题好解决</strong></p>
+<h2 id="使用RKNN官方例程"><a href="#使用RKNN官方例程" class="headerlink" title="使用RKNN官方例程"></a>使用RKNN官方例程</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><h4 id="服务器端环境"><a href="#服务器端环境" class="headerlink" title="服务器端环境"></a>服务器端环境</h4><p>首先在<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">firefly官网中的RK3588S中的NPU使用</a>中或者<a href="wget https://bj.bcebos.com/fastdeploy/third_libs/rknpu2_device_install_1.4.0.zip">百度提供的下载链接</a>下载RKNN SDK，然后由于目前RKNN ToolKit2只支持python3.6或者python3.8，所以在linux-ubuntu的电脑运行如下代码，安装对应代码</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 创建python3.<span class="number">8</span>环境</span><br><span class="line">conda create -n rknn2 python=<span class="number">3</span>.<span class="number">8</span></span><br><span class="line">conda activate rknn2</span><br><span class="line"></span><br><span class="line"># 安装 rknn-toolkit2</span><br><span class="line">pip install numpy==<span class="number">1</span>.<span class="number">16</span>.<span class="number">6</span></span><br><span class="line">sudo apt-get install libxslt1-dev zlib1g zlib1g-dev libglib2.<span class="number">0</span>-<span class="number">0</span> libsm6 libgl1-mesa-glx libprotobuf-dev gcc g++</span><br><span class="line">pip install rknn-toolkit2/packages/rknn_toolkit2-<span class="number">1</span>.<span class="number">3</span>.<span class="number">0</span>_11912b58-cp38-cp38-linux_x86_64.whl</span><br><span class="line"></span><br><span class="line"># 安装yaml</span><br><span class="line">pip install pyyaml</span><br></pre></td></tr></table></figure>
+<h4 id="板端环境"><a href="#板端环境" class="headerlink" title="板端环境"></a>板端环境</h4><p>首先将板子从原生的安卓刷系统为ubuntu系统，然后在<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">firefly官网中的RK3588S中的NPU使用</a>中下载RKNN SDK，由于目前的rknn_toolkit2_lite2只支持python3.7或者python3.9，所以输入下列代码安装rknn_toolkit2_lite2</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> rknpu2_device_install</span><br><span class="line"># RK3588运行以下代码</span><br><span class="line">sudo rknn_install_rk3588.sh</span><br></pre></td></tr></table></figure>
+<h3 id="模型转换步骤"><a href="#模型转换步骤" class="headerlink" title="模型转换步骤"></a>模型转换步骤</h3><ul>
+<li><p>首先通过任务的不同需求训练出神经网络</p>
+</li>
+<li><p>通过各类转换工具将模型转换为onnx</p>
+</li>
+<li><p>将onnx模型通过PKNN-Toolkit2转换为RKNN格式</p>
+<ul>
+<li><p>利用RKNN-Toolkit2的Python API接口导出RKNN格式的模型。操作流程如下</p>
+<p>1、 创建RKNN对象，初始化RKNN SDK环境。</p>
+<p>2、 调用config接口设置模型预处理参数。</p>
+<p>3、 调用对应加载第3方框架接口，加载TensorFlow、Pytorch、ONNX模型。</p>
+<p>4、 调用build接口构建RKNN模型。</p>
+<p>5、 调用export_rknn接口导出RKNN模型</p>
+</li>
+</ul>
+<p>对应文档查看下载包内的<strong>Rockchip_User_Guide_RKNN_Toolkit2_CN</strong></p>
+</li>
+</ul>
+<h3 id="默认转换好的模型在RK3588s上的使用（RKNPU2）"><a href="#默认转换好的模型在RK3588s上的使用（RKNPU2）" class="headerlink" title="默认转换好的模型在RK3588s上的使用（RKNPU2）"></a>默认转换好的模型在RK3588s上的使用（RKNPU2）</h3><ul>
+<li>首先针对于自身平台下载gcc交叉编译器 gcc-9.3.0-x86_64_arrch64-linux-gnu</li>
+<li>然后进入/rknpu2_1.3.0/examples 文件夹</li>
+<li>假定想要测试转换好了的yolov5，则进入对应的rknn_yolov5_demo文件夹</li>
+<li>使用./build-linux_RK3588.sh进行编译</li>
+<li>进入./install/rknn_yolov5_demo_linux 文件夹使用./rknn_yolov5_demo ./model/RK3588/yolov5s-640-640.rknn ./model/bus.jpg 进行测试</li>
+</ul>
+<h3 id="默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）"><a href="#默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）" class="headerlink" title="默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）"></a>默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）</h3><ul>
+<li>利用conda 创建py36或者py38的环境</li>
+<li>进入rknn-toolkit2-1.3.0/rknn_toolkit_lite2文件夹，进入package文件夹安装对应的whl</li>
+<li>进入examples/inference_with_lite文件夹，使用python test.py进行测试</li>
+</ul>
+<h2 id="使用百度-Fast-Deploy相关工具进行部署"><a href="#使用百度-Fast-Deploy相关工具进行部署" class="headerlink" title="使用百度 Fast Deploy相关工具进行部署"></a>使用百度 Fast Deploy相关工具进行部署</h2><p>官方视频例程大都是老版本的配置，其在现有的工程下的使用比较落后。故大致步骤可和<a target="_blank" rel="noopener" href="https://aistudio.baidu.com/aistudio/education/preview/3610910">官方视频</a>内相同，但具体节点的使用方式有所差异。</p>
+<h3 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h3><p>对应部署的环境配置分为板载RK3588s上的环境配置和个人PC上的环境配置，对应需要配置的环境如下所示</p>
+<p><img src="/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3_NEW/image-20230221221155971.png" alt="image-20230221221155971"></p>
+<p>RKNN官方例程中的服务器端环境和板端环境均需要进行配置，然后针对于FastDeploy进行环境配置。</p>
+<p>FastDeploy在板端的安装（c++）</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br><span class="line"><span class="built_in">cd</span> FastDeploy</span><br><span class="line"><span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build</span><br><span class="line"></span><br><span class="line"># Only a few key configurations are introduced here, see README.<span class="built_in">md</span> <span class="keyword">for</span> details.</span><br><span class="line"># -DENABLE_ORT_BACKEND:     Whether to enable ONNX model, default OFF</span><br><span class="line"># -DENABLE_RKNPU2_BACKEND:  Whether to enable RKNPU model, default OFF</span><br><span class="line"># -RKNN2_TARGET_SOC:        Compile the SDK board model. Enter RK356X or RK3588 with case sensitive required.</span><br><span class="line">cmake ..  -DENABLE_ORT_BACKEND=ON \</span><br><span class="line">	      -DENABLE_RKNPU2_BACKEND=ON \</span><br><span class="line">	      -DENABLE_VISION=ON \</span><br><span class="line">	      -DRKNN2_TARGET_SOC=RK3588 \</span><br><span class="line">          -DCMAKE_INSTALL_PREFIX=$&#123;PWD&#125;/fastdeploy-<span class="number">0</span>.<span class="number">0</span>.<span class="number">3</span></span><br><span class="line">make -j8</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>FastDeploy在板端的安装（python）</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br><span class="line"><span class="built_in">cd</span> FastDeploy</span><br><span class="line"><span class="built_in">cd</span> python</span><br><span class="line"></span><br><span class="line">export ENABLE_ORT_BACKEND=ON</span><br><span class="line">export ENABLE_RKNPU2_BACKEND=ON</span><br><span class="line">export ENABLE_VISION=ON</span><br><span class="line">export RKNN2_TARGET_SOC=RK3588</span><br><span class="line">python3 setup.py build</span><br><span class="line">python3 setup.py bdist_wheel</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> dist</span><br><span class="line"></span><br><span class="line">pip3 install fastdeploy_python-<span class="number">0</span>.<span class="number">0</span>.<span class="number">0</span>-cp39-cp39-linux_aarch64.whl</span><br></pre></td></tr></table></figure>
+<p>个人PC环境配置及模型转换</p>
+<p>本次尝试在对应远程服务器上进行环境部署，该服务器主要负责对应模型的训练，模型的转换，目前要求为linux-64bit环境。</p>
+<ul>
+<li><p>假定使用的是paddleDetection训练得到想要的模型，首先使用PaddleDetection中的/tools/export_model.py对训练得出的模型进行导出，将Paddle动态图转换为静态图，对应转换模型代码为</p>
+<ul>
+<li>```cmd<br>python ./tools/export_model.py —config configs/picodet/picodet_s_416_visdrone.yml<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 转换后的模型会存放于</span><br><span class="line"></span><br><span class="line">- ```cmd</span><br><span class="line">  ./output_inference/picodet_s_416_visdrone</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>进一步将模型从静态的paddle模型转化到onnx模型，需要使用Paddle2ONNX库，该库的安装命令使用</p>
+<ul>
+<li><p>```cmd<br>pip install paddle2onnx    </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 对应的模型的转换，从静态paddle模型转换为onnx格式，使用命令，对应[官网](https://github.com/PaddlePaddle/Paddle2ONNX)，（在Paddle2ONNX文件夹内使用）</span><br><span class="line"></span><br><span class="line">- ```cmd</span><br><span class="line">  #静态图转onnx模型</span><br><span class="line">  paddle2onnx --model_dir picodet_s_416_coco_lcnet --model_filename model.pdmodel --params_filename model.pdiparams --save_file  picodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx --enable_dev_version True</span><br><span class="line">  #固定模型输入形状，改为静态shape</span><br><span class="line">  python -m paddle2onnx.optimize \--input_modelpicodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx \--output_modelpicodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx \--input_shape_dict&quot;&#123;&#x27;image&#x27;:[1,3,416,416]&#125;&quot;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>注意，若ONNX不支持对应的算子，如自适应池化层，需要对得到的模型进行输入的固定，即改为静态shape。对应的查看方式为转换为onnx格式文件之后，使用[onnx结构查询——netron][<a target="_blank" rel="noopener" href="https://netron.app/]对onnx模型结构进行查看。">https://netron.app/]对onnx模型结构进行查看。</a></p>
+</li>
+</ul>
+</li>
+<li><p>然后将得到的onnx模型转换为对应的rknn模型，需要书写转换用到的yaml文件</p>
+<ul>
+<li><p>转换的yaml书写要点可见<a target="_blank" rel="noopener" href="https://www.github.com/PaddlePaddle/FastDeploy/blob/develop/docs/cn/faq/rknpu2/export.md">官网</a></p>
+<ul>
+<li><p>大体上如下所示</p>
+</li>
+<li><p>```cmd<br>mean:<br>  -</p>
+<pre><code>- 128.5
+- 128.5
+- 128.5
+</code></pre><p>std:<br>  -</p>
+<pre><code>- 128.5
+- 128.5
+- 128.5
+</code></pre><p>model_path: “./scrfd_500m_bnkps_shape640x640.onnx”<br>outputs_nodes:<br>do_quantization: True<br>dataset: “./datasets.txt”<br>output_folder: “./“</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 转换用的语句为</span><br><span class="line"></span><br><span class="line">  - ```cmd</span><br><span class="line">    python tools/rknpu2/export.py --config_path tools/rknpu2/config/RK3588/picodet_s_416_coco_lcnet.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>对应使用的为fastdeploy内的对rknpu2的export函数，得到对应的rknn模型</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="RK3588s环境配置及实机程序运行"><a href="#RK3588s环境配置及实机程序运行" class="headerlink" title="RK3588s环境配置及实机程序运行"></a>RK3588s环境配置及实机程序运行</h3><ul>
+<li><p>将对应的rknn模型和cfg，对应图像拷贝到RK3588板子上，并运行<a target="_blank" rel="noopener" href="https://github.com/PaddlePaddle/FastDeploy/tree/develop/examples/vision/detection/paddledetection/rknpu2/python">官网</a>提供的infer代码进行推理检测</p>
+<ul>
+<li>```python<br>import fastdeploy as fd<br>import cv2<br>import os</li>
+</ul>
+</li>
+</ul>
+<pre><code>def parse_arguments():
+    import argparse
+    import ast
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        &quot;--model_file&quot;,
+        default=&quot;./picodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet_rk3588_unquantized.rknn&quot;,
+        help=&quot;Path of rknn model.&quot;)
+    parser.add_argument(
+        &quot;--config_file&quot;,
+        default=&quot;./picodet_s_416_coco_lcnet/infer_cfg.yml&quot;,
+        help=&quot;Path of config.&quot;)
+    parser.add_argument(
+        &quot;--image&quot;,
+        type=str,
+        default=&quot;./000000014439.jpg&quot;,
+        help=&quot;Path of test image file.&quot;)
+    return parser.parse_args()
+
+
+if __name__ == &quot;__main__&quot;:
+    args = parse_arguments()
+
+    model_file = args.model_file
+    params_file = &quot;&quot;
+    config_file = args.config_file
+
+    # 配置runtime，加载模型
+    runtime_option = fd.RuntimeOption()
+    runtime_option.use_rknpu2()
+
+    model = fd.vision.detection.PPYOLOE(
+        model_file,
+        params_file,
+        config_file,
+        runtime_option=runtime_option,
+        model_format=fd.ModelFormat.RKNN)
+    model.preprocessor.disable_normalize()
+    model.preprocessor.disable_permute()
+    model.postprocessor.apply_decode_and_nms()
+
+    # 预测图片分割结果
+    im = cv2.imread(args.image)
+    result = model.predict(im)
+    print(result)
+
+    # 可视化结果
+    vis_im = fd.vision.vis_detection(im, result, score_threshold=0.5)
+    cv2.imwrite(&quot;visualized_result.jpg&quot;, vis_im)
+    print(&quot;Visualized result save in ./visualized_result.jpg&quot;)
+```
+</code></pre>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/" rel="prev" title="Towards Data-Efficient Detection Transformer">
+      <i class="fa fa-chevron-left"></i> Towards Data-Efficient Detection Transformer
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3"><span class="nav-number">1.</span> <span class="nav-text">RK3588s部署相关</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%BB%84%E4%BB%B6%E5%8F%8A%E5%8A%9F%E8%83%BD%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.</span> <span class="nav-text">基本组件及功能介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RKNN-Toolkit2%E4%B8%8ERKNN-Toolkit-Lite2%E5%A5%97%E4%BB%B6%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.1.</span> <span class="nav-text">RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#RKNN-Toolkit2"><span class="nav-number">1.1.1.1.</span> <span class="nav-text">RKNN-Toolkit2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RKNN-Toolkit-Lite2"><span class="nav-number">1.1.1.2.</span> <span class="nav-text">RKNN -Toolkit-Lite2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rknpu2"><span class="nav-number">1.1.1.3.</span> <span class="nav-text">rknpu2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FastDeploy"><span class="nav-number">1.1.1.4.</span> <span class="nav-text">FastDeploy</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8RKNN%E5%AE%98%E6%96%B9%E4%BE%8B%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">使用RKNN官方例程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">1.2.1.</span> <span class="nav-text">环境准备</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E7%8E%AF%E5%A2%83"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">服务器端环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9D%BF%E7%AB%AF%E7%8E%AF%E5%A2%83"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">板端环境</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E8%BD%AC%E6%8D%A2%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.2.2.</span> <span class="nav-text">模型转换步骤</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E8%BD%AC%E6%8D%A2%E5%A5%BD%E7%9A%84%E6%A8%A1%E5%9E%8B%E5%9C%A8RK3588s%E4%B8%8A%E7%9A%84%E4%BD%BF%E7%94%A8%EF%BC%88RKNPU2%EF%BC%89"><span class="nav-number">1.2.3.</span> <span class="nav-text">默认转换好的模型在RK3588s上的使用（RKNPU2）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E8%BD%AC%E6%8D%A2%E5%A5%BD%E7%9A%84%E6%A8%A1%E5%9E%8B%E5%9C%A8RK3588s%E4%B8%8A%E7%9A%84%E4%BD%BF%E7%94%A8%EF%BC%88RKNN-ToolKit2-lite%EF%BC%89"><span class="nav-number">1.2.4.</span> <span class="nav-text">默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E7%99%BE%E5%BA%A6-Fast-Deploy%E7%9B%B8%E5%85%B3%E5%B7%A5%E5%85%B7%E8%BF%9B%E8%A1%8C%E9%83%A8%E7%BD%B2"><span class="nav-number">1.3.</span> <span class="nav-text">使用百度 Fast Deploy相关工具进行部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="nav-number">1.3.1.</span> <span class="nav-text">环境配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RK3588s%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E5%8F%8A%E5%AE%9E%E6%9C%BA%E7%A8%8B%E5%BA%8F%E8%BF%90%E8%A1%8C"><span class="nav-number">1.3.2.</span> <span class="nav-text">RK3588s环境配置及实机程序运行</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
