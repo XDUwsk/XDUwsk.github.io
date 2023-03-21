@@ -148,6 +148,130 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/21/RK3588%E3%80%81ros%E3%80%81fastdeploy%E8%81%94%E5%90%88%E7%8E%AF%E5%A2%83%E8%AE%BE%E7%BD%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/21/RK3588%E3%80%81ros%E3%80%81fastdeploy%E8%81%94%E5%90%88%E7%8E%AF%E5%A2%83%E8%AE%BE%E7%BD%AE/" class="post-title-link" itemprop="url">RK3588、ros、fastdeploy联合环境设置</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-03-21 21:00:27 / 修改时间：21:01:02" itemprop="dateCreated datePublished" datetime="2023-03-21T21:00:27+08:00">2023-03-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="基础环境设置"><a href="#基础环境设置" class="headerlink" title="基础环境设置"></a>基础环境设置</h2><h3 id="ROS环境设置"><a href="#ROS环境设置" class="headerlink" title="ROS环境设置"></a>ROS环境设置</h3><p>ros与ubuntu系统紧密相连，要求在固定版本的Ubuntu系统上安装对应版本的ros系统，对应版本如下：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Ubuntu版本</th>
+<th>ros版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ubuntu16.04</td>
+<td>ros-kinetic</td>
+</tr>
+<tr>
+<td>ubuntu18.04</td>
+<td>ros-melodic</td>
+</tr>
+<tr>
+<td>ubuntu20.04</td>
+<td>ros-noetic</td>
+</tr>
+<tr>
+<td>Ubuntu22.04</td>
+<td>ros-humble（ros2）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>以在rk3588上安装ros为例，rk3588上系统环境为ubuntu20.04，即需要安装的ros版本为ros-noetic。</p>
+<p>安装类比于<a target="_blank" rel="noopener" href="https://blog.csdn.net/KIK9973/article/details/118755045">Ubuntu18.04安装Ros</a>进行ubuntu20.04下的ros安装，注意将其中的ros-melodic替换为ros-noetic。</p>
+<p>核心命令为</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#设置中科大源</span><br><span class="line">sudo sh -c &#x27;. /etc/lsb-release &amp;&amp; <span class="built_in">echo</span> &quot;deb http://mirrors.ustc.edu.cn/ros/ubuntu/ `lsb_release -cs` main&quot; &gt; /etc/apt/sources.list.d/ros-latest.list&#x27;</span><br><span class="line">#设置公钥</span><br><span class="line">sudo apt-key adv --keyserver &#x27;hkp://keyserver.ubuntu.com:<span class="number">80</span>&#x27; --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654</span><br><span class="line">#更新软件包列表</span><br><span class="line">sudo apt update</span><br><span class="line">#安装ros（需要替换网址中的melodic为noetic）</span><br><span class="line">sudo apt install ros-noetic-desktop-full</span><br><span class="line">#设置环境变量</span><br><span class="line"><span class="built_in">echo</span> &quot;source /opt/ros/melodic/setup.bash&quot; &gt;&gt; ~/.bashrc</span><br><span class="line">source ~/.bashrc</span><br></pre></td></tr></table></figure>
+<h3 id="FFMPEG源码编译"><a href="#FFMPEG源码编译" class="headerlink" title="FFMPEG源码编译"></a>FFMPEG源码编译</h3><p>在官方github中下载FFMPEG源码，例如版本4.2.7</p>
+<p>安装依赖库</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install libx264-dev</span><br><span class="line">sudo apt install libdrm-dev</span><br></pre></td></tr></table></figure>
+<p>根据需求配置configure，配置makefile</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --enable-shared --enable-gpl --enable-libx264 --enable-rkmpp --enable-version3 --enable-libdrm</span><br></pre></td></tr></table></figure>
+<h3 id="OPENCV源码编译"><a href="#OPENCV源码编译" class="headerlink" title="OPENCV源码编译"></a>OPENCV源码编译</h3><p>在官方github中下载OpenCV源码，例如版本4.5.5</p>
+<p>下载官方github 例如4.5.5</p>
+<ul>
+<li>安装依赖库</li>
+</ul>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install libgtk-dev</span><br><span class="line">sudo apt install libgail-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build </span><br><span class="line">cmake ..</span><br></pre></td></tr></table></figure>
+<h2 id="环境依赖兼容问题"><a href="#环境依赖兼容问题" class="headerlink" title="环境依赖兼容问题"></a>环境依赖兼容问题</h2><p>ros、fastdeploy、opencv版本问题</p>
+<p>解决方法：</p>
+<ul>
+<li><p>针对fastdeploy，自定义opencv版本进行fastdeploy的编译</p>
+<ul>
+<li><p>需要修改的文件路径如下所示：</p>
+<ul>
+<li><p><strong>/FastDeploy/CmakeLists.txt</strong></p>
+<ul>
+<li><pre><code class="lang-txt">#修改opencv_dir
+set(OPENCV_DIRECTORY &quot;/usr/local/lib/cmake/opencv4&quot; CACHR PATH &quot;User can specify the installed opencv directory.&quot;)
+</code></pre>
+<p>这个地方修改之后会在后续引入opencv.cmake的时候将该参数传入，并在opencv.cmake中进行cmakelist中头文件的包含，动态链接库的链接等操作</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3-NEW/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1622,368 +1746,6 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">YOLOv4总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-04 21:14:44" itemprop="dateCreated datePublished" datetime="2022-07-04T21:14:44+08:00">2022-07-04</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-22 21:35:35" itemprop="dateModified" datetime="2022-08-22T21:35:35+08:00">2022-08-22</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="目标检测组成及常见技术"><a href="#目标检测组成及常见技术" class="headerlink" title="目标检测组成及常见技术"></a>目标检测组成及常见技术</h3><p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/v2-dd7959839adc00c2803eb69574650a5a_720w.jpg" alt="img"></p>
-<p>yolov4原文中提及的目前常见的目标检测的方法:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/v2-229510bb08fbe321ce6c041f75b676b5_720w.jpg" alt="img"></p>
-<p>可以理解为如下,目标检测网络一般由以下四个部分组成:</p>
-<ul>
-<li><p><strong>Input部分：</strong>Image，Patches，Images Pyramid(图像金字塔)</p>
-</li>
-<li><p><strong>Backbone部分</strong>(Backbone的作用是目标的特征提取,用来提取基础特征,一般是在不同图像细粒度上聚合并形成图像特征的卷积神经网络)： VGG16，ResNet-50，SpineNet，EfficientNet-B0 / B7，CSPResNeXt50，CSPDarknet53</p>
-</li>
-<li><p><strong>neck部分</strong>(neck的作用是对backbone提取到的重要特征进行加工及再利用,目标检测常在backbone和heads部分加入一些层,用来进行一系列混合和组合图像的特征,并将图像特征传递到heads层):</p>
-</li>
-<li><ul>
-<li>Additional blocks：SPP，ASPP，RFB，SAM</li>
-<li>Path-aggregation blocks：FPN，PAN，NAS-FPN，Fully-connected FPN，BiFPN，ASFF，SFAM</li>
-</ul>
-</li>
-<li><p><strong>Heads部分</strong>(heads的作用是根据传入的图像特征进行边界框的生成和类别的预测):</p>
-</li>
-<li><ul>
-<li><p><strong>Dense Predictions</strong>(one-stage)：</p>
-</li>
-<li><ul>
-<li>RPN，SSD，YOLO，RetinaNet （基于anchor）</li>
-<li>CornerNet，CenterNet，MatrixNet，FCOS（无anchor）</li>
-</ul>
-</li>
-<li><p><strong>Sparse Predictions</strong>(two-stages)：</p>
-</li>
-<li><ul>
-<li>Faster R-CNN，R-FCN，Mask R-CNN（基于anchor）</li>
-<li>RepPoints（无anchor）</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="BOF-bag-of-freebies"><a href="#BOF-bag-of-freebies" class="headerlink" title="BOF(bag of freebies)"></a>BOF(bag of freebies)</h3><p>BOF是指那些能够提高精度但不增加推断时间的技术(但有可能会增加训练时间)</p>
-<p>常见的BOF方法如下:</p>
-<ul>
-<li>数据增强.数据增广<ul>
-<li>模拟几何畸变:Random Scaling,Random Cropping,Random Flipping, Random Rotating</li>
-<li>模拟光照变化:brightness,contrast,hue,saturation(饱和度),noise</li>
-<li>模拟遮挡:Ramdom Rease,CutOut,Hide-and-Seek,Grid Mask</li>
-<li>利用多张图像进行增强:Mixup,CutMix</li>
-<li>风格迁移:Style Transfer GAN</li>
-</ul>
-</li>
-<li>网络正则化<ul>
-<li>Dropot,DropConect,DropBlock</li>
-</ul>
-</li>
-<li>处理数据分布不平衡<ul>
-<li>two-stage:Hard Negative Example Mining,Online Hard Example Mining</li>
-<li>one-stage:Focal Loss</li>
-</ul>
-</li>
-<li>one-hot类别之间没有关联<ul>
-<li>Label Smoothing,知识蒸馏</li>
-</ul>
-</li>
-<li>BBox回归的损失函数的设计:<ul>
-<li>IOU Loss,DIOU Loss,GIOU Loss,CIOU Loss</li>
-</ul>
-</li>
-</ul>
-<h3 id="BOS-bag-of-specials"><a href="#BOS-bag-of-specials" class="headerlink" title="BOS(bag of specials)"></a>BOS(bag of specials)</h3><p>BOS指的是那些增加少许推断代价,但是可以提高模型精度的方法.</p>
-<p>常见的BOS方法如下</p>
-<ul>
-<li>增大模型感受野<ul>
-<li>SPP,ASPP,RFB</li>
-</ul>
-</li>
-<li>引入注意力机制<ul>
-<li>Squeeze-and-Excitation(SE),Spatial Attention Module(SAM),modified SAM</li>
-</ul>
-</li>
-<li>特征融合,特征集成模块<ul>
-<li>Skip Connection,Hyper Column,FPN(SFAM,ASFF.BiFPN)</li>
-</ul>
-</li>
-<li>改变激活函数<ul>
-<li>Mish.Swish.Hard Swish.ReLu类</li>
-</ul>
-</li>
-<li>后处理方法<ul>
-<li>soft NMS,greedy NMS,DIOU NMS</li>
-</ul>
-</li>
-</ul>
-<h3 id="BOF和BOS中部分关键技术解析"><a href="#BOF和BOS中部分关键技术解析" class="headerlink" title="BOF和BOS中部分关键技术解析"></a>BOF和BOS中部分关键技术解析</h3><h4 id="数据增强"><a href="#数据增强" class="headerlink" title="数据增强"></a>数据增强</h4><h5 id="传统数据增强"><a href="#传统数据增强" class="headerlink" title="传统数据增强"></a>传统数据增强</h5><p>模拟几何畸变,模拟光照变换,是通过旋转,镜像,平移,改变图像亮度,色域直方图等方式进行数据的增强操作.</p>
-<h4 id="数据增强-模拟遮挡"><a href="#数据增强-模拟遮挡" class="headerlink" title="数据增强-模拟遮挡"></a>数据增强-模拟遮挡</h4><h5 id="Random-Erease"><a href="#Random-Erease" class="headerlink" title="Random Erease"></a>Random Erease</h5><p>方法Random Erease属于模拟遮挡,不需要额外的参数或者内存消耗,通过随机选择图像中的一个矩形区域,并用随机值覆盖图像,从而模拟目标物体部分被其它物体遮掩的情况；</p>
-<p>但其由于擦除的随机性,容易导致随机的填充区域将目标覆盖(例如7变成1)；当使用随机的像素值时可能会改变数据的均值和方差,从而导致测试表现不好；与其他数据增强技术同时使用时,先后顺序会对结果产生影响.</p>
-<h5 id="CutOut"><a href="#CutOut" class="headerlink" title="CutOut"></a>CutOut</h5><p>方法CutOut属于模拟遮挡,其为通过填充区域从而将区域的图像信息遮挡,从而提升模型的泛化能力.但相较于Random Reaerse的随机取区域,CutOut使用的是固定大小的正方形区域,并用全0代替随机值进行填充,并且允许正方形区域在图片外.</p>
-<p>但其会受到正方形边长设定的影响,其边长设定容易导致图像主要信息被覆盖或对信息完全不构成影响等效果.其在尺度不一的实际环境中可能会导致测试效果较差.且在使用cutout之前,应当首先进行图像的归一化,从而减少像素填充的影响.</p>
-<h5 id="Hide-and-Seek"><a href="#Hide-and-Seek" class="headerlink" title="Hide-and-Seek"></a>Hide-and-Seek</h5><p>方法Hide-and-Seek属于模拟遮挡,和上述两种方法的本质相同,可以看作是对CutOut,Random Erease方法的扩展,其核心原理就是把图像划分为若干小块的区域,然后随机删除.其理论依据为将一些区域进行填充迫使模型通过其它区域的特征进行物体的识别,从而增强特征的表现能力和学到的特征的的多样性,提高模型的泛化能力.</p>
-<p>其存在将主要物体完全遮掩的可能性,存在背景信息取代目标信息的可能性,且存在数据分布被改变的可能性.</p>
-<h5 id="Grid-Mask"><a href="#Grid-Mask" class="headerlink" title="Grid Mask"></a>Grid Mask</h5><p>Grid Mask通过生成一个和原图相同分辨率的Mask,然后将该Mask和原图相称得到一个图像来进行模拟遮挡的.其中Mask的设置是通过控制ratio来控制原图像的信息保留比例,d用来控制每个块的大小.Mask中的空值是固定间隔,固定大小的方块空值在空间内复制而得到的.用这种方法可以避免过度删除或保持连续区域.一方面,过度删除区域会导致完整目标被删除或上下文信息缺失,从而导致剩下的区域不足以表达目标信息.另一方面,区域保留过多会导致其泛用性较差.</p>
-<h4 id="数据增强-利用多张图片进行增强"><a href="#数据增强-利用多张图片进行增强" class="headerlink" title="数据增强-利用多张图片进行增强"></a>数据增强-利用多张图片进行增强</h4><h5 id="Mixup"><a href="#Mixup" class="headerlink" title="Mixup"></a>Mixup</h5><p>方法Mixup是一种运用在计算机视觉中的对图像进行混类增强的算法,其从每个batch中随机选择两张图像,以一定的比例混合形成新的图像.其混合方式为其标签和样本按随机比例进行混合,并将混合生成的图像进行训练.其公式如下所示,其中  $mixed_batch_x$是经过mixup处理之后得到的图片,而$mixed_batch_y$是mixup操作之后得到的标签,其中$\lambda$是比例系数.</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220526151020848.png" alt="image-20220526151020848"></p>
-<h5 id="CutMix"><a href="#CutMix" class="headerlink" title="CutMix"></a>CutMix</h5><p>方法cutmix是指切割出图片中的一小块,然后将这一小块贴到其他的图片之中,并且label依据同样的原理进行混合.其公式如下所示:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220526162414668.png" alt="image-20220526162414668"></p>
-<p>其中$X_A,X_B$是两张图片$Y_A,Y_B$是对应的label,$\lambda$是随机生成的权重.对于label而言当前图片内容在融合后面积的占比决定了label的值,假设分别用两张图的0.3和0.7融合在一起,原始label为[1,0]和[0,1],则融合之后的label为[0.3,0.7]</p>
-<p>cutmix最大程度的利用了统一张图像上的两种不同图像信息,具有较好的分类性能和目标定位功能</p>
-<h4 id="风格迁移GAN"><a href="#风格迁移GAN" class="headerlink" title="风格迁移GAN"></a>风格迁移GAN</h4><h5 id="Style-Transfer-GAN"><a href="#Style-Transfer-GAN" class="headerlink" title="Style Transfer GAN"></a>Style Transfer GAN</h5><p>因为在网络训练的过程中,网络常常会学习到细致的纹理特征,而不是我们常常所需要的形状特征,与我们的需求不符.因而我们使用Style Transfer GAN使图片的分割发生改变,改变图像的纹理特征而不改变图像的大致形状,从而进行数据增强,从而让模型学到纹理特征减少.提高模型的泛化能力.</p>
-<h4 id="网络正则化"><a href="#网络正则化" class="headerlink" title="网络正则化"></a>网络正则化</h4><p>机器学习中的一个核心问题是需要设计的神经网络不仅在训练数据上表现良好,并且能在新的输入上具有泛化性.网络正则化的目的是避免过拟合造成的高方差.其可以理解为通过给模型添加限制,使其在被限制的条件下进行特征的学习从而使模型具有较强的泛化能力.常见的正则化方法有:L0正则化,L1正则化,L2正则化,Dropout,DropConnect,DropBlock,早停法等.</p>
-<h5 id="Dropout"><a href="#Dropout" class="headerlink" title="Dropout"></a>Dropout</h5><p>dropout是指在深度学习网络的训练过程中，对于神经网络单元，按照一定的概率将其暂时从网络中丢弃。对于随机梯度下降来说，由于是随机丢弃，故而每一个mini-batch都在训练不同的,更瘦的网络,这样降低了下一个节点对上一个节点的依赖,不会给上一层的某一个节点过高的权重,起到了压缩权重的作用。一般只在全连接层进行使用.</p>
-<h5 id="DropConnect"><a href="#DropConnect" class="headerlink" title="DropConnect"></a>DropConnect</h5><p>不同于Dropout的直接将节点的输出值置为1,DropConnect是将权值(即节点和节点之间的边)以(1-p)的概率乘以0.一般只在全连接层进行使用.</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/20160528171125066.png" alt="img"></p>
-<h5 id="DropBlock"><a href="#DropBlock" class="headerlink" title="DropBlock"></a>DropBlock</h5><p>Dropout在全连接层效果较好,但在卷积层效果不好,其原因是因为卷积层的特征图中相邻位置元素在空间上共享语义信息,所以尽管某个单元被drop,但其余单元可以将该信息补上,所以针对卷积神经网络,提出一钟结构形式的dropout来正则化,即dropblock.DropBlock则将整个局部空间进行删减丢弃,并将其运用在网络的每一个特征图上,并且可以在训练的不同阶段进行不同的设置.其效果比Dropout DropConnect好.</p>
-<h4 id="数据分布不平衡"><a href="#数据分布不平衡" class="headerlink" title="数据分布不平衡"></a>数据分布不平衡</h4><p>数据分布不均衡一般的处理办法可以分为两大类:1. 数据增强 2.损失函数权值均衡</p>
-<h5 id="TWO-STAGE"><a href="#TWO-STAGE" class="headerlink" title="TWO-STAGE"></a>TWO-STAGE</h5><h6 id="Hard-Negative-Example-Mining-困难负例样本挖掘"><a href="#Hard-Negative-Example-Mining-困难负例样本挖掘" class="headerlink" title="Hard Negative Example Mining(困难负例样本挖掘)"></a>Hard Negative Example Mining(困难负例样本挖掘)</h6><p>在目标检测中,检测的时候常常会遇到的问题是我们无法预知一张图片里面会存在多少个目标,所以目标检测框架常常会提出远高于实际数量的区域提议,但由于提出的区域太多,常常会使训练时大部分都是负样本,导致大量无意义的负样本在训练时对正样本产生了影响.根据Focal Loss的统计,通常包含少量信息的”easy examples”(负例) 与包含有用信息的”hard examples”(正例+难负例)的比例为100000:100.这会导致简单例的损失函数数值是难例的40倍.所以为了让模型正常训练,我们必须要通过某种方法抑制大量的简单负例,挖掘所有难例的信息,这是Hard Negative Example Mining的初衷.</p>
-<p>Hard Negative Example Mining的本质为在训练时,尽量多挖掘难负例加入负样本集,这样会比easy negative组成的负样本集效果更好.</p>
-<p>在RCNN中,采用了自举法(boootstrap)的方法:</p>
-<ul>
-<li>先用初始的正负样本训练分类器（此时为了平衡数据，使用的负样本也只是所有负样本的子集）</li>
-<li>用上一步训练好的分类器对样本进行分类,把其中错误分类的那些样本(hard negative)放入负样本子集</li>
-<li>继续训练分类器</li>
-<li>如此反复,直到达到停止条件(比如分类器性能不再提升).</li>
-</ul>
-<p>即可以理解为RCNN的Hard Negative Mining 可以理解为给模型定制一个错题集,在每轮训练中不断将错误的投入下一轮训练中,直到网络性能不能提升为止.</p>
-<h6 id="Online-Hard-Example-Mining"><a href="#Online-Hard-Example-Mining" class="headerlink" title="Online Hard Example Mining"></a>Online Hard Example Mining</h6><p>主要思想可以理解为:一个batch的输入经过网络的前向传播后，有一些困难样本loss较大，我们可以对loss进行降序排序，取前K个认为是hard example，然后有两种方案：</p>
-<ul>
-<li><p>第一个为最终loss只取前k个,其余置0,然后进行BP,其缺点为虽然置0,但内存中依然会为其分配内存</p>
-</li>
-<li><p>第二个方案的步骤如下所示:</p>
-<ul>
-<li>将Fast RCNN分成两个components：ConvNet和RoINet. ConvNet为共享的底层卷积层，RoINet为RoI Pooling后的层，包括全连接层；</li>
-<li>对于每张输入图像，经前向传播，用ConvNet获得feature maps（这里为RoI Pooling层的输入）；</li>
-<li>将事先计算好的proposals，经RoI Pooling层投影到feature maps上，获取固定的特征输出作为全连接层的输入；</li>
-</ul>
-<p>​     需要注意的是，论文说，为了减少显存以及后向传播的时间，这里的RoINet是有两个的，它们共享权重，</p>
-<p>​     RoINet1是只读（只进行forward），RoINet2进行forward和backward：</p>
-</li>
-</ul>
-<h5 id="ONE-STAGE"><a href="#ONE-STAGE" class="headerlink" title="ONE-STAGE"></a>ONE-STAGE</h5><h6 id="Focal-Loss"><a href="#Focal-Loss" class="headerlink" title="Focal Loss"></a>Focal Loss</h6><p>Focal Loss可以理解为一种处理样本分类不均衡的损失函数,其车中的点为根据样本分辨的难易程度给样本对应的损失添加权重,即给容易区分的样本添加较小的权重$a_1$,给难以区分的样本添加较大的权重$a_2$,那么损失函数的表达式可以写作:$L_{sum}=a_1<em>L_{易区分}+a_2</em>L_{难区分}$.其中$a_1$较小而$a_2$较大,所以损失函数中的难区分对象就将主导损失函数,即将损失函数的重点集中在难分辨的样本上,这种处理方法可以理解为Focal Loss.其中对于易分辨和难分辨的个体,我们用他们的置信度进行区分,分类置信度接近0或者1的样本称作易分辨样本,其余的称作难分辨样本.</p>
-<p>Focal Loss的公式如下:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220527153939965.png" alt="image-20220527153939965"></p>
-<p>其中$-log(p_t)$为标准交叉熵,$(1-p_t)^{\gamma}$ 为权重因子,对于$\gamma$取不同的值时.</p>
-<ul>
-<li>当 $\gamma=0$ 时，focal loss等于标准交叉熵函数。</li>
-<li>当 $\gamma&gt;0$时，因为$(1-p_t)&gt;=0$,所以focal loss的损失应该是小于等于标准交叉熵损失。所以，我们分析的重点应该放在难、易分辨样本损失在总损失中所占的比例。<br>即假设有两个$y=1$的样本，它们的分类置信度分别为0.9和0.6，取 $\gamma=2$ 。按照公式计算可得它们的损失分别为：$-(0.1)^2\log(0.9)$ 和 $ -(0.4)^2\log(0.6)$ .<br>将它们的权重相除：$\frac{0.16}{0.01}=16 $，可得到分类置信度为0.6的样本损失大大增强，分类置信度为0.9的样本损失大大抑制，从而使得损失函数专注于这些难分辨的样本上，这也是函数的中心思想。</li>
-</ul>
-<h4 id="one-hot类别之间没有关联"><a href="#one-hot类别之间没有关联" class="headerlink" title="one-hot类别之间没有关联"></a>one-hot类别之间没有关联</h4><p>One-hot是指将类别变量转换为机器学习易于利用的一种形式的过程.其只有一个值不为0,其余特征均为0.</p>
-<h5 id="Label-Smoothing"><a href="#Label-Smoothing" class="headerlink" title="Label Smoothing"></a>Label Smoothing</h5><p>多分类问题中,一般一个物体会输出对应于各个类别的置信度,然后将该置信度通过softmax便得到了该数据属于各个类别的概率.并使用cross-entropy进行loss的计算迭代.但cross-entropy和one-hot的结合使用会导致以下结果:</p>
-<ul>
-<li>真实标签跟其他标签之间的关系被忽略了，很多有用的知识无法学到；比如：“鸟”和“飞机”本来也比较像，因此如果模型预测觉得二者更接近，那么应该给予更小的loss；</li>
-<li>倾向于让模型更加“武断”，成为一个“非黑即白”的模型，导致泛化性能差；</li>
-<li>面对易混淆的分类任务、有噪音（误打标）的数据集时，更容易受影响</li>
-</ul>
-<p>label smoothing可以通过soft one-hot的方法解决上述问题,其加入了噪声,减少了真实样本标签的类别在计算损失函数时的权重,最终起到抑制过拟合的效果,增加label smoothing前后的概率分布改变如下:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/v2-56899017cd0d5c113edc8002997381d8_720w.jpg" alt="img"></p>
-<p>交叉熵损失函数的改变如下:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/v2-858823f138177de7f61b725b5075e491_720w.png" alt="img"></p>
-<p>最优预测概率分布如下:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/v2-2eb621ebddc7bc3b2722cb6bf535de17_720w.jpg" alt="img"></p>
-<h5 id="知识蒸馏"><a href="#知识蒸馏" class="headerlink" title="知识蒸馏"></a>知识蒸馏</h5><p>知识蒸馏也是处理one-hot编码的一个思路.在传统的ont-hot或者硬编码过程中,一张图只存在一个标签,但忽略了标签和标签之间的关系,例如一张图片上的物体A与B很接近,那合理的分类输出应该是A最高,B次高.但使用了硬编码便会导致只输出了概率最大的类别特征,而忽略了物体与类别B的相似性,而转而告诉大家物体A与类别B与类别C的相似概率相同,这是不合常理的.而soft label则包含了更多了信息,给出了硬编码未曾给出的,物体与谁更像,不像谁,像和不像的概率等信息.且知识蒸馏引入了蒸馏温度T,从而将softmax变得更软,让其的非正确类别概率的信息暴露得更多,即让知识暴露得就越多.</p>
-<p>蒸馏温度T对softmax的影响如下图所示:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQ2xpY2hvbmc=,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center.png" alt="(Wُ̑�ceQ�VGr�c��"></p>
-<p>当T越大的时候,类别之间的相似信息就保留得越多,当T=1的时候,即为softmax本身.</p>
-<p>在知识蒸馏的过程中存在两个网络,一个是复杂但高精度的模型Teacher模型,一个是精简但复杂度低,易部署的模型student,我们的目的是让教师网络通过hard target训练输出的soft target,作为学生网络的输入,其训练过程如下:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/f1e99d932a90ac1d4f94fdf55157cdfd.png" alt="img"></p>
-<p>在使用知识蒸馏的方法进行训练时,总的损失分为两个部分,分别为==student loss==和==distillation loss==,而最后的loss函数为student loss和distillation loss的加权求和.而在预测的时候,与Teacher模型无关,直接输入学生模型进行预测即可.</p>
-<p>这样的训练方式解决了使用one-hot编码时忽略了类间关系的问题,且压缩了模型,可以实现少样本的学习.</p>
-<p>soft targets与label smoothing相比,label smoothing将正确分类突出,而将其余错误类别拉成相同的,给予了其它类别一些分数从而避免模型过于自信,但忽略了类间关系,其对比可如下所见:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/adda1387a384d25ca220f4319a8d4613.png" alt="img"></p>
-<h4 id="BBox回归的损失函数的设计"><a href="#BBox回归的损失函数的设计" class="headerlink" title="BBox回归的损失函数的设计"></a>BBox回归的损失函数的设计</h4><h5 id="IOU-Loss"><a href="#IOU-Loss" class="headerlink" title="IOU Loss"></a>IOU Loss</h5><p>$IOU=\dfrac{ \vert A \cap B \vert}{ \vert A \cup B \vert}$</p>
-<p>IOU Loss的计算公式是直接将构成区域的四个点看为一个整体进行回归的,解决了传统的$L_1$,$L_2$损失未考虑坐标点之间相关性的问题,其计算公式可以简单的被看为</p>
-<p>$IOU Loss=1-IOU$</p>
-<p>但IOULoss存在以下缺点:</p>
-<ul>
-<li>但预测框与目标框不相交时,即$IOU(A,B)=0$时,不能反映$A,B$距离的远近,此时IOU Loss无法优化两个框不相交的情况</li>
-<li>假设预测框和目标框的大小都确定,其值只和其相交面积有关,但无法反映相交的方式.</li>
-</ul>
-<h5 id="GIOU-Loss"><a href="#GIOU-Loss" class="headerlink" title="GIOU Loss"></a>GIOU Loss</h5><p>对Ground Truth A和所得到的区域B求其的最小外接矩形C,并求A和B的IOU,$GIOU=IOU-\left(\dfrac{\vert C / A \cup B\vert}{\vert C\vert}\right)$</p>
-<p>其具有如下性质:</p>
-<ul>
-<li>当IoU值为1时，GIoU 为 1，即|A U B| = |A ∩ B|；</li>
-<li>Iou为0时，GIoU&lt;=0;</li>
-<li>-1&lt;= GIoU &lt;=1;</li>
-<li>GIou &lt;= IoU;</li>
-</ul>
-<p>由GIOU的计算过程可以得到,其的更新迭代过程中,若A与B相互包裹,则会导致其的外接矩形与$max(A,B)$相同,则GIOU退化为IOU,无法评估好坏.其次,其的训练过程首先需要其与目标框相交,所以其所需的训练轮次较多</p>
-<p>$GIOULoss=1-GIOU$</p>
-<h5 id="DIOU-Loss"><a href="#DIOU-Loss" class="headerlink" title="DIOU Loss"></a>DIOU Loss</h5><p>DIOU针对于GIOU的问题,提出了新的惩罚项,其表达式为$DIOU=IOU - \dfrac{\rho^2(A,B)}{c^2}$,其中的$\rho(A,B)$是指的是A框和B框中心点坐标的欧式距离,c是其外接矩形的对角线距离.$DIOULoss=1-DIOU$</p>
-<p>DIOU的惩罚项$\dfrac{\rho^2(A,B)}{c^2}$,其优化的直接目的是缩小惩罚项,即为减小两个矩形框中心点之间的欧式距离.比GIOU要更为直接,损失收敛速度更快.</p>
-<h5 id="CIOU-Loss"><a href="#CIOU-Loss" class="headerlink" title="CIOU Loss"></a>CIOU Loss</h5><p>边界框的回归应考虑三个比较重要的几何因素,即重叠面积,中心点距离和纵横比,在以前的各种IOULoss中,IOULoss,GIOULoss考虑重叠面积,DIOULoss考虑重叠面积和中心点距离,CIOULoss则同时考虑上述三点.</p>
-<p>CLOULoss的惩罚项如下所示:$R_{CIOU}=\dfrac{\rho^2(A,B)}{c^2}+\alpha v$,其中$\alpha$是一个正的权衡参数,v则衡量长宽比的一致性,其定义如下:</p>
-<p>$v=\dfrac{4}{\pi^2} \left(arctan\dfrac{w^{gt}}{h^{gt}}-arctan\dfrac{w}{h}\right)^2$</p>
-<p>$\alpha=\dfrac{v}{\left( 1-IOU\right)+v}$</p>
-<p>$CIOULoss=1-CLOU$</p>
-<p>对于IOULoss相关:</p>
-<ul>
-<li>IOU_Loss：主要考虑检测框和目标框重叠面积。</li>
-<li>GIOU_Loss：在IOU的基础上，解决边界框不重合时的问题。</li>
-<li>DIOU_Loss：在IOU和GIOU的基础上，考虑边界框中心点距离的信息。</li>
-<li>CIOU_Loss：在DIOU的基础上，考虑边界框宽高比的尺度信息。</li>
-</ul>
-<h4 id="增大模型感受野"><a href="#增大模型感受野" class="headerlink" title="增大模型感受野"></a>增大模型感受野</h4><h5 id="SPP"><a href="#SPP" class="headerlink" title="SPP"></a>SPP</h5><p>传统的CNN网络对图像的输入尺寸有要求,这是因为传统的CNN网络存在全连接层,全连接层的参数是上一层传入的特征个数,在传入的图像尺寸大小存在改变的情况下,该层学得的权重个数是不确定的,为了解决这个问题,SPP在全连接成之前加入了一个网络层,使其对任意的输入产生固定的输出.在SPP中,所添加的是一个pooling层,其的各种参数都是相对的,使最终pooling的结果是确定的,SPPNet思路是对于任意大小的feature map首先分成16、4、1个块，然后在每个块上最大池化，池化后的特征拼接得到一个固定维度的输出。以满足全连接层的需要。SPPNet理论上可以改进任何CNN网络，通过空间金字塔池化，使得CNN的特征不再是单一尺度的。<img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220606162333329.png" alt="image-20220606162333329"></p>
-<h5 id="ASPP"><a href="#ASPP" class="headerlink" title="ASPP"></a>ASPP</h5><p>SPP可以理解为在普通的SPP的基础上,添加了膨胀因子并将输入通过ASPPPooling层,从而实现自由的多尺度特征提取.</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/7548f8d2dfdc4c34884860e5c6e4cdb9.png" alt="img"></p>
-<h5 id="RFB"><a href="#RFB" class="headerlink" title="RFB"></a>RFB</h5><p>RFB可以理解为在其每个分支上使用不同尺度的常规卷积+空洞卷积,通过各个分支上各自的不同参数来模拟人类视觉感知模式,其网络结构如下图所示:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5YWl5Z2RJuWhq-WdkQ==,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="(Wُ̑�ceQ�VGr�c��"></p>
-<h4 id="引入注意力机制"><a href="#引入注意力机制" class="headerlink" title="引入注意力机制"></a>引入注意力机制</h4><p>注意力机制可以被认为是一种权重分配的机制和策略.</p>
-<h5 id="Squeeze-and-Excitation-SE"><a href="#Squeeze-and-Excitation-SE" class="headerlink" title="Squeeze-and-Excitation(SE)"></a>Squeeze-and-Excitation(SE)</h5><p>Squeeze-and-Excitation提出了一种新的网络模型的设计角度- 通过通道间的关系进行模型设计,这样提出的新的网络结构单元被叫作”Squeeze-and-Excitation”网络块,作者的定位是通过精确的建模卷积特征各个通道之间的作用关系来改善网络模型的表达能力。</p>
-<p>SE的示意图如下所示:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/20170928205849736.png" alt="img"></p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/20170928210056332.png" alt="img"></p>
-<h5 id="Spatial-Attention-Module-SAM"><a href="#Spatial-Attention-Module-SAM" class="headerlink" title="Spatial Attention Module(SAM)"></a>Spatial Attention Module(SAM)</h5><p>SAM就是用来对特征图内部的空间位置添加注意力机制的模块，假定输入的特征图还是C×H×W（也就是C张大小为H×W的特征图），这次我们对特征图的每个点（H×W内）进行通道数为C的最大值池化，这样最大值池化输出的特征图大小就是1×H×W，同时也进行通道数为C的平均值池化，输出的特征图大小也是1×H×W，将最大值池化输出的特征图和平均值池化输出的特征图进行拼接形成2×H×W的拼接特征图，然后通过1×1卷积进行通道降维成1×H×W的输出特征图，再经过Sigmoid激活形成空间注意力权重，然后和原来的C×H×W的特征图进行相乘。这样相当于给每张H×W的特征图乘于一个H×W的空间权重，从而形成空间注意力模块。<br><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5YWl5Z2RJuWhq-WdkQ==,size_20,color_FFFFFF,t_70,g_se,x_16-16544820991039.png" alt="在这里插入图片描述"></p>
-<h5 id="modified-SAM"><a href="#modified-SAM" class="headerlink" title="modified SAM"></a>modified SAM</h5><p>Modified SAM是YOLOv4的一个创新点，称为像素注意力机制，它的思路也非常简单，就是把SAM模块的池化层全部去除，对C×H×W的特征图进行1×1卷积（既没有降通道也没有升通道），得到C×H×W的输出特征图，然后使用Sigmoid激活，再与原来的C×H×W进行像素点相乘。</p>
-<p>其示意图如下所示:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5YWl5Z2RJuWhq-WdkQ==,size_20,color_FFFFFF,t_70,g_se,x_16-165448298270712.png" alt="在这里插入图片描述"></p>
-<p>YOLOV4里没有这样修改的好处的解释，这里只是个人见解：点卷积的一个特点是对信息进行跨通道的组合，原来的SAM里点卷积的对象是平均池化与最大值池化后的concat结果，在这里，点卷积能选择的只有2个通道，能选择的少。modified SAM利用这一点给卷积更多的通道去选择来组合更优的结果，并且是每个通道下都组合出一组更优的结果来和输入进行点乘，而SAM只组合出一组作为所有通道下的更优结果(SAM输入只有2通道，而且是均值池化和最大值池化，所以只能组合出一组，多组的结果就有问题了)，以一不好代表全部。</p>
-<h4 id="特征融合-特征集成模块"><a href="#特征融合-特征集成模块" class="headerlink" title="特征融合,特征集成模块"></a>特征融合,特征集成模块</h4><ul>
-<li>Skip Connection,Hyper Column,FPN(SFAM,ASFF.BiFPN)</li>
-</ul>
-<h4 id="改变激活函数"><a href="#改变激活函数" class="headerlink" title="改变激活函数"></a>改变激活函数</h4><ul>
-<li>Mish.Swish.Hard Swish.ReLu类</li>
-</ul>
-<h4 id="后处理方法"><a href="#后处理方法" class="headerlink" title="后处理方法"></a>后处理方法</h4><ul>
-<li>soft NMS,greedy NMS,DIOU NMS</li>
-</ul>
-<h3 id="YOLOv4最终采用方案"><a href="#YOLOv4最终采用方案" class="headerlink" title="YOLOv4最终采用方案"></a>YOLOv4最终采用方案</h3><p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220606140600019.png" alt="image-20220606140600019"></p>
-<p>yolov4最后采用的结构为:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBA5peg5bC955qE5rKJ6buY,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
-<p>上图中部分组件:</p>
-<p>==CBM==：Yolo v4网络结构中的最小组件，其由Conv（卷积）+ BN + Mish激活函数组成。<br>==CBL==：Yolo v4网络结构中的最小组件，其由Conv（卷积）+ BN + Leaky relu激活函数组成。<br>==Res unit==：残差组件，借鉴ResNet网络中的残差结构，让网络可以构建的更深。<br>==CSPX==：借鉴CSPNet网络结构，由三个CBM卷积层和X个Res unint模块Concat组成。<br>==SPP==：采用1×1，5×5，9×9，13×13的最大池化的方式，进行多尺度融合。</p>
-<p>张量拼接与张量相加<br>==Concat==：张量拼接，会扩充两个张量的维度，例如26×26×256和26×26×512两个张量拼接，结果是26×26×768。<br>==Add==：张量相加，张量直接相加，不会扩充维度，例如104×104×128和104×104×128相加，结果还是104×104×128。</p>
-<ul>
-<li><p>输入时采用了Mosaic数据增强,cmBN,SAT的方法</p>
-<ul>
-<li>Mosaic数据增强的使用主要是为了解决小目标的AP一般比中目标和大目标低很多的问题,但小目标分布并不均匀,且在训练集和测试集中分布不同.使用Mosaic数据增强的方法就是随机使用四张图片并进行随机的缩放和拼接,这样操作增加了很多小目标,让网络鲁棒性更好.</li>
-</ul>
-</li>
-<li><p>backbone 采用CSPDarknet53加一系列的trickrespond_bgd</p>
-<ul>
-<li><p>CSPNet全称是Cross Stage Partial Networks，也就是跨阶段局部网络。</p>
-</li>
-<li><p>CSPNet解决了其他大型卷积神经网络框架Backbone中网络优化的梯度信息重复问题，将梯度的变化从头到尾地集成到特征图中，因此减少了模型的参数量和FLOPS数值，既保证了推理速度和准确率，又减小了模型尺寸。</p>
-</li>
-<li><p>CSPNet实际上是基于Densnet的思想，复制基础层的特征映射图，通过dense block 发送副本到下一个阶段，从而将基础层的特征映射图分离出来。</p>
-</li>
-<li><p>这样可以有效缓解梯度消失问题(通过非常深的网络很难去反推丢失信号) ，支持特征传播，鼓励网络重用特征，从而减少网络参数数量。</p>
-<p>CSP结构示意图如下:</p>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ4OTg0MTc0,size_16,color_FFFFFF,t_70.png" alt="在这里插入图片描述"></p>
-<ul>
-<li>CSPDarknet53的激活函数使用Mish激活函数,其与leaky ReLu相比计算量较大,效果有所提升.但需要注意的是,只有在backbone之中的激活函数使用的是Mish,其余后续步骤使用的激活函数还是使用的leaky ReLu</li>
-<li>在backbone之中使用了dropblock,是一种缓解过拟合的正则化方法,其作用在任何卷积层之上.</li>
-<li>CBM是yolov4中的最小组件,由$Conv+Bn+Mish$组成,<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220606151708955.png" alt="image-20220606151708955"></li>
-</ul>
-</li>
-<li>Res unit模块借鉴了ResNet的结构,直接将输入传到Res unit的输出端,其由经过两个CBM模块处理之后的结果和输入相加所得.<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220606151722575.png" alt="image-20220606151722575"></li>
-</ul>
-</li>
-<li>CSP模块借鉴了上面所提到过的CSP的思想,由如下所示的部分所组成:<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220606151847805.png" alt="image-20220606151847805"></li>
-<li>其由CBM和Res unit组件得到的结果concat而成.</li>
-</ul>
-</li>
-<li>最终的backbone分别输出$76<em>76,38</em>38,19*19$的feature map</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>neck 主要采用了SPP+PAN的思想</p>
-<ul>
-<li>CBL模块和CBM模块类似,不过其的激活函数由Mish换成了Leaky ReLu,其余组件没有改变<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/image-20220606152324192.png" alt="image-20220606152324192"></li>
-</ul>
-</li>
-<li>SPP模块的组成如下所示:<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA54yq5LiN54ix5Yqo6ISR,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></li>
-<li>其分别采用了$1<em>1,5</em>5,9<em>9,13</em>13$的最大池化的方式进行多尺度融合,并最终concat成为最终的feature map</li>
-</ul>
-</li>
-<li>PAN模块的组成如下所示:<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/v2-b427ad60e3080fd4784df23e05ff675c_720w.jpg" alt="img"></li>
-<li>原本的PAN中,两个特征图相结合采用的是shortcut,但在yolov4中对其进行改进,采用的是concat操作,融合后的特征图尺寸有所改变:<ul>
-<li><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBA5peg5bC955qE5rKJ6buY,size_20,color_FFFFFF,t_70,g_se,x_16-16545031928827.png" alt="img"></li>
-</ul>
-</li>
-<li>SPP+PAN<ul>
-<li>SPP层自适应的进行池化提取特征,自顶向下传达强语义特征，而PAN则自底向上传达强定位特征，两两联手，从不同的主干层对不同的检测层进行参数聚合，加速了不同尺度特征的融合，进一步提高特征提取的能力。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Head 采用YOLOv3的Head</p>
-<ul>
-<li>YOLOv4中$Loss=边框位置损失+类别损失+置信度损失$,其使用了CIOULoss替代了YOLOv3中的边框位置损失,其余部分没有分别,其损失函数如下:</li>
-</ul>
-</li>
-</ul>
-<p><img src="/2022/07/04/YOLOv4%E6%80%BB%E7%BB%93/123213123123.png" alt="(sd"></p>
-<p>其中置信度损失使用了focal loss</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2053,7 +1815,7 @@ O^{\prime }(j, i)=\left \{\hspace {-1.mm}\begin {array}{l} \Delta l+\Delta _{l}^
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-count">17</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
