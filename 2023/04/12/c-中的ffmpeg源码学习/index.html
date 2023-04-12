@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="c++中的ffmpeg使用c++中ffmpeg的环境配置工程配置的CMakeLists.txt的一个可用案例如下所示： 12345678910111213cmake_minimum_required(VERSION 2.8)project(ffmpeg_project)#以使用的rk3588s为例，以下两个set按照自己ffmpeg的安装目录修改set(FFMPEG_LIBS_DIR &#x2F;lib&#x2F;a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="c++中的ffmpeg源码学习">
+<meta property="og:url" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="c++中的ffmpeg使用c++中ffmpeg的环境配置工程配置的CMakeLists.txt的一个可用案例如下所示： 12345678910111213cmake_minimum_required(VERSION 2.8)project(ffmpeg_project)#以使用的rk3588s为例，以下两个set按照自己ffmpeg的安装目录修改set(FFMPEG_LIBS_DIR &#x2F;lib&#x2F;a">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hVR09QSUdT,size_16,color_FFFFFF,t_70.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/Center.jpeg">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBA5byA5rC05aSq54Or,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/1426134989_1189.jpg">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/SouthEast.jpeg">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150303154603565.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150304201149635.jpeg">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150306173746865.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150305163655358.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150307171545202.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150312025330316.jpeg">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/1426229411_4898.jpg">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150303220720490.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150304132258935.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150307142222277.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150311222209829.png">
+<meta property="og:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150311155409612.png">
+<meta property="article:published_time" content="2023-04-12T01:36:52.000Z">
+<meta property="article:modified_time" content="2023-04-12T01:38:05.921Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hVR09QSUdT,size_16,color_FFFFFF,t_70.png">
+
+<link rel="canonical" href="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>c++中的ffmpeg源码学习 | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          c++中的ffmpeg源码学习
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-04-12 09:36:52 / 修改时间：09:38:05" itemprop="dateCreated datePublished" datetime="2023-04-12T09:36:52+08:00">2023-04-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="c-中的ffmpeg使用"><a href="#c-中的ffmpeg使用" class="headerlink" title="c++中的ffmpeg使用"></a>c++中的ffmpeg使用</h2><h3 id="c-中ffmpeg的环境配置"><a href="#c-中ffmpeg的环境配置" class="headerlink" title="c++中ffmpeg的环境配置"></a>c++中ffmpeg的环境配置</h3><p>工程配置的CMakeLists.txt的一个可用案例如下所示：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">2.8</span>)</span><br><span class="line"><span class="keyword">project</span>(ffmpeg_project)</span><br><span class="line"></span><br><span class="line"><span class="comment">#以使用的rk3588s为例，以下两个set按照自己ffmpeg的安装目录修改</span></span><br><span class="line"><span class="keyword">set</span>(FFMPEG_LIBS_DIR /lib/aarch64-linux-gnu)</span><br><span class="line"><span class="keyword">set</span>(FFMPEG_HEADERS_DIR /usr/local/<span class="keyword">include</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;FFMPEG_HEADERS_DIR&#125;</span>)</span><br><span class="line"><span class="keyword">link_directories</span>(<span class="variable">$&#123;FFMPEG_LIBS_DIR&#125;</span>)</span><br><span class="line"><span class="keyword">set</span>(FFMPEG_LIBS libavcodec.so libavformat.so libswscale.so libavdevice.so libavutil.so)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(ffmpeg_test main.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> <span class="variable">$&#123;FFMPEG_LIBS&#125;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="c-中头文件包含ffmpeg实例"><a href="#c-中头文件包含ffmpeg实例" class="headerlink" title="c++中头文件包含ffmpeg实例"></a>c++中头文件包含ffmpeg实例</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> &#123;</span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavcodec/avcodec.h&gt;</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavformat/avformat.h&gt;</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavutil/avutil.h&gt;</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavutil/opt.h&gt;</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在引入ffmpeg的头文件的时候，需要使用<code>extern &quot;C&quot;</code>将头文件包含。<code>extern &quot;c&quot;</code> 的主要作用就是为了能够正确实现C++代码调用其他C语言代码。加上 extern “c” 后，会指示编译器这部分的代码按C语言，而不是C++的方式进行编译。而ffmpeg的各个头文件都是使用c进行开发运行的，具体解释可见<a target="_blank" rel="noopener" href="https://blog.csdn.net/QTVLC/article/details/83962280">链接</a>。</p>
+<h3 id="c-中使用ffmpeg的大体流程"><a href="#c-中使用ffmpeg的大体流程" class="headerlink" title="c++中使用ffmpeg的大体流程"></a>c++中使用ffmpeg的大体流程</h3><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/leixiaohua1020/article/details/42658139#comments_25910979">详情可见雷神博客</a></p>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hVR09QSUdT,size_16,color_FFFFFF,t_70.png" alt="watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hVR09QSUdT,size_16,color_FFFFFF,t_70"></p>
+<p>在使用c++调用ffmpeg进行音视频处理过程中的大体流程按照<code>常见使用方法的ffmpeg音视频转换流程</code>所述。</p>
+<h3 id="c-中使用ffmpeg的常用结构体"><a href="#c-中使用ffmpeg的常用结构体" class="headerlink" title="c++中使用ffmpeg的常用结构体"></a>c++中使用ffmpeg的常用结构体</h3><p>结构体之间关系如下所示：</p>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/Center.jpeg" alt="img"></p>
+<p>FFMPEG中结构体很多。最关键的结构体可以分成以下几类：</p>
+<ul>
+<li>解协议（http,rtsp,rtmp,mms）</li>
+</ul>
+<blockquote>
+<p>AVIOContext，URLProtocol，URLContext主要存储视音频使用的协议的类型以及状态。URLProtocol存储输入视音频使用的封装格式。每种协议都对应一个URLProtocol结构。（注意：FFMPEG中文件也被当做一种协议“file”）</p>
+</blockquote>
+<ul>
+<li>解封装（flv,avi,rmvb,mp4）</li>
+</ul>
+<blockquote>
+<p>AVFormatContext主要存储视音频封装格式中包含的信息；AVInputFormat存储输入视音频使用的封装格式。每种视音频封装格式都对应一个AVInputFormat 结构。</p>
+</blockquote>
+<ul>
+<li>解码（h264,mpeg2,aac,mp3）</li>
+</ul>
+<blockquote>
+<p>每个AVStream存储一个视频/音频流的相关数据；每个AVStream对应一个AVCodecContext，存储该视频/音频流使用解码方式的相关数据；每个AVCodecContext中对应一个AVCodec，包含该视频/音频对应的解码器。每种解码器都对应一个AVCodec结构。</p>
+</blockquote>
+<ul>
+<li>存数据</li>
+</ul>
+<blockquote>
+<p>视频的话，每个结构一般是存一帧；音频可能有好几帧<br>解码前数据：AVPacket<br>解码后数据：AVFrame</p>
+</blockquote>
+<ul>
+<li><p><code>AVFormatContext</code>:封装格式上下文结构体，也是统领<strong>全局</strong>的结构体，保存了视频文件封装格式相关信息，是负责储存数据的结构体。</p>
+<ul>
+<li><p><code>AVInputFormat</code>:每种封装格式（例如<code>FLV</code>,<code>MKV</code>, <code>MP4</code>, <code>AVI</code>）对应一个该结构体。同理如<code>AVOutputFormat</code>。其保存在<code>AVFormatContext</code>中，主要被ffmpeg内部使用调用。</p>
+</li>
+<li><p>通过使用下述函数装载解封装器</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_open_input</span><span class="params">(AVFormatContext **ps, <span class="keyword">const</span> <span class="keyword">char</span> *filename, AVInputFormat *fmt, AVDictionary **options)</span></span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><code>AVIOContext</code>:主要负责解协议，封装协议相关的过程。在整个过程中负责对例如rtmp udp进行解协议。</p>
+</li>
+<li><code>AVStream</code>:视频文件中每个视频（音频）流对应一个该结构体。</li>
+<li><p><code>AVCodecContext</code>:编解码器上下文结构体，保存了视频（音频）编解码相关信息。</p>
+<ul>
+<li><code>AVCodec</code>:每种视频（音频）编解码器(例如H.264解码器)对应一个该结构体。其保存于<code>AVCodecContext</code>中，使用<code>avcodec_find_decoder(AVCodecID id)</code>装载解码器</li>
+</ul>
+</li>
+<li><p><code>AVFrame</code>:存储一帧解码后像素（采样）数据。</p>
+</li>
+<li><code>AVPacket</code>:存储一帧压缩编码数据。</li>
+</ul>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBA5byA5rC05aSq54Or,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center.png" alt="在这里插入图片描述"></p>
+<h3 id="解码过程中常用函数的解析"><a href="#解码过程中常用函数的解析" class="headerlink" title="解码过程中常用函数的解析"></a>解码过程中常用函数的解析</h3><p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/1426134989_1189.jpg" alt="1426134989_1189" style="zoom:200%;"></p>
+<h4 id="av-register-all"><a href="#av-register-all" class="headerlink" title="av_register_all()"></a>av_register_all()</h4><p><code>av_register_all()</code>注册所有解复用、解码等，将各个类别串成一个链表。在目前使用的ffmpeg4.2及以上的版本里面可不用该函数。其代码整个流程为首先确定有没有进行初始化，如果没有初始化，就调用avcodec_register_all()注册编解码器。函数的调用关系如下所示：</p>
+<ul>
+<li>在新版本的ffmpeg中，所有的解复用器，协议，复用器等被组织为一个全局静态数组，该数组在执行./configure命令的时候根据配置生成</li>
+</ul>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/SouthEast.jpeg" alt="img"></p>
+<h4 id="avformat-alloc-context"><a href="#avformat-alloc-context" class="headerlink" title="avformat_alloc_context()"></a>avformat_alloc_context()</h4><p><code>avformat_alloc_context()</code>主要负责AVFormatContext的初始化，主要功能为分配内存以及设置其中某些项的值为默认值。</p>
+<blockquote>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150303154603565.png" alt="img"></p>
+<h4 id="avformat-open-input"><a href="#avformat-open-input" class="headerlink" title="avformat_open_input()"></a>avformat_open_input()</h4><p>avformat_open_input()主要负责打开多媒体数据，并获得一些数据相关的信息。</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_open_input</span><span class="params">(AVFormatContext **ps, <span class="keyword">const</span> <span class="keyword">char</span> *filename, AVInputFormat *fmt, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">ps：函数调用成功之后处理过的AVFormatContext结构体。</span><br><span class="line">file：打开的视音频流的URL。</span><br><span class="line">fmt：强制指定AVFormatContext中AVInputFormat的。这个参数一般情况下可以设置为<span class="literal">NULL</span>，这样FFmpeg可以自动检测AVInputFormat。</span><br><span class="line">dictionay：附加的一些选项，一般情况下可以设置为<span class="literal">NULL</span>。</span><br><span class="line">当函数执行成功时，返回值大于等于<span class="number">0</span>，可以通过判断返回值与<span class="number">0</span>的关系从而判断是否打开多媒体数据成功。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150304201149635.jpeg" alt="img"></p>
+<p>函数首先对输入进来的<code>AVFormatContext</code>指针进行容错检查，如有无进行初始化等操作，然后针对一些格式进行特殊处理。核心处理流程有两步。</p>
+<ul>
+<li>一为使用<code>init_input</code>函数，打开输入的视频数据并且探测视频的格式。<a target="_blank" rel="noopener" href="https://blog.csdn.net/leixiaohua1020/article/details/44064715">详细解释链接</a><ul>
+<li>FFmpeg内部判断封装格式的原理实际上是对每种AVInputFormat给出一个分数，满分是100分，越有可能正确的AVInputFormat给出的分数就越高。最后选择分数最高的AVInputFormat作为推测结果。<ul>
+<li>如果AVInputFormat中包含read_probe()，就调用read_probe()函数获取匹配分数（这一方法如果结果匹配的话，一般会获得AVPROBE_SCORE_MAX的分值，即100分）。如果不包含该函数，就使用av_match_ext()函数比较输入媒体的扩展名和AVInputFormat的扩展名是否匹配，如果匹配的话，设定匹配分数为AVPROBE_SCORE_EXTENSION（AVPROBE_SCORE_EXTENSION取值为50，即50分）。</li>
+<li>使用av_match_name()比较输入媒体的mime_type和AVInputFormat的mime_type，如果匹配的话，设定匹配分数为AVPROBE_SCORE_MIME（AVPROBE_SCORE_MIME取值为75，即75分）。</li>
+<li>如果该AVInputFormat的匹配分数大于此前的最大匹配分数，则记录当前的匹配分数为最大匹配分数，并且记录当前的AVInputFormat为最佳匹配的AVInputFormat.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>二为使用<code>s-&gt;iformat-&gt;read_header()</code>，读取多媒体数据文件头，根据视音频流创建相应的AVStream。</li>
+</ul>
+<h4 id="avformat-find-stream-info"><a href="#avformat-find-stream-info" class="headerlink" title="avformat_find_stream_info()"></a>avformat_find_stream_info()</h4><p><code>avformat_find_stream_info</code>主要用于给每个媒体流（音频/视频）的AVStream结构体赋值，函数正常执行后返回值大于等于0。</p>
+<ul>
+<li><p>函数内部实现了解码器的查找，解码器的打开，视音频帧的读取，视音频帧的解码等工作。函数流程大致如下所示：</p>
+<ul>
+<li>查找解码器：find_decoder()</li>
+<li>打开解码器：avcodec_open2()</li>
+<li><p>读取完整的一帧压缩编码的数据：read_frame_internal()</p>
+<ul>
+<li>注：av_read_frame()内部实际上就是调用的read_frame_internal()。</li>
+</ul>
+</li>
+<li><p>解码一些压缩编码数据：try_decode_frame()</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_find_stream_info</span><span class="params">(AVFormatContext *ic, AVDictionary **options)</span></span>;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150306173746865.png" alt="img"></p>
+<h4 id="avcodec-find-decoder"><a href="#avcodec-find-decoder" class="headerlink" title="avcodec_find_decoder()"></a>avcodec_find_decoder()</h4><p><code>avcodec_find_encoder()</code>用于查找FFmpeg的编码器</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">AVCodec *<span class="title">avcodec_find_encoder</span><span class="params">(<span class="keyword">enum</span> AVCodecID id)</span></span></span><br><span class="line"><span class="function"> 该id为编码器的ID，返回为查找到的编码器，</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150305163655358.png" alt="img"></p>
+<p>在其中通过调用<code>AVCodec *find_encdec(enum AVCodecID id, int encoder)</code>进行编码器的搜索，该搜索遍历AVCodec结构的链表，逐一比较输入的ID和每一个编码器的ID，直到找到ID取值相同的编码器。</p>
+<h4 id="avcodec-open2"><a href="#avcodec-open2" class="headerlink" title="avcodec_open2()"></a>avcodec_open2()</h4><p><code>avcodec_open2()</code>用于初始化一个视音频编解码器的AVCodecContext</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avcodec_open2</span><span class="params">(AVCodecContext *avctx, <span class="keyword">const</span> AVCodec *codec, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">avctx：需要初始化的AVCodecContext。</span><br><span class="line">codec：输入的AVCodec</span><br><span class="line">options：一些选项。例如使用libx264编码的时候，“preset”，“tune”等都可以通过该参数设置。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150307171545202.png" alt="img"></p>
+<p>函数整体工作流程如下所示：</p>
+<ul>
+<li>为各种结构体分配内存（通过各种av_malloc()实现）。</li>
+<li>将输入的AVDictionary形式的选项设置到AVCodecContext。</li>
+<li>其他一些零零碎碎的检查，比如说检查编解码器是否处于“实验”阶段。</li>
+<li>如果是编码器，检查输入参数是否符合编码器的要求</li>
+<li>调用AVCodec的init()初始化具体的解码器。</li>
+</ul>
+<h4 id="av-read-frame"><a href="#av-read-frame" class="headerlink" title="av_read_frame()"></a>av_read_frame()</h4><p><code>av_read_frame()</code>的作用是读取码流中的音频若干帧或者视频一帧。例如，解码视频的时候，每解码一个视频帧，需要先调用 av_read_frame()获得一帧视频的压缩数据，然后才能对该数据进行解码（例如H.264中一帧压缩数据通常对应一个NAL）</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">av_read_frame</span><span class="params">(AVFormatContext *s, AVPacket *pkt)</span></span>;</span><br><span class="line"></span><br><span class="line">s：输入的AVFormatContext</span><br><span class="line">pkt：输出的AVPacket</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150312025330316.jpeg" alt="img"></p>
+<p>详细解析见<a target="_blank" rel="noopener" href="https://blog.csdn.net/leixiaohua1020/article/details/12678577">链接</a>，其大体思路为</p>
+<ul>
+<li>从对应的格式中，调用<code>ff_read_packet()</code>从相应的AVInputFormat中读取数据</li>
+<li>视需求调用parse_packet()解析相应的AVPacket</li>
+</ul>
+<h4 id="avcodec-decode-video2"><a href="#avcodec-decode-video2" class="headerlink" title="avcodec_decode_video2()"></a>avcodec_decode_video2()</h4><p><code>avcodec_decode_video2()</code>的作用是解码一帧视频数据。输入一个压缩编码的结构体AVPacket，输出一个解码后的结构体AVFrame</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avcodec_decode_video2</span><span class="params">(AVCodecContext *avctx, AVFrame *picture, <span class="keyword">int</span> *got_picture_ptr, <span class="keyword">const</span> AVPacket *avpkt)</span></span>;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<ul>
+<li>对输入的字段进行了一系列的检查工作：例如宽高是否正确，输入是否为视频等等。</li>
+<li>通过ret = avctx-&gt;codec-&gt;decode(avctx, picture, got_picture_ptr,&amp;tmp)这句代码，调用了相应AVCodec的decode()函数，完成了解码操作。</li>
+<li>对得到的AVFrame的一些字段进行了赋值，例如宽高、像素格式等等。</li>
+</ul>
+<h3 id="编码过程中常用函数的解析"><a href="#编码过程中常用函数的解析" class="headerlink" title="编码过程中常用函数的解析"></a>编码过程中常用函数的解析</h3><p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/1426229411_4898.jpg" alt="1426229411_4898"></p>
+<h4 id="av-register-all-1"><a href="#av-register-all-1" class="headerlink" title="av_register_all()"></a>av_register_all()</h4><p>该函数与解码时一样。</p>
+<h4 id="avformat-alloc-output-context2"><a href="#avformat-alloc-output-context2" class="headerlink" title="avformat_alloc_output_context2()"></a>avformat_alloc_output_context2()</h4><p><code>avformat_alloc_output_context2()</code>函数可以初始化一个用于输出的AVFormatContext结构体。其</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_alloc_output_context2</span><span class="params">(AVFormatContext **ctx, AVOutputFormat *oformat, <span class="keyword">const</span> <span class="keyword">char</span> *format_name, <span class="keyword">const</span> <span class="keyword">char</span> *filename)</span></span>;</span><br><span class="line"></span><br><span class="line">ctx：函数调用成功之后创建的AVFormatContext结构体。</span><br><span class="line">oformat：指定AVFormatContext中的AVOutputFormat，用于确定输出格式。如果指定为<span class="literal">NULL</span>，可以设定后两个参数（format_name或者filename）由FFmpeg猜测输出格式。</span><br><span class="line">	PS：使用该参数需要自己手动获取AVOutputFormat，相对于使用后两个参数来说要麻烦一些。</span><br><span class="line">format_name：指定输出格式的名称。根据格式名称，FFmpeg会推测输出格式。输出格式可以是“flv”，“mkv”等等。</span><br><span class="line">filename：指定输出文件的名称。根据文件名称，FFmpeg会推测输出格式。文件名称可以是“xx.flv”，“yy.mkv”等等。</span><br><span class="line">函数执行成功的话，其返回值大于等于<span class="number">0</span>。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150303220720490.png" alt="img"></p>
+<p>函数执行流程可简单概括为以下两步：</p>
+<ul>
+<li>调用avformat_alloc_context()进行内存分配以及初始化默认的AVFormatContext。</li>
+<li>如果指定了输入的AVOutputFormat，则直接将输入的AVOutputFormat赋值给AVOutputFormat的oformat。如果没有指定输入的AVOutputFormat，就需要根据文件格式名称或者文件名推测输出的AVOutputFormat。无论是通过文件格式名称还是文件名推测输出格式，都会调用一个函数av_guess_format()。<ul>
+<li>在<code>av_guess_format()</code>中，使用socre记录每种输出格式的匹配程度，遍历ffmpeg中所有的AVOutputFormat并逐一计算每个输出格式的score，具体的计算流程如下所示：<ul>
+<li>如果封装格式名称匹配，score增加100。匹配中使用了函数av_match_name()。</li>
+<li>如果mime类型匹配，score增加10。匹配直接使用字符串比较函数strcmp()。</li>
+<li>如果文件名称的后缀匹配，score增加5。匹配中使用了函数av_match_ext()。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="avio-open2"><a href="#avio-open2" class="headerlink" title="avio_open2()"></a>avio_open2()</h4><p><code>avio_open2()</code>用于打开FFmpeg的输入输出文件。</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avio_open2</span><span class="params">(AVIOContext **s, <span class="keyword">const</span> <span class="keyword">char</span> *url, <span class="keyword">int</span> flags, <span class="keyword">const</span> AVIOInterruptCB *int_cb, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">s：函数调用成功之后创建的AVIOContext结构体。</span><br><span class="line">url：输入输出协议的地址（文件也是一种“广义”的协议，对于文件来说就是文件的路径）。</span><br><span class="line">flags：打开地址的方式。可以选择只读，只写，或者读写。取值如下。</span><br><span class="line">	AVIO_FLAG_READ：只读。</span><br><span class="line">	AVIO_FLAG_WRITE：只写。</span><br><span class="line">	AVIO_FLAG_READ_WRITE：读写。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150304132258935.png" alt="img"></p>
+<p>该函数主要调用了两个函数<code>ffurl_open()</code>和<code>ffio_fdopen()</code>。</p>
+<ul>
+<li>ffurl_open()用于初始化URLContext<ul>
+<li>ffurl_open()主要调用了2个函数：ffurl_alloc()和ffurl_connect()。<ul>
+<li>ffurl_alloc()用于查找合适的URLProtocol，并创建一个URLContext</li>
+<li>ffurl_connect()用于打开获得的URLProtocol。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>ffio_fdopen()用于根据URLContext初始化AVIOContext。<ul>
+<li>URLContext中包含的URLProtocol完成了具体的协议读写等工作。AVIOContext则是在URLContext的读写函数外面加上了一层“包装”（通过retry_transfer_wrapper()函数）。</li>
+</ul>
+</li>
+</ul>
+<h4 id="avformat-new-stream"><a href="#avformat-new-stream" class="headerlink" title="avformat_new_stream()"></a>avformat_new_stream()</h4><p><code>avformat_new_stream()</code>是初始化<code>AVStream</code>的函数。</p>
+<h4 id="avcodec-find-encoder"><a href="#avcodec-find-encoder" class="headerlink" title="avcodec_find_encoder()"></a>avcodec_find_encoder()</h4><p><code>avcodec_find_encoder()</code>与解码过程中的<code>avcodec_find_decoder()</code>类似。</p>
+<h4 id="avcodec-open2-1"><a href="#avcodec-open2-1" class="headerlink" title="avcodec_open2()"></a>avcodec_open2()</h4><p><code>avcodec_open2()</code>用于初始化一个视音频编解码器的AVCodecContext。</p>
+<h4 id="avformat-write-header"><a href="#avformat-write-header" class="headerlink" title="avformat_write_header()"></a>avformat_write_header()</h4><p><code>avformat_write_header()</code>用于写视频文件头。</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_write_header</span><span class="params">(AVFormatContext *s, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">s：用于输出的AVFormatContext。</span><br><span class="line">options：额外的选项，目前没有深入研究过，一般为<span class="literal">NULL</span>。</span><br><span class="line">函数正常执行后返回值为<span class="number">0</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150307142222277.png" alt="img"></p>
+<p>avformat_write_header()完成了以下工作：</p>
+<ul>
+<li>调用init_muxer()初始化复用器<ul>
+<li>将传入的AVDictionary形式的选项设置到AVFormatContext</li>
+<li>遍历AVFormatContext中的每个AVStream，并作如下检查：<ul>
+<li>AVStream的time_base是否正确设置。如果发现AVStream的time_base没有设置，则会调用avpriv_set_pts_info()进行设置。</li>
+<li>对于音频，检查采样率设置是否正确；对于视频，检查宽、高、宽高比。</li>
+<li>其他一些检查</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>调用AVOutputFormat的write_header()，write_header()是AVOutputFormat中的一个函数指针，指向写文件头的函数。不同的AVOutputFormat有不同的write_header()的实现方法。</li>
+</ul>
+<h4 id="avcodec-encode-video2"><a href="#avcodec-encode-video2" class="headerlink" title="avcodec_encode_video2()"></a>avcodec_encode_video2()</h4><p><code>avcodec_encode_video2()</code>用于编码一帧视频数据</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avcodec_encode_video2</span><span class="params">(AVCodecContext *avctx, AVPacket *avpkt, <span class="keyword">const</span> AVFrame *frame, <span class="keyword">int</span> *got_packet_ptr)</span></span>;</span><br><span class="line"> avctx：编码器的AVCodecContext。</span><br><span class="line"> avpkt：编码输出的AVPacket。</span><br><span class="line"> frame：编码输入的AVFrame。</span><br><span class="line"> got_packet_ptr：成功编码一个AVPacket的时候设置为<span class="number">1</span>。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150311222209829.png" alt="img"></p>
+<p>在该函数中，主要由两个部分组成。首先调用<code>av_image_check_size()</code>检查设置的宽高等参数是否合理，然后调用AVcodec的<code>encode2()</code>调用具体的解码器。</p>
+<h4 id="av-write-frame"><a href="#av-write-frame" class="headerlink" title="av_write_frame()"></a>av_write_frame()</h4><p><code>av_write_frame()</code>用于输出一帧视频数据。</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">av_write_frame</span><span class="params">(AVFormatContext *s, AVPacket *pkt)</span></span>;</span><br><span class="line">	s：用于输出的AVFormatContext。</span><br><span class="line">	pkt：等待输出的AVPacket。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150311155409612.png" alt="img"></p>
+<p>该函数主要包括以下三个步骤：</p>
+<ul>
+<li>调用check_packet()做一些简单的检测</li>
+<li>调用compute_pkt_fields2()设置AVPacket的一些属性值</li>
+<li>调用write_packet()写入数据</li>
+</ul>
+<h4 id="av-write-trailer"><a href="#av-write-trailer" class="headerlink" title="av_write_trailer()"></a>av_write_trailer()</h4><p><code>av_write_trailer()</code>用于写视频文件尾</p>
+<blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">av_write_trailer</span><span class="params">(AVFormatContext *s)</span></span>;</span><br><span class="line">	s：用于输出的AVFormatContext。</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>av_write_trailer()主要完成了以下两步工作：</p>
+<ul>
+<li>循环调用interleave_packet()以及write_packet()，将还未输出的AVPacket输出出来。</li>
+<li>调用AVOutputFormat的write_trailer()，输出文件尾。</li>
+</ul>
+<h3 id="c-使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）"><a href="#c-使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）" class="headerlink" title="c++使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）"></a>c++使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）</h3><p>工程链接：<a target="_blank" rel="noopener" href="https://github.com/XDUwsk/ffmpeg_demo/tree/main/change_mp4_2_flv">change_mp4_2_flv</a></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavformat/avformat.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavutil/dict.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavutil/opt.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavutil/timestamp.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libswscale/swscale.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libswresample/swresample.h&quot;</span></span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//本质上ffmpeg4.2.7不需要这句话，但是加上也没有问题</span></span><br><span class="line">	<span class="built_in">av_register_all</span>();</span><br><span class="line">	<span class="comment">//avformat_network_init();</span></span><br><span class="line"> </span><br><span class="line">    AVFormatContext* ifmt_ctx = <span class="literal">NULL</span>;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>* inputUrl = <span class="string">&quot;/home/firefly/ffmpeg_workspace/media/4.mp4&quot;</span>;</span><br><span class="line"> </span><br><span class="line">	<span class="comment">///打开输入的流</span></span><br><span class="line">	<span class="keyword">int</span> ret = <span class="built_in">avformat_open_input</span>(&amp;ifmt_ctx, inputUrl, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (ret != <span class="number">0</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;Couldn&#x27;t open input stream.\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	<span class="comment">//查找流信息</span></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">avformat_find_stream_info</span>(ifmt_ctx, <span class="literal">NULL</span>) &lt; <span class="number">0</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;Couldn&#x27;t find stream information.\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//输出的文件</span></span><br><span class="line">    AVOutputFormat *ofmt = <span class="literal">NULL</span>;</span><br><span class="line">    AVFormatContext *ofmt_ctx = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span>* out_filename = <span class="string">&quot;4_out.flv&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">avformat_alloc_output_context2</span>(&amp;ofmt_ctx, <span class="literal">NULL</span>, <span class="literal">NULL</span>, out_filename);</span><br><span class="line">    <span class="keyword">if</span> (!ofmt_ctx) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">int</span> stream_mapping_size = ifmt_ctx-&gt;nb_streams;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//为数组分配内存</span></span><br><span class="line">    <span class="keyword">int</span>* stream_mapping = (<span class="keyword">int</span> *)<span class="built_in">av_mallocz_array</span>(stream_mapping_size, <span class="built_in"><span class="keyword">sizeof</span></span>(*stream_mapping));</span><br><span class="line">    <span class="keyword">if</span> (!stream_mapping) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">int</span> stream_index = <span class="number">0</span>;</span><br><span class="line">    ofmt = ofmt_ctx-&gt;oformat;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; ifmt_ctx-&gt;nb_streams; i++) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//输出的流</span></span><br><span class="line">        AVStream* out_stream = <span class="literal">NULL</span>;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//输入的流 视频、音频、字幕等</span></span><br><span class="line">        AVStream* in_stream = ifmt_ctx-&gt;streams[i];</span><br><span class="line">        AVCodecParameters* in_codecpar = in_stream-&gt;codecpar;</span><br><span class="line">        <span class="keyword">if</span> (in_codecpar-&gt;codec_type != AVMEDIA_TYPE_AUDIO &amp;&amp; in_codecpar-&gt;codec_type != AVMEDIA_TYPE_VIDEO &amp;&amp; in_codecpar-&gt;codec_type != AVMEDIA_TYPE_SUBTITLE) </span><br><span class="line">        &#123;</span><br><span class="line">            stream_mapping[i] = <span class="number">-1</span>;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        stream_mapping[i] = stream_index++;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//创建一个新的流</span></span><br><span class="line">        out_stream = <span class="built_in">avformat_new_stream</span>(ofmt_ctx, <span class="literal">NULL</span>); </span><br><span class="line">        <span class="keyword">if</span> (!out_stream) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//复制输入的流信息到输出流中</span></span><br><span class="line">        ret = <span class="built_in">avcodec_parameters_copy</span>(out_stream-&gt;codecpar, in_codecpar);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        out_stream-&gt;codecpar-&gt;codec_tag = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (!(ofmt-&gt;flags &amp; AVFMT_NOFILE)) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//打开输出文件</span></span><br><span class="line">        ret = <span class="built_in">avio_open</span>(&amp;ofmt_ctx-&gt;pb, out_filename, AVIO_FLAG_WRITE); </span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//写入头</span></span><br><span class="line">    ret = <span class="built_in">avformat_write_header</span>(ofmt_ctx, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    AVPacket pkt;</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) </span><br><span class="line">    &#123;</span><br><span class="line">        AVStream* in_stream = <span class="literal">NULL</span>;</span><br><span class="line">        AVStream* out_stream = <span class="literal">NULL</span>;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//从输入流中读取数据到pkt中</span></span><br><span class="line">        ret = <span class="built_in">av_read_frame</span>(ifmt_ctx, &amp;pkt);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"> </span><br><span class="line">        in_stream = ifmt_ctx-&gt;streams[pkt.stream_index];</span><br><span class="line">        <span class="keyword">if</span> (pkt.stream_index &gt;= stream_mapping_size || stream_mapping[pkt.stream_index] &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">av_packet_unref</span>(&amp;pkt);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        pkt.stream_index = stream_mapping[pkt.stream_index];</span><br><span class="line">        out_stream = ofmt_ctx-&gt;streams[pkt.stream_index];</span><br><span class="line"> </span><br><span class="line">        <span class="comment">/* copy packet */</span></span><br><span class="line">        pkt.pts = <span class="built_in">av_rescale_q_rnd</span>(pkt.pts, in_stream-&gt;time_base, out_stream-&gt;time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));</span><br><span class="line">        pkt.dts = <span class="built_in">av_rescale_q_rnd</span>(pkt.dts, in_stream-&gt;time_base, out_stream-&gt;time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));</span><br><span class="line">        pkt.duration = <span class="built_in">av_rescale_q</span>(pkt.duration, in_stream-&gt;time_base, out_stream-&gt;time_base);</span><br><span class="line">        pkt.pos = <span class="number">-1</span>;</span><br><span class="line"> </span><br><span class="line">        ret = <span class="built_in">av_interleaved_write_frame</span>(ofmt_ctx, &amp;pkt);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Error muxing packet\n&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">av_packet_unref</span>(&amp;pkt);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//写文件尾</span></span><br><span class="line">    <span class="built_in">av_write_trailer</span>(ofmt_ctx);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//关闭</span></span><br><span class="line">    <span class="built_in">avformat_close_input</span>(&amp;ifmt_ctx);</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (ofmt_ctx &amp;&amp; !(ofmt-&gt;flags &amp; AVFMT_NOFILE))</span><br><span class="line">        <span class="built_in">avio_closep</span>(&amp;ofmt_ctx-&gt;pb);</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">avformat_free_context</span>(ofmt_ctx);</span><br><span class="line">    <span class="built_in">av_freep</span>(&amp;stream_mapping);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span> &amp;&amp; ret != AVERROR_EOF)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/04/12/ffmpeg%E5%9F%BA%E7%A1%80%E4%BA%86%E8%A7%A3/" rel="prev" title="ffmpeg基础了解">
+      <i class="fa fa-chevron-left"></i> ffmpeg基础了解
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#c-%E4%B8%AD%E7%9A%84ffmpeg%E4%BD%BF%E7%94%A8"><span class="nav-number">1.</span> <span class="nav-text">c++中的ffmpeg使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#c-%E4%B8%ADffmpeg%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="nav-number">1.1.</span> <span class="nav-text">c++中ffmpeg的环境配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#c-%E4%B8%AD%E5%A4%B4%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%ABffmpeg%E5%AE%9E%E4%BE%8B"><span class="nav-number">1.2.</span> <span class="nav-text">c++中头文件包含ffmpeg实例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#c-%E4%B8%AD%E4%BD%BF%E7%94%A8ffmpeg%E7%9A%84%E5%A4%A7%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">c++中使用ffmpeg的大体流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#c-%E4%B8%AD%E4%BD%BF%E7%94%A8ffmpeg%E7%9A%84%E5%B8%B8%E7%94%A8%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-number">1.4.</span> <span class="nav-text">c++中使用ffmpeg的常用结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E7%A0%81%E8%BF%87%E7%A8%8B%E4%B8%AD%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0%E7%9A%84%E8%A7%A3%E6%9E%90"><span class="nav-number">1.5.</span> <span class="nav-text">解码过程中常用函数的解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#av-register-all"><span class="nav-number">1.5.1.</span> <span class="nav-text">av_register_all()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avformat-alloc-context"><span class="nav-number">1.5.2.</span> <span class="nav-text">avformat_alloc_context()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avformat-open-input"><span class="nav-number">1.5.3.</span> <span class="nav-text">avformat_open_input()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avformat-find-stream-info"><span class="nav-number">1.5.4.</span> <span class="nav-text">avformat_find_stream_info()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avcodec-find-decoder"><span class="nav-number">1.5.5.</span> <span class="nav-text">avcodec_find_decoder()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avcodec-open2"><span class="nav-number">1.5.6.</span> <span class="nav-text">avcodec_open2()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#av-read-frame"><span class="nav-number">1.5.7.</span> <span class="nav-text">av_read_frame()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avcodec-decode-video2"><span class="nav-number">1.5.8.</span> <span class="nav-text">avcodec_decode_video2()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E7%A0%81%E8%BF%87%E7%A8%8B%E4%B8%AD%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0%E7%9A%84%E8%A7%A3%E6%9E%90"><span class="nav-number">1.6.</span> <span class="nav-text">编码过程中常用函数的解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#av-register-all-1"><span class="nav-number">1.6.1.</span> <span class="nav-text">av_register_all()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avformat-alloc-output-context2"><span class="nav-number">1.6.2.</span> <span class="nav-text">avformat_alloc_output_context2()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avio-open2"><span class="nav-number">1.6.3.</span> <span class="nav-text">avio_open2()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avformat-new-stream"><span class="nav-number">1.6.4.</span> <span class="nav-text">avformat_new_stream()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avcodec-find-encoder"><span class="nav-number">1.6.5.</span> <span class="nav-text">avcodec_find_encoder()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avcodec-open2-1"><span class="nav-number">1.6.6.</span> <span class="nav-text">avcodec_open2()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avformat-write-header"><span class="nav-number">1.6.7.</span> <span class="nav-text">avformat_write_header()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#avcodec-encode-video2"><span class="nav-number">1.6.8.</span> <span class="nav-text">avcodec_encode_video2()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#av-write-frame"><span class="nav-number">1.6.9.</span> <span class="nav-text">av_write_frame()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#av-write-trailer"><span class="nav-number">1.6.10.</span> <span class="nav-text">av_write_trailer()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#c-%E4%BD%BF%E7%94%A8ffmpeg%E8%BF%9B%E8%A1%8C%E8%A7%86%E9%A2%91%E6%A0%BC%E5%BC%8F%E8%BD%AC%E6%8D%A2%E7%9A%84%E6%A1%88%E4%BE%8B%EF%BC%88%E7%94%B1mp4%E8%BD%AC%E6%8D%A2%E4%B8%BAflv%EF%BC%89"><span class="nav-number">1.7.</span> <span class="nav-text">c++使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

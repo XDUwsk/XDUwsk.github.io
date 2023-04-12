@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="ffmpeg是什么FFmpeg是一个库和工具的集合，用于处理音频、视频、字幕和相关元数据等多媒体内容。 ffmpeg的组成ffmpeg由以下几个核心依赖包组成  libavcodec - 提供了更广泛的编码器解码器的实现。各种格式的编解码代码(如aacenc.c、aacdec.c等)都位于该目录下。 libavformat - 实现了流协议、容器格式和基本的I&#x2F;O实现。用于各种音视频封装格式的生成">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ffmpeg基础了解">
+<meta property="og:url" content="http://example.com/2023/04/12/ffmpeg%E5%9F%BA%E7%A1%80%E4%BA%86%E8%A7%A3/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="ffmpeg是什么FFmpeg是一个库和工具的集合，用于处理音频、视频、字幕和相关元数据等多媒体内容。 ffmpeg的组成ffmpeg由以下几个核心依赖包组成  libavcodec - 提供了更广泛的编码器解码器的实现。各种格式的编解码代码(如aacenc.c、aacdec.c等)都位于该目录下。 libavformat - 实现了流协议、容器格式和基本的I&#x2F;O实现。用于各种音视频封装格式的生成">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-04-12T01:36:29.000Z">
+<meta property="article:modified_time" content="2023-04-12T01:39:30.153Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2023/04/12/ffmpeg%E5%9F%BA%E7%A1%80%E4%BA%86%E8%A7%A3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ffmpeg基础了解 | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/12/ffmpeg%E5%9F%BA%E7%A1%80%E4%BA%86%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ffmpeg基础了解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-04-12 09:36:29 / 修改时间：09:39:30" itemprop="dateCreated datePublished" datetime="2023-04-12T09:36:29+08:00">2023-04-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="ffmpeg是什么"><a href="#ffmpeg是什么" class="headerlink" title="ffmpeg是什么"></a>ffmpeg是什么</h2><p>FFmpeg是一个库和工具的集合，用于处理音频、视频、字幕和相关元数据等多媒体内容。</p>
+<h2 id="ffmpeg的组成"><a href="#ffmpeg的组成" class="headerlink" title="ffmpeg的组成"></a>ffmpeg的组成</h2><p>ffmpeg由以下几个核心依赖包组成</p>
+<ul>
+<li><strong>libavcodec</strong> - 提供了更广泛的编码器解码器的实现。各种格式的编解码代码(如aacenc.c、aacdec.c等)都位于该目录下。</li>
+<li><strong>libavformat</strong> - 实现了流协议、容器格式和基本的I/O实现。用于各种音视频封装格式的生成和解析，包括获取解码所需信息、读取音视频数据等功能。各种流媒体协议代码(如rtmpproto.c等)以及音视频格式的(解)复用代码(如flvdec.c、flvenc.c等)都位于该目录下。</li>
+<li><strong>libavutil</strong> - 为核心工具包，包含一些公共的工具函数的使用库，包括算数运算，字符操作等。</li>
+<li><strong>libavfilter</strong> - 提供各种音视频滤波器。</li>
+<li><strong>libavdevice</strong> - 用于硬件的音视频采集、加速和显示。</li>
+<li><strong>libswresample</strong> - 提供音频重采样，采样格式转换和音频混合等功能。</li>
+<li><strong>libswscale</strong> - 提供原始视频的比例缩放、色彩映射转换、图像颜色空间或格式转换的功能。</li>
+</ul>
+<h2 id="ffmpeg用到的工具"><a href="#ffmpeg用到的工具" class="headerlink" title="ffmpeg用到的工具"></a>ffmpeg用到的工具</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffmpeg.html">ffmpeg</a>是一个用于操作、转换和流式传输多媒体内容的命令行工具箱。</li>
+<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffplay.html">ffplay</a>是一款简约的多媒体播放器。</li>
+<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffprobe.html">ffprobe</a>是一种检查多媒体内容的简单分析工具。</li>
+<li>其他小工具，如”aviocat”、”ismindex”和”qt faststart”。</li>
+</ul>
+<h2 id="ffmpeg的源码编译"><a href="#ffmpeg的源码编译" class="headerlink" title="ffmpeg的源码编译"></a>ffmpeg的源码编译</h2><h3 id="ffmpeg的源码下载-以ffmpeg-release-6-0为例"><a href="#ffmpeg的源码下载-以ffmpeg-release-6-0为例" class="headerlink" title="ffmpeg的源码下载    以ffmpeg release 6.0为例"></a>ffmpeg的源码下载    以<a target="_blank" rel="noopener" href="https://github.com/FFmpeg/FFmpeg/tree/release/6.0">ffmpeg release 6.0为例</a></h3><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/FFmpeg/FFmpeg/<span class="built_in">tree</span>/release/<span class="number">6</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<h3 id="yasm的安装"><a href="#yasm的安装" class="headerlink" title="yasm的安装"></a>yasm的安装</h3><p>由于ffmpeg的安装过程中为了提高效率使用了汇编指令，而yasm是汇编编译器，在ffmpeg的编译过程中对其有依赖，所以需要对其提前进行下载安装。</p>
+<p>linux环境下直接：</p>
+<ul>
+<li>下载：wget  <a target="_blank" rel="noopener" href="http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz">http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz</a></li>
+<li>解压：tar zxvf yasm-1.3.0.tar.gz</li>
+<li>切换路径： cd yasm-1.3.0</li>
+<li>执行配置： ./configure</li>
+<li>编译：make</li>
+<li>安装：make install</li>
+</ul>
+<h3 id="ffmpeg的源码编译-1"><a href="#ffmpeg的源码编译-1" class="headerlink" title="ffmpeg的源码编译"></a>ffmpeg的源码编译</h3><p>进入ffmpeg的源码文件夹。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">./configure --prefix=/usr/local/ffmpeg</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">vi /etc/profile</span><br><span class="line">export <span class="built_in">PATH</span>=$<span class="built_in">PATH</span>:/usr/local/ffmpeg/bin</span><br></pre></td></tr></table></figure>
+<h3 id="ffmpeg的安装测试"><a href="#ffmpeg的安装测试" class="headerlink" title="ffmpeg的安装测试"></a>ffmpeg的安装测试</h3><p>在命令行中直接输入ffmpeg，得到ffmpeg相关的信息输出即可。</p>
+<h2 id="常见使用方法"><a href="#常见使用方法" class="headerlink" title="常见使用方法"></a>常见使用方法</h2><p>具体详细版的ffmpeg文档可见： <a target="_blank" rel="noopener" href="https://xdsnet.gitbooks.io/other-doc-cn-ffmpeg/content/index.html">ffmpeg中文文档</a></p>
+<h3 id="统一语法"><a href="#统一语法" class="headerlink" title="统一语法"></a>统一语法</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg [全局选项] &#123;[输入文件选项] -i 输入文件&#125; ... &#123;[输出文件选项] 输出文件&#125; ...</span><br></pre></td></tr></table></figure>
+<p>即</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg [global_options] &#123;[input_file_options] -i input_file&#125; ... &#123;[output_file_options] output_file&#125; ...</span><br></pre></td></tr></table></figure>
+<h3 id="基本选项"><a href="#基本选项" class="headerlink" title="基本选项"></a>基本选项</h3><p>能力集列表</p>
+<ul>
+<li>-formats：列出支持的文件格式。</li>
+<li>-codecs：列出支持的编解码器。</li>
+<li>-decoders：列出支持的解码器。</li>
+<li>-encoders：列出支持的编码器。</li>
+<li>-protocols：列出支持的协议。</li>
+<li>-bsfs：列出支持的比特流过滤器。</li>
+<li>-filters：列出支持的滤镜。</li>
+<li>-pix_fmts：列出支持的图像采样格式。</li>
+<li>-sample_fmts：列出支持的声音采样格式。</li>
+</ul>
+<p>常用输入选项</p>
+<ul>
+<li>-i filename：指定输入文件名。</li>
+<li>-f fmt：强制设定文件格式，需使用能力集列表中的名称(缺省是根据扩展名选择的)。</li>
+<li>-ss hh:mm:ss[.xxx]：设定输入文件的起始时间点，启动后将跳转到此时间点然后开始读取数据。</li>
+</ul>
+<p>对于输入，以下选项通常是自动识别的，但也可以强制设定。</p>
+<ul>
+<li>-c codec：指定解码器，需使用能力集列表中的名称。</li>
+<li>-acodec codec：指定声音的解码器，需使用能力集列表中的名称。</li>
+<li>-vcodec codec：指定视频的解码器，需使用能力集列表中的名称。</li>
+<li>-b:v bitrate：设定视频流的比特率，整数，单位bps。</li>
+<li>-r fps：设定视频流的帧率，整数，单位fps。</li>
+<li>-s WxH : 设定视频的画面大小。也可以通过挂载画面缩放滤镜实现。</li>
+<li>-pix_fmt format：设定视频流的图像格式(如RGB还是YUV)。</li>
+<li>-ar sample rate：设定音频流的采样率，整数，单位Hz。</li>
+<li>-ab bitrate：设定音频流的比特率，整数，单位bps。</li>
+<li>-ac channels：设置音频流的声道数目。</li>
+</ul>
+<p>常用输出选项</p>
+<ul>
+<li>-f fmt：强制设定文件格式，需使用能力集列表中的名称(缺省是根据扩展名选择的)。</li>
+<li>-c codec：指定编码器，需使用能力集列表中的名称(编码器设定为”copy“表示不进行编解码)。</li>
+<li>-acodec codec：指定声音的编码器，需使用能力集列表中的名称(编码器设定为”copy“表示不进行编解码)。</li>
+<li>-vcodec codec：指定视频的编码器，需使用能力集列表中的名称(编解码器设定为”copy“表示不进行编解码)。</li>
+<li>-r fps：设定视频编码器的帧率，整数，单位fps。</li>
+<li>-pix_fmt format：设置视频编码器使用的图像格式(如RGB还是YUV)。</li>
+<li>-ar sample rate：设定音频编码器的采样率，整数，单位Hz。</li>
+<li>-b bitrate：设定音视频编码器输出的比特率，整数，单位bps。</li>
+<li>-ab bitrate：设定音频编码器输出的比特率，整数，单位bps。</li>
+<li>-ac channels：设置音频编码器的声道数目。</li>
+<li>-an 忽略任何音频流。</li>
+<li>-vn 忽略任何视频流。</li>
+<li>-t hh:mm:ss[.xxx]：设定输出文件的时间长度。</li>
+<li>-to hh:mm:ss[.xxx]：如果没有设定输出文件的时间长度的画可以设定终止时间点。</li>
+</ul>
+<h3 id="ffmpeg音视频转换流程"><a href="#ffmpeg音视频转换流程" class="headerlink" title="ffmpeg音视频转换流程"></a>ffmpeg音视频转换流程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> _______              ______________</span><br><span class="line">|       |            |              |</span><br><span class="line">| input |  demuxer   | encoded data |   decoder</span><br><span class="line">| file  | ---------&gt; | packets      | -----+</span><br><span class="line">|_______|            |______________|      |</span><br><span class="line">                                           v</span><br><span class="line">                                       _________</span><br><span class="line">                                      |         |</span><br><span class="line">                                      | decoded |</span><br><span class="line">                                      | frames  |</span><br><span class="line">                                      |_________|</span><br><span class="line">  ________             ______________      |</span><br><span class="line">|        |           |              |      |</span><br><span class="line">| output | &lt;-------- | encoded data | &lt;----+</span><br><span class="line">| file   |   muxer   | packets      |   encoder</span><br><span class="line">|________|           |______________|</span><br></pre></td></tr></table></figure>
+<p><code>ffmpeg</code>调用<code>libavformat</code>库(含分离器<code>demuxer</code>)读取输入文件，分离出各类编码的数据包(流)。编码数据包通过解码器解码出非压缩的数据帧(raw视频/PCM格式音频…)，这些数据帧可以被滤镜进一步处理。经过滤镜处理的数据被重新编码为新的数据包(流)，然后经过混合器混合(例如按一定顺序和比例把音频数据包和视频数据包交叉组合)，写入到输出文件。</p>
+<h3 id="滤镜处理-Filtering"><a href="#滤镜处理-Filtering" class="headerlink" title="滤镜处理(Filtering)"></a>滤镜处理(Filtering)</h3><p>在上述音视频转换流程中，decoder得到原始音视频数据之后，可以使用<code>libavfilter</code>库中的滤镜进行处理，滤镜之间可以组合使用<code>filtergraphs</code> ，对于ffmpeg而言，滤镜分为<code>简单滤镜</code>和<code>复合滤镜</code>。</p>
+<h4 id="简单滤镜"><a href="#简单滤镜" class="headerlink" title="简单滤镜"></a>简单滤镜</h4><p>简单滤镜即为只有一个输入和输出的滤镜，且滤镜两边的数据为同一类型的数据，可以理解为从raw data到encoder处理之前简单附加的一步。其具体流程可如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> _________                        ______________</span><br><span class="line">|         |                      |              |</span><br><span class="line">| decoded |                      | encoded data |</span><br><span class="line">| frames  |\                     | packets      |</span><br><span class="line">|_________| \                  /||______________|</span><br><span class="line">             \   __________   /</span><br><span class="line">  simple      \ |          | /  encoder</span><br><span class="line">  filtergraph  \| filtered |/</span><br><span class="line">                | frames   |</span><br><span class="line">                |__________|</span><br></pre></td></tr></table></figure>
+<p>tips：滤镜改变的不止可以为帧内容，还可以是帧属性。例如帧率的变化，尺寸的变化等。对应于帧内容并不发生改变。</p>
+<h4 id="复合滤镜"><a href="#复合滤镜" class="headerlink" title="复合滤镜"></a>复合滤镜</h4><p>不为简单滤镜的行为均可视为复合滤镜，例如多个输入多个输出的场景，示意图如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> _________</span><br><span class="line">|         |</span><br><span class="line">| input 0 |\                    __________</span><br><span class="line">|_________| \                  |          |</span><br><span class="line">             \   _________    /| output 0 |</span><br><span class="line">              \ |         |  / |__________|</span><br><span class="line"> _________     \| complex | /</span><br><span class="line">|         |     |         |/</span><br><span class="line">| input 1 |----&gt;| filter  |\</span><br><span class="line">|_________|     |         | \   __________</span><br><span class="line">               /| graph   |  \ |          |</span><br><span class="line">              / |         |   \| output 1 |</span><br><span class="line"> _________   /  |_________|    |__________|</span><br><span class="line">|         | /</span><br><span class="line">| input 2 |/</span><br><span class="line">|_________|</span><br></pre></td></tr></table></figure>
+<p>复合滤镜由<code>-filter_complex</code>选项进行设定。<strong>注意</strong>这是一个全局选项，因为一个复合滤镜必然是不能只关联到一个单一流或者文件的。<code>-lavfi</code>选项等效于<code>-filter_complex</code></p>
+<p>一个复合滤镜的简单例子就是<code>overlay</code>滤镜，它从两路输入中，把一个视频叠加到一个输出上。对应的类似音频滤镜是<code>amix</code>。</p>
+<h4 id="流拷贝"><a href="#流拷贝" class="headerlink" title="流拷贝"></a>流拷贝</h4><p>流拷贝(Stream copy)是一种对指定流数据仅仅进行复制的<code>拷贝(copy)</code>模式。这种情况下<code>ffmpeg</code>不会对指定流进行解码和编码步骤，而仅仅是分离和混合数据包。这种模式常用于文件包装格式的转换或者修改部分元数据信息，这个过程简单图示如下：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_______              ______________            ________</span><br><span class="line">|       |            |              |          |        |</span><br><span class="line">| input |  demuxer   | encoded data |  muxer   | output |</span><br><span class="line">| file  | ---------&gt; | packets      | -------&gt; | file   |</span><br><span class="line">|_______|            |______________|          |________|</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>因为这种模式下不存在解码和编码过程，所以也特别快，而且不会造成新的质量损失。然而这也使得这样的模式不能适合很多工作需求，例如这个模式下不能使用大量的滤镜了，因为滤镜仅能对未压缩(编码)的数据进行处理。</p>
+<h3 id="流"><a href="#流" class="headerlink" title="流"></a>流</h3><h4 id="4-1流处理"><a href="#4-1流处理" class="headerlink" title="4.1流处理"></a>4.1流处理</h4><p>默认情况下，<code>ffmpeg</code>把输入文件每种类型(视频、音频和字幕)仅仅采用一个流转换输出到输出文件中，就是把<strong>最好</strong>效果的流进行输出：</p>
+<ul>
+<li>对于视频，它是具有最高分辨率的流</li>
+<li>对于音频，它是具有最多频道的流</li>
+<li>对于字幕，它是第一个找到的字幕流，但有一个警告。输出格式的默认字幕编码器可以是基于文本的，也可以是基于图像的，并且仅选择相同类型的字幕流</li>
+<li>在几个相同类型的流速率相等的情况下，选择具有最低索引的流。</li>
+</ul>
+<p>当然，你可以禁用默认设置，而采用<code>-vn/-an/-sn</code>选项进行专门的指定，如果要进行完全的手动控制，则是以<code>-map</code>选项，它将禁止默认值而选用指定的配置。</p>
+<h4 id="4-1流处理-1"><a href="#4-1流处理-1" class="headerlink" title="4.1流处理"></a>4.1流处理</h4><p>流处理独立于流选择，下面描述的字幕除外。流处理通过<code>-codec</code>选项进行设置，该选项寻址到特定输出文件内的流。特别是，<code>-codec</code>在流选择过程之后被ffmpeg应用，因此不影响后者。如果没有为流类型指定<code>-codec</code>选项，ffmpeg将选择输出文件muxer注册的默认编码器。</p>
+<p>对于字幕存在例外。如果为输出文件指定了字幕编码器，则将包括找到任何类型的第一个字幕流，如文本或图像。 ffmpeg不验证指定的编码器是否可以转换所选的流，或者转换的流是否在输出格式中是可接受的。这通常也适用：当用户手动设置编码器时，流选择过程不能检查编码流是否可以复用到输出文件中。如果不能，则ffmpeg将中止，并且所有输出文件都将无法处理。</p>
+<h4 id="4-2例子"><a href="#4-2例子" class="headerlink" title="4.2例子"></a>4.2例子</h4><p>假设以下三个输入文件。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">input file &#x27;A.avi&#x27;</span><br><span class="line">      stream 0: video 640x360</span><br><span class="line">      stream 1: audio 2 channels</span><br><span class="line"> </span><br><span class="line">input file &#x27;B.mp4&#x27;</span><br><span class="line">      stream 0: video 1920x1080</span><br><span class="line">      stream 1: audio 2 channels</span><br><span class="line">      stream 2: subtitles (text)</span><br><span class="line">      stream 3: audio 5.1 channels</span><br><span class="line">      stream 4: subtitles (text)</span><br><span class="line"> </span><br><span class="line">input file &#x27;C.mkv&#x27;</span><br><span class="line">      stream 0: video 1280x720</span><br><span class="line">      stream 1: audio 2 channels</span><br><span class="line">      stream 2: subtitles (image)</span><br></pre></td></tr></table></figure>
+<h5 id="示例：自动流选择"><a href="#示例：自动流选择" class="headerlink" title="示例：自动流选择"></a>示例：自动流选择</h5><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i A.avi -i B.mp4 out1.mkv out2.wav -map <span class="number">1</span>:a -c:a <span class="built_in">copy</span> out3.mov</span><br></pre></td></tr></table></figure>
+<p>指定了三个输出文件，对于前两个out1 out2，由于未设置<code>-map</code>选项，因此ffmpeg将自动为这两个文件选择流。<br>out1.mkv是一个Matroska容器文件，接受视频，音频和字幕流，因此ffmpeg将尝试选择每种类型中的一种。<br>对于视频，它将从B.mp4中选择流 stream 0 ，其在所有输入视频流中具有最高分辨率。<br>对于音频，它将从B.mp4中选择流 stream 3 ，因为它具有最多的通道。<br>对于字幕，它将从B.mp4中选择流 stream 2 ，这是A.avi和B.mp4中的第一个字幕流。<br>out2.wav只接受音频流，因此只选择来自B.mp4的stream 3。<br>out3.mov，由于设置了<code>-map</code>选项，因此不会进行自动流选择。 <code>-map 1:a</code>选项将从第二个输入B.mp4中选择所有音频流。此输出文件中不包含其他流。<br>对于前两个输出，将对所有包含的流进行转码。选择的编码器将是每种输出格式注册的默认编码器，可能与所选输入流的编解码器不匹配。<br>对于第三个输出，<code>-c:a copy</code>意为使用指定音视频编码中的所有音频流编解码器，设置为<code>copy</code>，因此不会发生以及不可能发生解码 - 过滤 - 编码操作。所选流的数据包应从输入文件传送，并在输出文件中复用。</p>
+<h5 id="示例：自动字幕选择"><a href="#示例：自动字幕选择" class="headerlink" title="示例：自动字幕选择"></a>示例：自动字幕选择</h5><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i C.mkv out1.mkv -c:s dvdsub -an out2.mkv</span><br></pre></td></tr></table></figure>
+<p>尽管out1.mkv是Matroska容器文件，它接受字幕流，但只能选择视频和音频流。 C.mkv的字幕流是基于图像的，并且Matroska复用器的默认字幕编码器是基于文本的，因此字幕的转码操作预计会失败，因此不选择该流。 然而，在out2.mkv中，在命令中<code>-c:s dvdsub</code>指定字幕编码器，因此，除了视频流之外，还选择字幕流。 <code>-an</code>的存在禁用out2.mkv的音频流选择。</p>
+<h3 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h3><p>所有的数值选项，如果没有特殊定义，则需要一个接受一个字符串代表一个数作为输入，这可能跟着一个单位量词首字母，例如<code>&quot;k&quot;</code>,<code>&quot;m&quot;</code>或<code>&quot;G&quot;</code></p>
+<p>如果<code>i</code>是附加到SI单位的首字母，完整的字母将被解释为一个2的幂数单位，这是基于1024而不是1000的，添加<code>B</code>的SI单位则是再将此值乘以8。例如<code>KB</code>，<code>MiB</code>，<code>G</code>和<code>B</code></p>
+<p>对于选项中不带参数的布尔选项，即把相应的值设置为<code>true</code>，它们可以添加<code>no</code>设置为false，例如<code>nofoo</code>就相当于<code>foo false</code> 。</p>
+<h4 id="流说明-限定-符"><a href="#流说明-限定-符" class="headerlink" title="流说明(限定)符"></a>流说明(限定)符</h4><ul>
+<li>很多选项是作用于单独的流的，例如码率(bitrate)或者编码(codec)，流说明符就是精确的为每个流指定相应的选项。</li>
+<li>一个流说明符是一个以冒号分隔的字符串，其中分隔出的部分是附加选项，例如<code>-codec:a:1 ac3</code>表示编码器是对第2音频流以ac3编码。</li>
+<li>一个流说明符可能匹配多个流，则该选项是所有匹配项的选项，例如<code>-b:a 128k</code>表示所有的音频流都是128k的码率。</li>
+<li>一个空的流说明符匹配所有的流，例如<code>-codec copy</code>或者<code>-codec: copy</code>表示所有的流都不进行再次编码(包括视频和音频)</li>
+</ul>
+<p>可能的流说明符有：</p>
+<ul>
+<li><strong><code>stream_index</code></strong>:匹配流的索引，例如<code>-threads:1 4</code>表示对2号流采用4个线程处理</li>
+<li><strong><code>stream_type[:stream_index]</code></strong>:<code>stream_type</code>有<code>v</code>表示视频，<code>a</code>表示音频，<code>s</code>表示字幕，<code>d</code>表示数据和<code>t</code>表示附加/附件等可能，如果<code>stream_index</code>同时被指定，则匹配该索引对于的该类型的流。例如<code>-codec:v:0 h264</code>表示第1视频流是h.264编码。</li>
+<li><strong><code>p:program_id[:stream_index]</code></strong>:如果<code>stream_index</code>被指定，则表示被<code>program_id</code>指定的程序仅作用于<code>stream_index</code>所指流，否则将作用于所有流。</li>
+<li><strong><code>#stream_id</code>或者<code>i:stream_id</code></strong>：匹配<code>stream_id</code>所指流(MPEG-TS中的PID)</li>
+<li><strong><code>m:key[:value]</code></strong>:匹配在元数据中以标签<code>key</code>=<code>value</code>值的流，如果<code>value</code>没有设置，则匹配所有。</li>
+<li><strong><code>u</code></strong>：匹配不能被配置的流，这时编码器必须被定义且有必要的视频维度或者音频采样率之类的信息。<strong>注意</strong>，<code>ffmpeg</code>匹配由元数据标识的状态仅对于输入文件有效。</li>
+</ul>
+<h4 id="常规选项"><a href="#常规选项" class="headerlink" title="常规选项"></a>常规选项</h4><p>这些常规选项也可以用在<code>ffmpeg</code>项目中其他<code>ff*</code>工具，例如<code>ffplayer</code></p>
+<ul>
+<li><p><code>-L</code>：显示授权协议</p>
+</li>
+<li><p><code>-h，-？，-help，--help[arg]</code>:显示帮助，一个附加选项可以指定帮助显示的模式，如果没有参数，则是基本选项(没有特别声明)说明被显示，下面是参数定义</p>
+<ul>
+<li><code>long</code>：在基本选项说明基础上增加高级选项说明</li>
+<li><code>full</code>：输出完整的选项列表，包括编(解)码器，分离器混合器以及滤镜等等的共享和私有选项</li>
+<li><code>decoder=decoder_name</code>：输出指定解码器名的详细信息。可以使用<code>-decoders</code>来获取当前支持的所有解码器名</li>
+<li><code>encoder=encoder_name</code>：输出指定编码器名的详细信息。可以使用<code>-encoders</code>来获取当前支持的所有编码器名</li>
+<li><code>demuxer=demuxer_name</code>：输出指定分离器名详细信息。可以使用<code>-formats</code>来获取当前支持的所有分离器和混合器</li>
+<li><code>muxer=muxer_name</code>：输出指定混合器名详细信息。可以使用<code>-formats</code>来获取当前支持的所有分离器和混合器</li>
+<li><code>filter=filter_name</code>：输出指定滤镜名的详细信息。可以使用<code>-filters</code>来获取当前支持的所有滤镜</li>
+</ul>
+</li>
+<li><p><code>-version</code>：显示版</p>
+</li>
+<li><p><code>-buildconf</code> : 显示构建选项</p>
+</li>
+<li><p><code>-formats</code>：显示所有有效的格式(包括设备)</p>
+</li>
+<li><p><code>-devices</code>：显示有效设备</p>
+</li>
+<li><p><code>-codecs</code>：显示所有已支持的编码(libavcodec中的)</p>
+</li>
+<li><p><code>-decoders</code>：显示所有有效解码器</p>
+</li>
+<li><p><code>-encoders</code>：显示所有有效的编码器</p>
+</li>
+<li><p><code>-bsfs</code>：显示有效的数据流(bitstream)滤镜</p>
+</li>
+<li><p><code>-protocols</code>：显示支持的协议</p>
+</li>
+<li><p><code>-filters</code>：显示libavfilter中的滤镜</p>
+</li>
+<li><p><code>-pix_fmts</code>：显示有效的像素(pixel)格式</p>
+</li>
+<li><p><code>-sample_fmts</code>：显示有效的实例格式</p>
+</li>
+<li><p><code>-layouts</code>：显示信道名字和信道布局</p>
+</li>
+<li><p><code>-colors</code>：显示注册的颜色名</p>
+</li>
+<li><p><code>-sources device[,opt1=val1[,opt2=val]...]</code>：显示自动识别的输入设备源。一些设备可能需要提供一些系统指派的源名字而不能自动识别。返回的列表不能认为一定是完整的(即有可能还有设备没有列出来)</p>
+<p><code>ffmpeg -sources pulse,server=192.168.0.4</code></p>
+</li>
+<li><p><code>-sinks device[,opt1=val1[,opt2=val]...]</code>:显示自动识别的输出设备。一些设备可能需要提供一些系统指派的源名字而不能自动识别。返回的列表不能认为一定是完整的(即有可能还有设备没有列出来)</p>
+<p><code>ffmpeg -sinks pulse,server=192.168.0.4</code></p>
+</li>
+<li><p><code>-loglevel [repeat+]loglevel 或者 -v [repeat+]loglevel</code>：设置日志层次。如果附加有<code>repeat+</code>则表示从第一条非压缩行到达到最后消息n次之间的行将被忽略。<code>&quot;repeat&quot;</code>也可以一直使用，如果没有现有日志层级设置，则采用默认日志层级。如果有多个日志层级参数被获取，使用<code>&quot;repeat&quot;</code>不改变当前日志层级。日志层级是一个字符串或数值，有以下可能值：</p>
+<ul>
+<li><p><code>quiet,-8</code>，什么都不输出，是无声的</p>
+</li>
+<li><p><code>panic,0</code>，仅显示造成进程失败的致命错误，它当前不能使用</p>
+</li>
+<li><p><code>fatal,8</code>仅仅显示致命错误，这些错误使得处理不能继续</p>
+</li>
+<li><p><code>error,16</code>显示所有的错误，包括可以回收的错误(进程还可以继续的)</p>
+</li>
+<li><p><code>warning,24</code>显示所有警告和错误，任何错误或者意外事件相关信息均被显示</p>
+</li>
+<li><p><code>info,32</code>显示过程中的信息，还包括警告和错误，则是默认值</p>
+</li>
+<li><p><code>verbose,40</code>类似<code>info</code>，但更冗长</p>
+</li>
+<li><p><code>debug,48</code>显示所有，包括调试信息</p>
+</li>
+<li><p><code>trace,56</code></p>
+<p>默认的日志输出是stderr设备，如果在控制台支持颜色，则错误和警告标记的颜色将被显示处理，默认日志的颜色设置可以由环境变量的<code>AV_LOG_FORCE_NOCOLOR</code>或者<code>NO_COLOR</code>或者环境变量<code>AV_LOG_RORCE_COLOR</code>覆盖。环境变量<code>NO_COLOR</code>不推荐使用，因为其已经不被新版本支持。</p>
+</li>
+</ul>
+</li>
+<li><p><code>-report</code>：复制所有命令行和控制台输出到当前目录下名为<code>program-YYYMMDD-HHMMSS.log</code>文件中。这常用于报告bug，所以一般会同时设置<code>-loglevel verbose</code></p>
+<p>设置环境变量<code>FFREPORT</code>可以起到相同的效果。如果值是一个以<code>：</code>分隔的关键值对，则将影响到报告效果。值中的特殊符号或者分隔符<code>：</code>必须被转义(参考ffmepg-utils手册中”引用逃逸”(“Quoting and escaping”)章节)。以下是选项值范围：</p>
+<ul>
+<li><p>file：设置报告文件名字，<code>%p</code>被扩展为程序名字，<code>%t</code>是时间码，<code>%%</code>表示一个字符<code>%</code></p>
+</li>
+<li><p>level：用数字设定日志信息详略程度(参考<code>-longlevel</code>)</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">`FFREPORT=file=ffreport.log:level=32 ffmpeg -i input output`</span><br></pre></td></tr></table></figure>
+<p>会把日志信息输出到环境变量定义的文件中， 内容包括简要过程信息，警告和错误。</p>
+</li>
+</ul>
+</li>
+<li><p><code>-hide_banner</code>：禁止打印输出banner。所有FFmpeg工具使用中常规都会在前面显示一些版权通知、编译选项和库版本等，这个选项可以禁止这部分的显示。</p>
+</li>
+<li><p><code>cpuflags flags(global)</code>：允许设置或者清除cpu标志性和。当前这个选项主要还是测试特性，不要使用，除非你明确需要：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -cpuflags -sse+mmx ... </span><br><span class="line">ffmpeg -cpuflags mmx ... </span><br><span class="line">ffmpeg -cpuflags 0 ...</span><br></pre></td></tr></table></figure>
+<p>可能的选项参数有：</p>
+<ul>
+<li><p>x86</p>
+<ul>
+<li>mmx</li>
+<li>mmxext</li>
+<li>sse</li>
+<li>sse2</li>
+<li>sse2slow</li>
+<li>sse3</li>
+<li>atom</li>
+<li>sse4.1</li>
+<li>sse4.2</li>
+<li>avx</li>
+<li>avx2</li>
+<li>xop</li>
+<li>fma3</li>
+<li>fma4</li>
+<li>3dnow</li>
+<li>3dnowext</li>
+<li>bmi1</li>
+<li>bmi2</li>
+<li>cmov</li>
+</ul>
+</li>
+<li><p>ARM</p>
+<ul>
+<li>armv5te</li>
+<li>armv6</li>
+<li>armv6t2</li>
+<li>vfp</li>
+<li>vfpv3</li>
+<li>neon</li>
+<li>setend</li>
+</ul>
+</li>
+<li><p>AArch64</p>
+<ul>
+<li>armv8</li>
+<li>vfp</li>
+<li>neon</li>
+</ul>
+</li>
+<li><p>PowerPC</p>
+<ul>
+<li>altivec</li>
+</ul>
+</li>
+<li><p>Specific Processors</p>
+<ul>
+<li>pentium2</li>
+<li>pentium3</li>
+<li>pentium4</li>
+<li>k6</li>
+<li>athlon</li>
+<li>athlonxp</li>
+<li>k8</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>-opencl_bench</code>：输出所有效OpenCL设备的基准测试情况。当前选项仅在编译FFmepg中打开了<code>--enable-opencl</code>才有效。</p>
+<p>当FFmpeg指定了<code>--enable-opencl</code>编译后，这个选项还可以通过全局参数<code>-opencl_options</code>进行设定，参考OpenCL选项，在ffmpeg-utils手册中对于选项的支持情况，这包括在特定的平台设备上支持OpenCL的能力。默认，FFmpeg会运行在首选平台的首选设备上，通过设置全局的OpenCL则可以实现在选定的OpenCL设备上运行，这样就可以在更快的OpenCL设备上运行(平时节点，需要时才选用性能高但耗电的设备)</p>
+<p>这个选项有助于帮助用户了解信息以进行有效配置。它将在每个设备上运行基准测试，并以性能排序所有设备，用户可以在随后调用<code>ffmpeg</code>时使用<code>-opencl_options</code>配置合适的OpenCL加速特性。</p>
+<p>一般以下面的步骤使用这个参数：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -opencl_bench        </span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><strong>注意</strong>输出中第一行的平台ID(<em>pidx</em>)和设备ID(<em>didx</em>)，然后在选择平台和设备用于命令行：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -opencl_options platform_idx=pidx:device_idx=didx ...</span><br></pre></td></tr></table></figure>
+</blockquote>
+</li>
+<li><p><code>opencl_options options(global)</code>:设置OpenCL环境选项，这个选项仅仅在FFmpeg编译选项中打开了<code>--enable-opencl</code>才有效。</p>
+<p><em>options</em>必须是一个由<code>:</code>分隔的<code>key=value</code>键值对列表。参考OpenCL选项，在ffmpeg-utils手册中对于选项的支持情况</p>
+</li>
+</ul>
+<h4 id="AV选项"><a href="#AV选项" class="headerlink" title="AV选项"></a>AV选项</h4><p>这些选项由特定的库提供(如libavformat，libavdevice以及libavcodec)。为了更多的了解AV选项，使用<code>-help</code>进行进一步了解。它们可以指定下面2个分类：</p>
+<ul>
+<li>generic(常规)：这类选项可以用于设置容器、设备、编码器、解码器等。通用选项对列在<code>AVFormatContext</code>中的容器/设备以及<code>AVCodecContext</code>中的编码有效。</li>
+<li>private(私有)：这类仅对特定的容器、设备或者编码有效。私有选项由相应的 容器/设备/编码 指定(确定)。</li>
+</ul>
+<p>例如要在一个默认为ID3v2.4为头的MP3文件中写入ID3v2.3头，需要使用id3v2_version 私有选项来对MP3混流：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.flac -id3v2_version 3 out.mp3</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>所有编码AV选项是针对单独流的，所以必须详细指定。</p>
+<p><strong>注意</strong></p>
+<ol>
+<li><code>-nooption</code>语法不能被用于AV选项中的布尔值项目，而必须使用<code>-option 0/-option 1</code></li>
+<li>以往使用<code>v/a/s</code>命名指定每个流的AV选项语法已经不建议使用，它们很快就会失效移除。</li>
+</ol>
+<h4 id="主要选项"><a href="#主要选项" class="headerlink" title="主要选项"></a>主要选项</h4><ul>
+<li><p><code>-f fmt (input/output)</code> :指定输入或者输出文件格式。常规可省略而使用依据扩展名的自动指定，但一些选项需要强制明确设定。</p>
+</li>
+<li><p><code>-i filename (input)</code>：指定输入文件</p>
+</li>
+<li><p><code>-y (global)</code>：默认自动覆盖输出文件，而不再询问确认。</p>
+</li>
+<li><p><code>-n (global)</code>:不覆盖输出文件，如果输出文件已经存在则立即退出</p>
+</li>
+<li><p>-<code>c[:stream_specifier] codec (input/output,per-stream)</code></p>
+</li>
+<li><p><code>-codec[:stream_specifier] codec (input/output,per-stream)</code> 为特定的文件选择编/解码模式，对于输出文件就是编码器，对于输入或者某个流就是解码器。选项参数中<code>codec</code>是编解码器的名字，或者是<code>copy</code>(仅对输出文件)则意味着流数据直接复制而不再编码。例如： </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -map 0 -c:v libx264 -c:a copy OUTPUT</span><br></pre></td></tr></table></figure>
+<p>是使用libx264编码所有的视频流，然后复制所有的音频流。</p>
+<p>再如除了特殊设置外所有的流都由<code>c</code>匹配指定： </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -map 0 -c copy -c:v:1 libx264 -c:a:137 libvorbis OUTPUT</span><br></pre></td></tr></table></figure>
+<p>这将在输出文件中第2视频流按libx264编码，第138音频流按libvorbis编码，其余都直接复制输出。</p>
+</li>
+<li><p><code>-t duration (input/output)</code>:限制输入/输出的时间。如果是在<code>-i</code>前面，就是限定从输入中读取多少时间的数据；如果是用于限定输出文件，则表示写入多少时间数据后就停止。<code>duration</code>可以是以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值。 <strong>注意</strong><code>-to</code>和<code>-t</code>是互斥的，<code>-t</code>有更高优先级。</p>
+</li>
+<li><p><code>-to position (output)</code>:只写入<code>position</code>时间后就停止，<code>position</code>可以是以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值。 <strong>注意</strong><code>-to</code>和<code>-t</code>是互斥的，<code>-t</code>有更高优先级。</p>
+</li>
+<li><p><code>-fs limit_size (output)</code>:设置输出文件大小限制，单位是字节(bytes)。</p>
+</li>
+<li><p><code>-ss position (input/output)</code>:</p>
+<ul>
+<li>当在<code>-i</code>前，表示定位输入文件到<code>position</code>指定的位置。<strong>注意</strong>可能一些格式是不支持精确定位的，所以<code>ffmpeg</code>可能是定位到最接近<code>position</code>(在之前)的可定位点。当有转码发生且<code>-accurate_seek</code>被设置为启用(默认)，则实际定位点到<code>position</code>间的数据被解码出来但丢弃掉。如果是复制模式或者<code>-noaccurate_seek</code>被使用，则这之间的数据会被保留。</li>
+<li>当用于输出文件时，会解码丢弃<code>position</code>对应时间码前的输入文件数据。</li>
+<li><code>position</code>可以是以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值</li>
+</ul>
+</li>
+<li><p><code>-itsoffset offset (input)</code>:设置输入文件的时间偏移。<code>offset</code>必须采用时间持续的方式指定，即可以有<code>-</code>号的时间值(以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值)。偏移会附加到输入文件的时间码上，意味着所指定的流会以时间码+偏移量作为最终输出时间码。</p>
+</li>
+<li><p><code>-timestamp date (output)</code>:设置在容器中记录时间戳。</p>
+<p>date 必须是一个时间持续描述格式，即</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[(YYYY-MM-DD|YYYYMMDD)[T|t| ]]((HH:MM:SS[.m...]]])|(HHMMSS[.m...]]]))[Z]</span><br><span class="line">或者为</span><br><span class="line">now</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>-metadata[:metadata_specifier] key=value (output,per-metadata)</code>：指定元数据中的键值对。</p>
+<p>流或者章的<code>metadata_specifier</code>可能值是可以参考文档中<code>-map_metadata</code>部分了解。</p>
+<p>简单的覆盖<code>-map_metadata</code>可以通过一个为空的选项实现，例如：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i in.avi -metadata title=&quot;my title&quot; out.flv</span><br></pre></td></tr></table></figure>
+<p>设置第1声道语言:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -metadata:s:a:0 language=eng OUTPUT</span><br></pre></td></tr></table></figure>
+</blockquote>
+</li>
+<li><p><code>-taget type (output)</code>：指定目标文件类型(vcd,svcd,dvd,dv,dv50)，类型还可以前缀一个<code>pal-</code>,<code>ntsc-</code>或者<code>film-</code>来设定更具体的标准。所有的格式选项(码率、编码、缓冲尺寸)都会自动设置，而你仅仅只需要设置目标类型：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i myfile.avi -taget vcd /tmp/vcd.mpg</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>当然，你也可以指定一些额外的选项，只要你知道这些不会与标准冲突，如：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i myfile.avi -target vcd -bf 2 /tmp/vcd.mpg</span><br></pre></td></tr></table></figure>
+</blockquote>
+</li>
+<li><p><code>-dframes number (output)</code>:设定指定<code>number</code>数据帧到输出文件，这是<code>-frames:d</code>的别名。</p>
+</li>
+<li><p><code>frames[:stream_specifier] framecount (output,per-stream)</code>:在指定计数帧后停止写入数据。</p>
+</li>
+<li><p><code>-q[:stream_specifier] q (output,per-stream)</code></p>
+</li>
+<li><p><code>-qscale[:stream_specifier] q (output,per-stream)</code></p>
+<p>使用固定的质量品质(VBR)。用于指定<code>q|qscale</code>编码依赖。如果<code>qscale</code>没有跟<code>stream_specifier</code>则只适用于视频。其中值<code>q</code>取值在0.01-255,越小质量越好。</p>
+</li>
+<li><p><code>-filter[:stream_specifier] filtergraph (output,per-stream)</code>:创建一个由<code>filtergraph</code>指定的滤镜，并应用于指定流。</p>
+<p><code>filtergraph</code>是应用于流的滤镜链图，它必须有一个输入和输出，而且流的类型需要相同。在滤镜链图中，从<code>in</code>标签指定出输入，从<code>out</code>标签出输出。要了解更多语法，请参考<code>ffmpeg－filters</code>手册。</p>
+<p>参考<code>－filter_complex</code>选项以了解如何建立多个输入／输出的滤镜链图。</p>
+</li>
+<li><p><code>－filter_script［：stream_specifier］ filename (output，per－stream)</code>：这个选项类似于<code>－filter</code>，只是这里的参数是一个文件名，它的内容将被读取用于构建滤镜链图。</p>
+</li>
+<li><p><code>－pre［：stream_specifier］ preset_name (output，per－stream)</code>：指定预设名字的流(单个或者多个)。</p>
+</li>
+<li><p><code>－stats (global)</code>：输出编码过程／统计，这是系统默认值，如果你想禁止，则需要采用<code>－nostats</code>。</p>
+</li>
+<li><p><code>－progress url (global)</code>：发送友好的处理过程信息到<code>url</code>。处理过程信息是一种键值对(key=value)序列信息，它每秒都输出，或者在一次编码结束时输出。信息中最后的一个键值对表明了当前处理进度。</p>
+</li>
+<li><p><code>-stdin</code>:允许标准输入作为交互。在默认情况下除非标准输入作为真正的输入。要禁用标准输入交互，则你需要显式的使用<code>-nostdin</code>进行设置。禁用标准输入作为交互作用是有用的，例如FFmpeg是后台进程组，它需要一些相同的从shell开始的调用(<code>ffmpeg ... &lt;/dev/null</code>)。</p>
+</li>
+<li><p><code>-debug_ts (global)</code>：打印时间码信息，默认是禁止的。这个选项对于测试或者调试是非常有用的特性，或者用于从一种格式切换到另外的格式(包括特性)的时间成本分析，所以不用于脚本处理中。还可以参考<code>-fdebug ts</code>选项。</p>
+</li>
+<li><p><code>-attach filename (output)</code>：把一个文件附加到输出文件中。这里只有很少文件类型能被支持，例如使用Matroska技术为了渲染字幕的字体文件。附件作为一种特殊的流类型，所以这个选项会添加一个流到文件中，然后你就可以像操作其他流一样使用每种流选项。在应用本选项时，附件流须作为最后一个流(例如根据<code>-map</code>映射流或者自动映射时需要注意)。<strong>注意</strong>对于<code>Matroska</code>你也可以在元数据标签中进行类型设定： &gt; ffmpeg -i INPUT -attach DejaVuSans.ttf -metadata:s:2 mimetype=application/x-truetype-font out.mkv</p>
+</li>
+</ul>
+<p>(这时要访问到附件流，则就是访问输出文件中的第3个流)</p>
+<ul>
+<li><p><code>-dump_attachment[:stream_specifier] filename (input,per-stream)</code>：从输入文件中解出指定的附件流到文件filename： &gt; ffmpeg -dump_attachment:t:0 out.ttf -i INPUT</p>
+<p>如果想一次性把所有附件都解出来，则 &gt; ffmpeg -dump_attachment:t “” -i INPUT</p>
+<p>技术说明：附件流是作为编码扩展数据来工作的，所以其他流数据也能展开，而不仅仅是这个附件属性。</p>
+</li>
+<li><p><code>-noautorotate</code>：禁止自动依据文件元数据旋转视频。</p>
+</li>
+</ul>
+<h4 id="视频-video-选项"><a href="#视频-video-选项" class="headerlink" title="视频(video)选项"></a>视频(video)选项</h4><ul>
+<li><p><code>-vframes number (output)</code>：设置输出文件的帧数，是<code>-frames:v</code>的别名。</p>
+</li>
+<li><p><code>-r[:stream_specifier] fps (input/output,per-stream)</code>：设置帧率(一种Hz值，缩写或者分数值)。</p>
+<p>在作为输入选项时，会忽略文件中存储的时间戳和时间戳而产生的假设恒定帧率<code>fps</code>，即强制按设定帧率处理视频产生(快进/减缓效果)。这不像<code>-framerate</code>选项是用来让一些输入文件格式如image2或者v412(兼容旧版本的FFmpeg)等，要注意这一点区别，而不要造成混淆。</p>
+<p>作为输出选项时，会复制或者丢弃输入中个别的帧以满足设定达到<code>fps</code>要求的帧率。</p>
+</li>
+<li><p><code>-s[:stream_specifier] size (input/output,per-stream)</code>：设置帧的尺寸。</p>
+<p>当作为输入选项时，是私有选项<code>video_size</code>的缩写，一些文件没有把帧尺寸进行存储，或者设备对帧尺寸是可以设置的，例如一些采集卡或者raw视频数据。</p>
+<p>当作为输出选项是，则相当于<code>scale</code>滤镜作用在滤镜链图的最后。请使用<code>scale</code>滤镜插入到开始或者其他地方。</p>
+<p>数据的格式是<code>wxh</code>，即<code>宽度值X高度值</code>，例如<code>320x240</code>，(默认同源尺寸)</p>
+</li>
+<li><p><code>aspect[:stream_specifier] aspect (output,per-stream)</code>：指定视频的纵横比(长宽显示比例)。<code>aspect</code>是一个浮点数字符串或者<code>num:den</code>格式字符串(其值就是num/den)，例如”4:3”,”16:9”,”1.3333”以及”1.7777”都是常用参数值。</p>
+<p>如果还同时使用了<code>-vcodec copy</code>选项，它将只影响容器级的长宽比，而不是存储在编码中的帧纵横比。</p>
+</li>
+<li><p><code>-vn (output)</code>：禁止输出视频</p>
+</li>
+<li><p><code>-vcodec codec (output)</code>：设置视频编码器，这是<code>-codec:v</code>的一个别名。</p>
+</li>
+<li><p><code>-pass[:stream_specifier] n (output,per-stream)</code>:选择当前编码数(1或者2)，它通常用于2次视频编码的场景。第一次编码通常把分析统计数据记录到1个日志文件中(参考<code>-passlogfile</code>选项)，然后在第二次编码时读取分析以精确要求码率。在第一次编码时通常可以禁止音频，并且把输出文件设置为<code>null</code>，在windows和类unix分别是:</p>
+<blockquote>
+<p>ffmpeg -i foo.mov -c:v libxvid -pass 1 -an -f rawvideo -y NUL ffmpeg -i foo.mov -c:v libxvid -pass 1 -an -f rawvideo -y /dev/null</p>
+</blockquote>
+</li>
+<li><p><code>-passlogfile[:stream_specifier] prefix (output,per-stream)</code>：设置2次编码模式下日志文件存储文件前导，默认是”ffmepg2pass”，则完整的文件名就是”PREFIX-N.log”，其中的N是指定的输出流序号(对多流输出情况)</p>
+</li>
+<li><p><code>-vf filtergraph (output)</code>：创建一个<code>filtergraph</code>的滤镜链并作用在流上。它实为<code>-filter:v</code>的别名，详细参考<code>-filter</code>选项。</p>
+</li>
+</ul>
+<h4 id="高级视频选项"><a href="#高级视频选项" class="headerlink" title="高级视频选项"></a>高级视频选项</h4><ul>
+<li><p><code>-pix_fmt[:stream_specifier] format (input/output,per-stream)</code>：设置像素格式。使用<code>-pix_fmts</code>可以显示所有支持的像素格式。如果设置的像素格式不能被选中(启用)，则ffmpeg会输出一个警告和并选择这个编码最好(兼容)的像素格式。如果<code>pix_fmt</code>前面前导了一个<code>+</code>字符，ffmepg会在要求的像素格式不被支持时退出，这也意味着滤镜中的自动转换也会被禁止。如果<code>pix_fmt</code>是单独的<code>+</code>，则ffmpeg选择和输入(或者滤镜通道)一样的像素格式作为输出，这时自动转换也会被禁止。</p>
+</li>
+<li><p><code>-sws_flags flags (input/output)</code>:选择<code>SwScaler</code>放缩标志量。</p>
+</li>
+<li><p><code>-vdt n</code>：丢弃的门限设置。</p>
+</li>
+<li><p><code>-rc_override[:stream_specifier] override (output,per-stream)</code>:在特定时间范围内的间隔覆盖率，<code>override</code>的格式是”int\int\int”。其中前两个数字是开始帧和结束帧，最后一个数字如果为正则是量化模式，如果为负则是品质因素。</p>
+</li>
+<li><p><code>-ilme</code>：支持交错编码(仅MPEG-2和MPEG-4)。如果你的输入是交错的，而且你想保持交错格式，又想减少质量损失，则选此项。另一种方法是采用<code>-deinterlace</code>对输入流进行分离，但会引入更多的质量损失。</p>
+</li>
+<li><p><code>-psnr</code>：计算压缩帧的<code>PSNR</code></p>
+</li>
+<li><p><code>-vstats</code>：复制视频编码统计分析到日志文件<code>vstats_HHMMSS.log</code></p>
+</li>
+<li><p><code>-vstats_file file</code>:复制视频编码统计分析到<code>file</code>所指的日志文件中。</p>
+</li>
+<li><p><code>-top[:stream_specifier] n (output,per-stream)</code>: 指明视频帧数据描述的起点。<code>顶部=1/底部=0/自动=-1</code>(以往CRT电视扫描线模式)</p>
+</li>
+<li><p><code>-dc precision</code>：Intra_dc_precision值。</p>
+</li>
+<li><p><code>-vtag fourcc/tag (output)</code>:是<code>-tag:v</code>的别名，强制指定视频标签/fourCC (FourCC全称Four-Character Codes，代表四字符代码 (four character code), 它是一个32位的标示符，其实就是typedef unsigned int FOURCC;是一种独立标示视频数据流格式的四字符代码。)</p>
+</li>
+<li><p><code>-qphist (global)</code>：显示<code>QP</code>直方图。</p>
+</li>
+<li><p><code>-vbsf bitstream_filter</code>：参考<code>-bsf</code>以进一步了解。</p>
+</li>
+<li><p><code>-force_key_frames[:stream_specifier] time[,time...] (output,per-stream)</code> ：(见下)</p>
+</li>
+<li><p><code>-force_key_frames[:stream_specifier] expr:expr (output,per-stream)</code>：强制时间戳位置帧为关键帧，更确切说是从第一帧起每设置时间都是关键帧(即强制关键帧率)。</p>
+<p>如果参数值是以<code>expr:</code>前导的，则字符串<code>expr</code>为一个表达式用于计算关键帧间隔数。关键帧间隔值必须是一个非零数值。</p>
+<p>如果一个时间值是”<code>chapters</code> [delta]”则表示文件中从<code>delta</code>章开始的所有章节点计算以秒为单位的时间，并把该时间所指帧强制为关键帧。这个选项常用于确保输出文件中所有章标记点或者其他点所指帧都是关键帧(这样可以方便定位)。例如下面的选项代码就可以使“第5分钟以及章节chapters-0.1开始的所有标记点都成为关键帧”：</p>
+<blockquote>
+<p>-force_key_frames 0:05:00,chapters-0.1</p>
+</blockquote>
+<p>其中表达式<code>expr</code>接受如下的内容：</p>
+<ul>
+<li><p><code>n</code>：当前帧序数，从0开始计数</p>
+</li>
+<li><p><code>n_forced</code>：强制关键帧数</p>
+</li>
+<li><p><code>prev_forced_n</code>：之前强制关键帧数，如果之前还没有强制关键帧，则其值为<code>NAN</code></p>
+</li>
+<li><p><code>prev_forced_t</code>：之前强制关键帧时间，如果之前还没有强制关键帧则为<code>NAN</code></p>
+</li>
+<li><p><code>t</code>：当前处理到的帧对应时间。</p>
+<p>例如要强制每5秒一个关键帧：</p>
+<blockquote>
+<p>-force_key_frames expr:gte(t,n_forced*5)</p>
+</blockquote>
+<p>从13秒后每5秒一个关键帧：</p>
+<blockquote>
+<p>-force_key_frames expr:if(isnan(prev_forced_t),gte(t,13),gte(t,prev_forced_t+5))</p>
+</blockquote>
+<p><strong>注意</strong>设置太多强制关键帧会损害编码器前瞻算法效率，采用固定<code>GOP</code>选项或采用一些近似设置可能更高效。</p>
+</li>
+</ul>
+</li>
+<li><p><code>-copyinkf[:stream_specifier] (output,per-stream)</code>:流复制时同时复制非关键帧。</p>
+</li>
+<li><p><code>-hwaccel[:stream_specifier] hwaccel (input,per-stream)</code>：使用硬件加速解码匹配的流。允许的<code>hwaccel</code>值为：</p>
+<ul>
+<li><p><code>none</code>：没有硬件加速(默认值)</p>
+</li>
+<li><p><code>auto</code>：自动选择硬件加速</p>
+</li>
+<li><p><code>vda</code>：使用Apple的VDA硬件加速</p>
+</li>
+<li><p><code>vdpau</code>：使用VDPAU(Video Decode and Presentation API for Unix，类unix下的技术标准)硬件加速</p>
+</li>
+<li><p><code>dxva2</code>：使用DXVA2 (DirectX Video Acceleration，windows下的技术标准) 硬件加速。</p>
+<p>这个选项可能并不能起效果(它依赖于硬件设备支持和选择的解码器支持)</p>
+<p><strong>注意</strong>：很多加速方法(设备)现在并不比现代CPU快了，而且额外的<code>ffmpeg</code>需要拷贝解码的帧(从GPU内存到系统内存)完成后续处理(例如写入文件)，从而造成进一步的性能损失。所以当前这个选项更多的用于测试。</p>
+</li>
+</ul>
+</li>
+<li><p><code>-hwaccel_device:[:stream_specifier] hwaccel_device (input,per-stream)</code>：选择一个设备用于硬件解码加速。这个选项必须同时指定了<code>-hwaccel</code>才可能生效。它也依赖于指定的设备对于特定编码的解码加速支持性能。</p>
+<ul>
+<li><code>vdpau</code>：对应于<code>VDPAU</code>，在<code>X11</code>(类Unix)显示/屏幕 上的，如果这个选项值没有选中，则必须在<code>DISPLAY</code>环境变量中有设置。</li>
+<li><code>dxva2</code>：对应于<code>DXVA2</code>，这个是显示硬件(卡)的设备号，如果没有指明，则采用默认设备(对于多个卡时)。</li>
+</ul>
+</li>
+</ul>
+<h4 id="音频选项"><a href="#音频选项" class="headerlink" title="音频选项"></a>音频选项</h4><ul>
+<li><code>-aframes number (output)</code>：设置<code>number</code>音频帧输出，是<code>-frames:a</code>的别名</li>
+<li><code>-ar[:stream_specifier] freq (input/output,per-stream)</code>:设置音频采样率。默认是输出同于输入。对于输入进行设置，仅仅通道是真实的设备或者raw数据分离出并映射的通道才有效。对于输出则可以强制设置音频量化的采用率。</li>
+<li><code>-aq q (output)</code>：设置音频品质(编码指定为VBR)，它是<code>-q:a</code>的别名。</li>
+<li><code>-ac[:stream_specifier] channels (input/output,per-stream)</code>：设置音频通道数。默认输出会有输入相同的音频通道。对于输入进行设置，仅仅通道是真实的设备或者raw数据分离出并映射的通道才有效。</li>
+<li><code>-an (output)</code>：禁止输出音频</li>
+<li><code>-acode codec (input/output)</code>：设置音频解码/编码的编/解码器，是<code>-codec:a</code>的别名</li>
+<li><code>-sample_fmt[:stream_specifier] sample_fmt (output,per-stream)</code>:设置音频样例格式。使用<code>-sample_fmts</code>可以获取所有支持的样例格式。</li>
+<li><code>-af filtergraph (output)</code>：对音频使用<code>filtergraph</code>滤镜效果，其是<code>-filter:a</code>的别名，参考<code>-filter</code>选项。</li>
+</ul>
+<h4 id="高级音频选项"><a href="#高级音频选项" class="headerlink" title="高级音频选项"></a>高级音频选项</h4><ul>
+<li><code>-atag fourcc/tag (output)</code>：强制音频标签/fourcc。这个是<code>-tag:a</code>的别名。</li>
+<li><code>-absf bitstream_filter</code>：要深入了解参考<code>-bsf</code></li>
+<li><code>-guess_layout_max channels (input,per-stream)</code>:如果音频输入通道的布局不确定，则尝试猜测选择一个能包括所有指定通道的布局。例如：通道数是2，则<code>ffmpeg</code>可以认为是2个单声道，或者1个立体声声道而不会认为是6通道或者5.1通道模式。默认值是总是试图猜测一个包含所有通道的布局，用0来禁用。</li>
+</ul>
+<h4 id="字幕选项"><a href="#字幕选项" class="headerlink" title="字幕选项"></a>字幕选项</h4><ul>
+<li><code>-scodec codec (input/output)</code>：设置字幕解码器，是<code>-codec:s</code>的别名。</li>
+<li><code>-sn (output)</code>：禁止输出字幕</li>
+<li><code>-sbsf bitstream_filter</code>：深入了解请参考<code>-bsf</code></li>
+</ul>
+<h4 id="高级字幕选项"><a href="#高级字幕选项" class="headerlink" title="高级字幕选项"></a>高级字幕选项</h4><ul>
+<li><p><code>-fix_sub_duration</code>：修正字幕持续时间。对每个字幕根据接下来的数据包调整字幕流的时间常数以防止相互覆盖(第一个没有完下一个就出来了)。这对很多字幕解码来说是必须的，特别是DVB字幕，因为它在原始数据包中只记录了一个粗略的估计值，最后还以一个空的字幕帧结束。</p>
+<p>这个选项可能失败，或者出现夸张的持续时间或者合成失败，这是因为数据中有非单调递增的时间戳。</p>
+<p><strong>注意</strong>此选项将导致所有数据延迟输出到字幕解码器，它会增加内存消耗，并引起大量延迟。</p>
+</li>
+<li><p><code>-canvas_size size</code>：设置字幕渲染区域的尺寸(位置)</p>
+</li>
+</ul>
+<h4 id="高级选项"><a href="#高级选项" class="headerlink" title="高级选项"></a>高级选项</h4><ul>
+<li><p><code>-map [-]input_file_id[:stream_specifier][,sync_file_id[:stream_specifier]] | [linklabel] (output)</code>：设定一个或者多个输入流作为输出流的源。每个输入流是以<code>input_file_id</code>序数标记的输入文件和<code>input_stream_id</code>标记的流序号共同作用指明，它们都以0起始计数。如果设置了<code>sync_file_id:stream_specifier</code>，则把这个输入流作为同步信号参考。</p>
+<p>命令行中的第一个<code>-map</code>选项指定了输出文件中第一个流的映射规则(编号为0的流，0号流)，第二个则指定1号流的，以此类推。</p>
+<p>如果在流限定符前面有一个<code>-</code>标记则表明创建一个“负”映射，这意味着禁止该流输出，及排除该流。</p>
+<p>一种替代的形式是在复合滤镜中利用<code>[linklabel]</code>来进行映射(参看<code>-filter_complex</code>选项)。其中的<code>linklabel</code>必须是输出滤镜链图中已命名的标签。</p>
+<p>例子：映射第一个输入文件的所有流到输出文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -map 0 output</span><br></pre></td></tr></table></figure>
+<p>又如，如果在输入文件中有两路音频流，则这些流的标签就是”0:0”和”0:1”，你可以使用<code>-map</code>来选择某个输出，例如： &gt; ffmpeg -i INPUT -map 0:1 out.wav</p>
+<p>这将只把输入文件中流标签为”0:1”的音频流单独输出到out.wav中。</p>
+<p>再如，从文件a.mov中选择序号为2的流(流标签0:2)，以及从b.mov中选择序号为6的流(流标签1:6)，然后共同复制输出到out.mov需要如下写: </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i a.mov -i b.mov -c copy -map 0:2 -map 1:6 out.mov</span><br><span class="line">选择所有的视频和第三个音频流则是:</span><br><span class="line">ffmpeg -i INPUT -map 0:v -map:a:2 OUTPUT</span><br><span class="line">选择所有的流除了第二音频流外的流进行输出是：</span><br><span class="line">ffmpeg -i INPUT -map 0 -map -0:a:1 OUTPUT</span><br><span class="line">选择输出英语音频流:</span><br><span class="line">ffmpeg -i INPUT -map 0:m:language:eng OUTPUT</span><br></pre></td></tr></table></figure>
+<p><strong>注意</strong>应用了该选项将自动禁用默认的映射。</p>
+</li>
+<li><p><code>-ignore_unknown</code>：如果流的类型未知则忽略，而不进行复制。</p>
+</li>
+<li><p><code>-copy_unknown</code>：复制类型未知的流。</p>
+</li>
+<li><p><code>-map_channel [input_file_id.stream_specifier.channel_id|-1][:output_file_id.stream_specifier]</code>:从输入文件中指定映射一个通道的音频到输出文件指定流。如果<code>output_file_id.stream_specifier</code>没有设置，则音频通道将映射到输出文件的所有音频流中。</p>
+<p>使用<code>-1</code>插入到<code>input_file_id.stream_specifier.chnnel_id</code>会映射一个静音通道</p>
+<p>例如<code>INPUT</code>是一个立体声音频文件，你可以分别选择两个音频通道(下面实际上对于输入是交换了2个音频通道顺序进行输出)： &gt; ffmpeg -i INPUT -map_channel 0.0.1 -map_channel 0.0.0 OUTPUT</p>
+<p>如果你想静音第一个通道，而只保留第二通道，则可使用: &gt; ffmpeg -i INPUT -map_channel -1 -map_channel 0.0.1 OUTPUT</p>
+<p>以<code>-map_channel</code>选项指定的顺序在输出文件中输出音频流通道布局，即第一个<code>-map_channel</code>对应输出中第一个音频流通道，第二个对应第二个音频流通道，以此类推(只有一个则是单声道，2个是立体声)。联合使用<code>-ac</code>与<code>-map_channel</code>，而且在输入的<code>-map_channel</code>与<code>-ac</code>不匹配(例如只有2个<code>-map_channel</code>，又设置了<code>-ac 6</code>)时将使指定音频流通道提高增益。</p>
+<p>你可以详细的对每个输入通道指派输出以分离整个输入文件，例如下面就把有<code>INPUT</code>文件中的两个音频分别输出到两个输出文件中(OUTPUT_CH0 和 OUTPUT_CH1 )： &gt; ffmpeg -i INPUT -map_channel 0.0.0 OUTPUT_CH0 -map_channel 0.0.1 OUTPUT_CH1</p>
+<p>下面的例子则把一个立体声音频的两个音频通道分离输出到两个相互独立的流(相当于两个单声道了)中(但还是放置在同一个输出文件中): &gt; ffmpeg -i stereo.wav -map 0:0 -map 0:0 -map_channel 0.0.0:0.0 -map_channel 0.0.1:0.1 -y out.ogg</p>
+<p><strong>注意</strong>当前一个输出流仅能与一个输入通道连接，既你不能实现利用<code>-map_channel</code>把多个输入的音频通道整合到不同的流中(从同一个文件或者不同文件)或者是混合它们成为单独的流，例如整合2个单声道形成立体声是不可能的。但是分离一个立体声成为2个独立的单声道是可行的。</p>
+<p>如果你需要类似的应用，你需要使用<code>amerge</code>滤镜，例如你需要整合一个媒体(这里是input.mkv)中的2个单声道成为一个立体声通道(保持视频流不变)，你需要采用下面的命令: &gt; ffmpeg -i input.mkv -filter_complex “[0:1] [0:2] amerge” -c:a pcm_s16le -c:v copy output.mkv</p>
+</li>
+<li><p><code>-map_metadata[:metadata_spec_out] infile[:metadata_spec_in] (output,per-metadata)</code>：在下一个输出文件中从<code>infile</code>读取输出元数据信息。<strong>注意</strong>这里的文件索引也是以0开始计数的，而不是文件名。参数<code>metadata_spec_in/out</code>指定的元数据将被复制，一个元数据描述可以有如下的信息块:</p>
+<ul>
+<li><p><code>g</code>:全局元数据，这些元数据将作用于整个文件</p>
+</li>
+<li><p><code>s[:stream_spec]</code>:每个流的元数据，<code>steam_spec</code>的介绍在<code>流指定</code>章节。如果是描述输入流，则第一个被匹配的流相关内容被复制，如果是输出元数据指定，则所有匹配的流相关信息被复制到该处。</p>
+</li>
+<li><p><code>c:chapter_index</code>:每个章节的元数据，<code>chapter_index</code>也是以0开始的章节索引。</p>
+</li>
+<li><p><code>p:program_index</code>：每个节目元数据，<code>program_index</code>是以0开始的节目索引</p>
+<p>如果元数据指定被省略，则默认是全局的。</p>
+<p>默认全局元数据会从第一个输入文件每个流每个章节依次复制(流/章节)，这种默认映射会因为显式创建了任意的映射而失效。一个负的文件索引就可以禁用默认的自动复制。</p>
+<p>例如从输入文件的第一个流复制一些元数据作为输出的全局元数据 &gt; ffmpeg -i in.ogg -map_metadata 0:s:0 out.mp3</p>
+<p>与上相反的操作，例如复制全局元数据给所有的音频流 &gt; ffmpeg -i in.mkv -map_metadata:s:a 0:g out.mkv</p>
+<p><strong>注意</strong>这里简单的<code>0</code>在这里能正常工作是因为全局元数据是默认访问的。</p>
+</li>
+</ul>
+</li>
+<li><p><code>-map_chapters input_file_index (output)</code>:从输入文件中复制由<code>input_file_index</code>指定的章节的内容到输出。如果没有匹配的章节，则复制第一个输入文件至少一章内容(第一章)。使用负数索引则禁用所有的复制。</p>
+</li>
+<li><p><code>-benchmark (global)</code>：在编码结束后显示基准信息。则包括CPU使用时间和最大内存消耗，最大内存消耗是不一定在所有的系统中被支持，它通常以显示为0表示不支持。</p>
+</li>
+<li><p><code>-benchmark_all (global)</code>:在编码过程中持续显示基准信息，则包括CPU使用时间(音频/视频 的 编/解码)</p>
+</li>
+<li><p><code>-timelimit duration (global)</code>:ffmpeg在编码处理了<code>duration</code>秒后退出。</p>
+</li>
+<li><p><code>-dump (global)</code>：复制每个输入包到标准输出设备</p>
+</li>
+<li><p><code>-hex (global)</code>:复制包时也复制荷载信息</p>
+</li>
+<li><p><code>-re (input)</code>：以指定帧率读取输入。通常用于模拟一个硬件设备，例如在直播输入流(这时是读取一个文件)。不应该在实际设备或者在直播输入中使用(因为这将导致数据包的丢弃)。默认<code>ffmpeg</code>会尽量以最高可能的帧率读取。这个选项可以降低从输入读取的帧率，这常用于实时输出(例如直播流)。</p>
+</li>
+<li><p><code>-loop_input</code>：循环输入流。当前它仅作用于图片流。这个选项主要用于FFserver自动化测试。这个选项现在过时了，应该使用<code>-loop 1</code>。</p>
+</li>
+<li><p><code>-loop_output number_of_times</code>：重复播放<code>number_of_times</code>次。这是对于GIF类型的动画(0表示持续重复而不停止)。这是一个过时的选项，用<code>-loop</code>替代。</p>
+</li>
+<li><p><code>-vsync parameter</code>：视频同步方式。为了兼容旧，常被设置为一个数字值。也可以接受字符串来作为描述参数值，其中可能的值是:</p>
+<ul>
+<li><p><code>0,passthrough</code>:每个帧都通过时间戳来同步(从解复用到混合)。</p>
+</li>
+<li><p><code>1，cfr</code>：帧将复制或者降速以精准达到所要求的恒定帧速率。</p>
+</li>
+<li><p><code>2，vfr</code>：个别帧通过他们的时间戳或者降速以防止2帧具有相同的时间戳</p>
+</li>
+<li><p><code>drop</code>：直接丢弃所有的时间戳，而是在混合器中基于设定的帧率产生新的时间戳。</p>
+</li>
+<li><p><code>-1，auto</code>：根据混合器功能在1或者2中选择，这是默认值。</p>
+<p><strong>注意</strong>时间戳可以通过混合器进一步修改。例如<code>avoid_negative_ts</code>被设置时。</p>
+<p>利用<code>-map</code>你可以选择一个流的时间戳作为凭据，它可以对任何视频或者音频 不改变或者重新同步持续流到这个凭据。</p>
+</li>
+</ul>
+</li>
+<li><p><code>-frame_drop_threshold parameter</code>：丢帧的阀值，它指定后面多少帧内可能有丢帧。在帧率计数时1.0是1帧，默认值是1.1。一个可能的用例是避免在混杂的时间戳或者需要增加精准时间戳的情况下确立丢帧率。</p>
+</li>
+<li><p><code>-async samples_per_second</code>：音频同步方式。”拉伸/压缩”音频以匹配时间戳。参数是每秒最大可能的音频改变样本。<code>-async 1</code>是一种特殊情况指只有开始时校正，后续不再校正。</p>
+<p><strong>注意</strong>时间戳还可以进一步被混合器修改。例如<code>avoid_negative_ts</code>选项被指定时</p>
+<p>已不推荐这个选项，而是用<code>aresample</code>音频滤波器代替。</p>
+</li>
+<li><p><code>-copyts</code>：不处理输入的时间戳，保持它们而不是尝试审核。特别是不会消除启动时间偏移值。</p>
+<p><strong>注意</strong>根据<code>vsync</code>同步选项或者特定的混合器处理流程(例如格式选项<code>avoid_negative_ts</code>被设置)输出时间戳会忽略匹配输入时间戳(即使这个选项被设置)</p>
+</li>
+<li><p><code>-start_at_zero</code>：当使用<code>-copyts</code>,位移输入时间戳作为开始时间0.这意味着使用该选项，同时又设置了<code>-ss</code>，例如<code>-ss 50</code>则输出中会从50秒开始加入输入文件时间戳。</p>
+</li>
+<li><p>```<br>-copytb mode</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">：指定当流复制时如何设置编码时间基准。</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>mode</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  参数是一个整数值，可以有如下可能：</span><br><span class="line"></span><br><span class="line">  - `1`表示使用分离器时间基准，从分离器中复制时间戳到编码中。复制可变帧率视频流时需要避免非单调递增的时间戳。</span><br><span class="line">  - `0`表示使用解码器时间基准，使用解码器中获取的时间戳作为输出编码基准。</span><br><span class="line">  - `-1`尝试自动选择，只要能产生一个正常的输出，这是默认值。</span><br><span class="line"></span><br><span class="line">- `-shortest (output)`：完成编码时最短输入端。</span><br><span class="line"></span><br><span class="line">- `-dts_delta_threshold`：时间不连续增量阀值。</span><br><span class="line"></span><br><span class="line">- `-muxdelay seconds (input)`：设置最大 解复用-解码 延迟。参数是秒数值。</span><br><span class="line"></span><br><span class="line">- `-maxpreload seconds (input)`：设置初始的 解复用-解码延迟，参数是秒数值。</span><br><span class="line"></span><br><span class="line">- `-streamid output-stream-index:new-value (output)`:强制把输出文件中序号为output-stream-id的流命名为new-value的值。这对应于这样的场景：在存在了多输出文件时需要把一个流分配给不同的值。例如设置0号流为33号流，1号流为36号流到一个mpegts格式输出文件中(这相当于对流建立链接/别名)：</span><br><span class="line">  </span><br><span class="line">  &gt; ffmpeg -i infile -streamid 0:33 -streamid 1:36 out.ts</span><br><span class="line"></span><br><span class="line">- `-bsf[:stream_specifier] bitstream_filters (output,per-stream)`：为每个匹配流设置bit流滤镜。`bitstream_filters`是一个逗号分隔的bit流滤镜列表。可以使用`-bsfs`来获得当前可用的bit流滤镜。</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i h264.mp4 -c:v copy -bsf:v h264_mp4toannexb -an out.h264 ffmpeg -i file.mov -an -vn -bsf:s mov2textsub -c:s copy -f rawvideo sub.txt</span><br><span class="line"></span><br><span class="line">- `-tag[:stream_specifier codec_tag (input/output,per-stream`：为匹配的流设置标签/fourcc。</span><br><span class="line"></span><br><span class="line">- `-timecode hh:mm:ssSEDff`:指定时间码，这里`SEP`如果是`:`则不减少时间码，如果是`;`或者`.`则可减少。</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i input.mpg -timecode 01:02:03.04 -r 30000/1001 -s ntsc output.mpg</span><br><span class="line"></span><br><span class="line">- `-filter_complex filtergraph (global)`：定义一个复合滤镜，可以有任意数量的输入/输出。最简单的滤镜链图至少有一个输入和一个输出，且需要相同类型。参考`-filter`以获取更多信息(更有价值)。`filtergraph`用来指定一个滤镜链图。关于`滤镜链图的语法`可以参考`ffmpeg-filters`相关章节。</span><br><span class="line"></span><br><span class="line">  其中输入链标签必须对应于一个输入流。filtergraph的具体描述可以使用`file_index:stream_specifier`语法(事实上这同于`-map`)。如果`stream_specifier`匹配到了一个多输出流，则第一个被使用。滤镜链图中一个未命名输入将匹配链接到的输入中第一个未使用且类型匹配的流。</span><br><span class="line"></span><br><span class="line">  使用`-map`来把输出链接到指定位置上。未标记的输出会添加到第一个输出文件。</span><br><span class="line"></span><br><span class="line">  **注意**这个选项参数在用于`-lavfi`源时不是普通的输入文件。 &gt; ffmpeg -i video.mkv -i image.png -filter_complex &#x27;[0:v][1:v]overlay[out]&#x27; -map &#x27;[out]&#x27; out.mkv</span><br><span class="line"></span><br><span class="line">  这里`[0:v]`是第一个输入文件的第一个视频流，它作为滤镜的第一个(主要的)输入，同样，第二个输入文件的第一个视频流作为滤镜的第二个输入。</span><br><span class="line"></span><br><span class="line">  假如每个输入文件只有一个视频流，则我们可以省略流选择标签，所以上面的内容在这时等价于:</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i video.mkv -i image.png -filter_complex &#x27;overlay[out]&#x27; -map &#x27;[out]&#x27; out.mkv</span><br><span class="line"></span><br><span class="line">  此外，在滤镜是单输出时我们还可以进一步省略输出标签，它会自动添加到输出文件，所以进一步简写为:</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i video.mkv -i image.png -filter_complex &#x27;overlay&#x27; out.mkv</span><br><span class="line"></span><br><span class="line">  利用`lavfi`生成5秒的 红`color`(色块):</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -filter_complex &#x27;color=c=red&#x27; -t 5 out.mkv</span><br><span class="line"></span><br><span class="line">- `-lavfi filtergraph (global)`：定义一个复合滤镜，至少有一个输入和/或输出，等效于`-filter_complex`。</span><br><span class="line"></span><br><span class="line">- `-filter_complex_script filename (global)`：这个选项类似于`-filter_complex`，唯一不同就是它的参数是文件名，会从这个文件中读取复合滤镜的定义。</span><br><span class="line"></span><br><span class="line">- `-accurate_seek (input)`：这个选项会启用/禁止输入文件的精确定位(配合`-ss`)，它默认是启用的，即可以精确定位。需要时可以使用`-noaccurate_seek`来禁用，例如在复制一些流而转码另一些的场景下。</span><br><span class="line"></span><br><span class="line">- `-seek_timestamp (input)`：这个选项配合`-ss`参数可以在输入文件上启用或者禁止利用时间戳的定位。默认是禁止的，如果启用，则认为`-ss`选项参数是正式的时间戳，而不是由文件开始计算出来的偏移。这一般用于具有不是从0开始时间戳的文件，例如一些传输流(直播下)。</span><br><span class="line"></span><br><span class="line">- `-thread_queue_size size (input)`：这个选项设置可以从文件或者设备读取的最大排队数据包数量。对于低延迟高速率的直播流，如果不能及时读取，则出现丢包，所以提高这个值可以避免出现大量丢包现象。</span><br><span class="line"></span><br><span class="line">- `-override_ffserver (global)`:对`ffserver`的输入进行指定。使用这个选项`ffmpeg`可以把任意输入映射给`ffserver`并且同时控制很多编码可能。如果没有这个选项，则`ffmpeg`仅能根据`ffserver`所要求的数据进行传输。</span><br><span class="line"></span><br><span class="line">  这个选项应用场景是`ffserver`需要一些特性，但文件/设备不提供，这时可以利用`ffmpeg`作为中间处理环节控制后输出到`ffserver`到达所需要求。</span><br><span class="line"></span><br><span class="line">- `-sdp_file file (global)`：输出`sdp`信息到文件`file`。它会在至少一个输出不是`rtp`流时同时输出`sdp`信息。</span><br><span class="line"></span><br><span class="line">- ```</span><br><span class="line">  -discard (input)</span><br></pre></td></tr></table></figure>
+<p>：允许丢弃特定的流或者分离出的流上的部分帧，但不是所有的分离器都支持这个特性。</p>
+<ul>
+<li><code>none</code>：不丢帧</li>
+<li><code>default</code>：丢弃无效帧</li>
+<li><code>noref</code>：丢弃所有非参考帧</li>
+<li><code>bidir</code>：丢弃所有双向帧</li>
+<li><code>nokey</code>：丢弃所有非关键帧</li>
+<li><code>all</code>：丢弃所有帧</li>
+</ul>
+</li>
+<li><p><code>-xerror (global)</code>:在出错时停止并退出</p>
+</li>
+</ul>
+<p>作为一个特殊的例外，你可以把一个位图字幕(bitmap subtitle)流作为输入，它将转换作为同于文件最大尺寸的视频(如果没有视频则是720x576分辨率)。<strong>注意</strong>这仅仅是一个特殊的例外的临时解决方案，如果在<code>libavfilter</code>中字幕处理方案成熟后这样的处理方案将被移除。</p>
+<p>例如需要为一个储存在DVB-T上的MPEG-TS格式硬编码字幕，而且字幕延迟1秒： &gt; ffmpeg -i input.ts -filter_complex \ ‘[#0x2ef] setpts=PTS+1/TB [sub] ; [#0x2d0] [sub] overlay’ \ -sn -map ‘#0x2dc’ output.mkv</p>
+<p>(0x2d0, 0x2dc 以及 0x2ef 是MPEG-TS 的PIDs，分别指向视频、音频和字幕流，一般作为MPEG-TS中的0:0,0:3和0：7是实际流标签)</p>
+<h4 id="预设文件"><a href="#预设文件" class="headerlink" title="预设文件"></a>预设文件</h4><p>一个预设文件是选项/值对的序列(option=value)，每行都是一个选项/值对， 用于指定一系列的选项，而这些一般很难在命令行中指定(限于命令行的一些限制，例如长度限制)。以<code>#</code>开始的行是注释，会被忽略。一般<code>ffmpeg</code>会在目录树中检查<code>presets</code>子目录以获取预设文件。</p>
+<p>有两种类型的预设文件:ffpreset 和 avpreset。</p>
+<h5 id="ffpreset类型预设文件"><a href="#ffpreset类型预设文件" class="headerlink" title="ffpreset类型预设文件"></a>ffpreset类型预设文件</h5><p>采用<code>ffpreset</code>类型预设文件主要包含<code>vpre</code>、<code>apre</code>、<code>spre</code>和<code>fpre</code>选项。其中<code>fpre</code>选项的参数可以代替预设的名称作为输入预设文件名，以用于任何一种编码格式。对于<code>vpre</code>、<code>apre</code>和<code>spre</code>选项参数会指定一个预设定文件用于当前编码格式以替代(作为)同类项的预订选项。</p>
+<p>选用预设文件传递<code>vpre</code>、<code>apre</code>和<code>spre</code>的参数<code>arg</code>有下面一些搜索应用规则：</p>
+<ul>
+<li>将在目录<code>$FFMPEG_DATADIR</code>(如果设置了)和<code>$HOME/.ffmpeg</code>目录和配置文件中定义的数据目录(一般是<code>PREFIX/share/ffmpeg</code>)，以及<code>ffpresets</code>所在的执行文件目录下ffmpeg搜索对应的预定义文件<code>arg.ffpreset</code>，例如参数是<code>libvpx-1080p</code>,则对应于文件<code>libvpx-1080p.ffpreset</code></li>
+<li>如果没有该文件，则进一步在前述目录下搜索<code>codec_name-arg.ffpreset</code>文件，如果找到即应用。例如选择了视频编码器<code>-vcodec libvpx</code>和<code>-vpre 1080p</code>则对应的预设文件名是<code>libvpx-1080p.ffpreset</code></li>
+</ul>
+<h5 id="avpreset类型预设文件"><a href="#avpreset类型预设文件" class="headerlink" title="avpreset类型预设文件"></a>avpreset类型预设文件</h5><p><code>avprest</code>类型预设文件以<code>pre</code>选项引入。他们工作方式类似于<code>ffpreset</code>类型预设文件(即也是选项值对序列)，但只对于特定编码器选项，因此一些 选项值 对于不适合的编码器是无效的。根据<code>pre</code>的参数<code>arg</code>查找预设文件基于如下规则：</p>
+<ul>
+<li>首先搜索<code>$AVCONV_DATADIR</code>所指目录(如果定义了)，其次搜索<code>$HOME/.avconv</code>目录，然后搜索执行文件所在目录(通常是<code>PREFIX/share/ffmpeg</code>)，在其下查找<code>arg.avpreset</code>文件。第一个匹配的文件被应用。</li>
+<li>如果查找不到，如果还同步还指定了编码(如<code>-vcodec libvpx</code>)再以前面目录顺序，以<code>codec_name-arg.avpreset</code>再次查找文件。例如对于有选项<code>-vcodec libvpx</code>和<code>-pre 1080p</code>将搜索<code>libvpx-1080p.avpreset</code></li>
+<li>如果还没有找到，将在当前目录下搜索<code>arg.avpreset</code>文件</li>
+</ul>
+<h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><h4 id="视频和音频抓取"><a href="#视频和音频抓取" class="headerlink" title="视频和音频抓取"></a>视频和音频抓取</h4><p>如果你指定了输入格式和设备，ffmpeg可以直接抓取视频和音频：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f oss -i /dev/dsp -f video4linux2 -i /dev/video0 /tmp/out.mpg</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>或者采用ALSA音频源(单声道，卡的id是1)替代OSS:</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f alsa -ac 1 -i hw:1 -f video4linux2 -i /dev/video0 /tmp/out.mpg</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p><strong>注意</strong>对于不同的视频采集卡，你必须正确激活视频源和通道，例如Gerd Knorr的<code>xawtv</code>。你还需要设置正确的音频记录层次和混合模式。只有这样你才能采集到想要的视音频。</p>
+<h4 id="X11显示的抓取"><a href="#X11显示的抓取" class="headerlink" title="X11显示的抓取"></a>X11显示的抓取</h4><p>可以通过ffmpeg直接抓取X11显示内容：</p>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f x11grab -video_size cif -framerate 25 -i :0.0+10，20 /tmp/out.mpg</span><br></pre></td></tr></table></figure>
+<p><code>0.0</code>是X11服务的显示屏幕号(display.screen)，定义于<code>DISPLAY</code>环境变量。10是水平偏移，20是垂直偏移</p>
+</blockquote>
+<h4 id="视频和音频文件格式转换"><a href="#视频和音频文件格式转换" class="headerlink" title="视频和音频文件格式转换"></a>视频和音频文件格式转换</h4><p>任何支持的文件格式或者协议都可以作为ffmpeg输入。例如：</p>
+<ul>
+<li><p>你可以使用YUV文件作为输入</p>
+<blockquote>
+<p>ffmpeg -i /tmp/test%d.Y /tmp/out.mpg</p>
+</blockquote>
+<p>这里可能是这样一些文件</p>
+<blockquote>
+<p>/tmp/test0.Y, /tmp/test0.U, /tmp/test1.V, /tmp/test1.Y, /tmp/test1.U, /tmp/test1.V, etc…</p>
+</blockquote>
+<p>这里Y还有对应分辨率的2个关联文件U和V。这是一种raw数据文件而没有文件头，它可以被所有的视频解码器生成。你必须利用<code>-s</code>对它指定一个尺寸而不是让ffmpeg去猜测。</p>
+</li>
+<li><p>你可以把raw YUV420P文件作为输入：</p>
+<blockquote>
+<p>ffmpeg -i /tmp/test/yuv /tmp/out.avi</p>
+</blockquote>
+<p>test.yuv 是一个包含raw YUV通道数据的文件。每个帧先是Y数据，然后是U和V数据。</p>
+</li>
+<li><p>也可以输出YUV420P类型的文件</p>
+<blockquote>
+<p>ffmpeg -i mydivx.avi hugefile.yuv</p>
+</blockquote>
+</li>
+<li><p>可以设置一些输入文件和输出文件</p>
+<blockquote>
+<p>ffmpeg -i /tmp/a.wav -s 640x480 -i /tmp/a.yuv /tmp/a.mpg</p>
+</blockquote>
+<p>这将转换一个音频和raw的YUV视频到一个MPEG文件中</p>
+</li>
+<li><p>你也可以同时对音频或者视频进行转换</p>
+<blockquote>
+<p>ffmpeg -i /tmp/a.wav -ar 22050 /tmp/a.mp2</p>
+</blockquote>
+<p>这里把a.wav转换为MPEG音频，同时转换了采样率为22050HZ</p>
+</li>
+<li><p>你也可以利用映射同时编码多个格式作为输入或者输出：</p>
+<blockquote>
+<p>ffmpeg -i /tmp/a.wav -map 0:a -b:a 64k /tmp/a.mp2 -map 0:a -b:a 128k /tmp/b.mp2</p>
+</blockquote>
+<p>这将同时把a.wav以64k码率输出到a.mp2，以128k码率输出到b.mp2。 “-map file:index”指定了对于每个输出是连接到那个输入流的。</p>
+</li>
+<li><p>还可以转换解码VOBs：</p>
+<blockquote>
+<p>ffmpeg -i snatch_1.vob -f avi -c:v mpeg4 -b:v 800k -g 300 -bf 2 -c:a libmp3lame -b:a 128k snatch.avi</p>
+</blockquote>
+<p>这是一个典型的DVD抓取例子。这里的输入是一个VOB文件，输出是MPEG-4编码视频以及MP3编码音频的AVI文件。<strong>注意</strong>在这个命令行里使用了B-frames（B帧）是兼容DivX5的，GOP设置为300则意味着有一个内帧是适合29.97fps的输入视频。此外，音频流采用MP3编码需要运行LAME支持，它需要通过在编译是设置<code>--enable-libmp3lame</code>。这种转换设置在多语言DVD抓取转换出所需的语言音频时特别有用。</p>
+<p><strong>注意</strong>要了解支持那些格式，可以采用<code>ffmpeg -formats</code></p>
+</li>
+<li><p>可以从一个视频扩展生成图片（序列），或者从一些图片生成视频：</p>
+<ul>
+<li><p>导出图片</p>
+<blockquote>
+<p>ffmpeg -i foo.avi -r 1 -s WxH -f image2 foo-%03d.jpeg</p>
+</blockquote>
+<p>这将每秒依据foo.avi生成一个图片命名为foo-001.jpeg ,foo-002.jpeg以此类推,图片尺寸是WxH定义的值。</p>
+<p>如果你想只生成有限数量的视频帧，你可以进一步结合<code>-vframes</code>或者<code>-t</code>或者<code>-ss</code>选项实现。</p>
+</li>
+<li><p>从图片生成视频</p>
+<blockquote>
+<p>ffmpeg -f image2 -framerate 12 -i foo-%03d.jpeg -s WxH foo.avi</p>
+</blockquote>
+<p>这里的语法<code>foo-%03d.jpeg</code>指明使用3位数字来补充完整文件名，不足3位以0补齐。这类似于C语言的printf函数中的格式，但只接受常规整数作为部分。</p>
+<p>当导入一个图片序列时，<code>-i</code>也支持shell的通配符模式(内置的)，这需要同时选择image2的特性选项<code>-pattern_type glob</code>：例如下面就利用了所有匹配<code>foo-*.jpeg</code>的图片序列创建一个视频：</p>
+<blockquote>
+<p>ffmpeg -f image2 -pattern_type glob -framerate 12 -i ‘foo-*.jpeg’ -s WxH foo.avi</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>你可以把很多相同类型的流一起放到一个输出中：</p>
+<blockquote>
+<p>ffmpeg -i test1.avi -i test2.avi -map 1:1 -map 1:0 -map 0:1 -map 0:0 -c copy -y test12.nut</p>
+</blockquote>
+<p>这里最后输出文件test12.nut包括了4个流，其中流的顺序完全根据前面<code>-map</code>的指定顺序。</p>
+</li>
+<li><p>强制为固定码率编码(CBR)输出视频：</p>
+<blockquote>
+<p>ffmpeg -i myfile.avi -b 4000k -minrate 4000k -maxrate 4000k -bufsize 1835k out.m2v</p>
+</blockquote>
+</li>
+<li><p>使用<code>lambda</code>工具的4个选项<code>lmin</code>，<code>lmax</code>，<code>mblmin</code>以及<code>mblmax</code>使你能更简单的从<code>q</code>转换到<code>QP2LAMBDA</code>:</p>
+<blockquote>
+<p>ffmpeg -i src.ext -lmax 21*QP2LAMBDA dst.ext</p>
+</blockquote>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/03/21/RK3588%E3%80%81ros%E3%80%81fastdeploy%E8%81%94%E5%90%88%E7%8E%AF%E5%A2%83%E8%AE%BE%E7%BD%AE/" rel="prev" title="RK3588、ros、fastdeploy联合环境设置">
+      <i class="fa fa-chevron-left"></i> RK3588、ros、fastdeploy联合环境设置
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/" rel="next" title="c++中的ffmpeg源码学习">
+      c++中的ffmpeg源码学习 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ffmpeg%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.</span> <span class="nav-text">ffmpeg是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ffmpeg%E7%9A%84%E7%BB%84%E6%88%90"><span class="nav-number">2.</span> <span class="nav-text">ffmpeg的组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ffmpeg%E7%94%A8%E5%88%B0%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="nav-number">3.</span> <span class="nav-text">ffmpeg用到的工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ffmpeg%E7%9A%84%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91"><span class="nav-number">4.</span> <span class="nav-text">ffmpeg的源码编译</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ffmpeg%E7%9A%84%E6%BA%90%E7%A0%81%E4%B8%8B%E8%BD%BD-%E4%BB%A5ffmpeg-release-6-0%E4%B8%BA%E4%BE%8B"><span class="nav-number">4.1.</span> <span class="nav-text">ffmpeg的源码下载    以ffmpeg release 6.0为例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#yasm%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-number">4.2.</span> <span class="nav-text">yasm的安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ffmpeg%E7%9A%84%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91-1"><span class="nav-number">4.3.</span> <span class="nav-text">ffmpeg的源码编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ffmpeg%E7%9A%84%E5%AE%89%E8%A3%85%E6%B5%8B%E8%AF%95"><span class="nav-number">4.4.</span> <span class="nav-text">ffmpeg的安装测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"><span class="nav-number">5.</span> <span class="nav-text">常见使用方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%9F%E4%B8%80%E8%AF%AD%E6%B3%95"><span class="nav-number">5.1.</span> <span class="nav-text">统一语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E9%80%89%E9%A1%B9"><span class="nav-number">5.2.</span> <span class="nav-text">基本选项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ffmpeg%E9%9F%B3%E8%A7%86%E9%A2%91%E8%BD%AC%E6%8D%A2%E6%B5%81%E7%A8%8B"><span class="nav-number">5.3.</span> <span class="nav-text">ffmpeg音视频转换流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BB%A4%E9%95%9C%E5%A4%84%E7%90%86-Filtering"><span class="nav-number">5.4.</span> <span class="nav-text">滤镜处理(Filtering)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E6%BB%A4%E9%95%9C"><span class="nav-number">5.4.1.</span> <span class="nav-text">简单滤镜</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%8D%E5%90%88%E6%BB%A4%E9%95%9C"><span class="nav-number">5.4.2.</span> <span class="nav-text">复合滤镜</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E6%8B%B7%E8%B4%9D"><span class="nav-number">5.4.3.</span> <span class="nav-text">流拷贝</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81"><span class="nav-number">5.5.</span> <span class="nav-text">流</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1%E6%B5%81%E5%A4%84%E7%90%86"><span class="nav-number">5.5.1.</span> <span class="nav-text">4.1流处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1%E6%B5%81%E5%A4%84%E7%90%86-1"><span class="nav-number">5.5.2.</span> <span class="nav-text">4.1流处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2%E4%BE%8B%E5%AD%90"><span class="nav-number">5.5.3.</span> <span class="nav-text">4.2例子</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A%E8%87%AA%E5%8A%A8%E6%B5%81%E9%80%89%E6%8B%A9"><span class="nav-number">5.5.3.1.</span> <span class="nav-text">示例：自动流选择</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A%E8%87%AA%E5%8A%A8%E5%AD%97%E5%B9%95%E9%80%89%E6%8B%A9"><span class="nav-number">5.5.3.2.</span> <span class="nav-text">示例：自动字幕选择</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.</span> <span class="nav-text">选项</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E8%AF%B4%E6%98%8E-%E9%99%90%E5%AE%9A-%E7%AC%A6"><span class="nav-number">5.6.1.</span> <span class="nav-text">流说明(限定)符</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%84%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.2.</span> <span class="nav-text">常规选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AV%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.3.</span> <span class="nav-text">AV选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.4.</span> <span class="nav-text">主要选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%86%E9%A2%91-video-%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.5.</span> <span class="nav-text">视频(video)选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E8%A7%86%E9%A2%91%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.6.</span> <span class="nav-text">高级视频选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%9F%B3%E9%A2%91%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.7.</span> <span class="nav-text">音频选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E9%9F%B3%E9%A2%91%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.8.</span> <span class="nav-text">高级音频选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%97%E5%B9%95%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.9.</span> <span class="nav-text">字幕选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E5%AD%97%E5%B9%95%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.10.</span> <span class="nav-text">高级字幕选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E9%80%89%E9%A1%B9"><span class="nav-number">5.6.11.</span> <span class="nav-text">高级选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E8%AE%BE%E6%96%87%E4%BB%B6"><span class="nav-number">5.6.12.</span> <span class="nav-text">预设文件</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#ffpreset%E7%B1%BB%E5%9E%8B%E9%A2%84%E8%AE%BE%E6%96%87%E4%BB%B6"><span class="nav-number">5.6.12.1.</span> <span class="nav-text">ffpreset类型预设文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#avpreset%E7%B1%BB%E5%9E%8B%E9%A2%84%E8%AE%BE%E6%96%87%E4%BB%B6"><span class="nav-number">5.6.12.2.</span> <span class="nav-text">avpreset类型预设文件</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90"><span class="nav-number">5.7.</span> <span class="nav-text">例子</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%86%E9%A2%91%E5%92%8C%E9%9F%B3%E9%A2%91%E6%8A%93%E5%8F%96"><span class="nav-number">5.7.1.</span> <span class="nav-text">视频和音频抓取</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#X11%E6%98%BE%E7%A4%BA%E7%9A%84%E6%8A%93%E5%8F%96"><span class="nav-number">5.7.2.</span> <span class="nav-text">X11显示的抓取</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%86%E9%A2%91%E5%92%8C%E9%9F%B3%E9%A2%91%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="nav-number">5.7.3.</span> <span class="nav-text">视频和音频文件格式转换</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
