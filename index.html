@@ -162,7 +162,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/" class="post-title-link" itemprop="url">“目标重识别综述阅读”</a>
+            <a href="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/" class="post-title-link" itemprop="url">目标重识别综述阅读</a>
         </h2>
 
         <div class="post-meta">
@@ -173,7 +173,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-23 20:48:09 / 修改时间：20:48:39" itemprop="dateCreated datePublished" datetime="2023-04-23T20:48:09+08:00">2023-04-23</time>
+              <time title="创建时间：2023-04-23 20:48:09 / 修改时间：20:53:57" itemprop="dateCreated datePublished" datetime="2023-04-23T20:48:09+08:00">2023-04-23</time>
             </span>
 
           
@@ -275,7 +275,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/" class="post-title-link" itemprop="url">Bag of Tricks and A Strong Baseline for Deep Person Re-identification.md</a>
+            <a href="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/" class="post-title-link" itemprop="url">未命名</a>
         </h2>
 
         <div class="post-meta">
@@ -286,7 +286,79 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-04-23 20:45:36 / 修改时间：20:47:46" itemprop="dateCreated datePublished" datetime="2023-04-23T20:45:36+08:00">2023-04-23</time>
+              <time title="创建时间：2023-04-23 20:45:36 / 修改时间：20:53:44" itemprop="dateCreated datePublished" datetime="2023-04-23T20:45:36+08:00">2023-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="AGW-A-New-Baseline-for-Single-Cross-Modality-Re-ID"><a href="#AGW-A-New-Baseline-for-Single-Cross-Modality-Re-ID" class="headerlink" title="AGW: A New Baseline for Single-/Cross-Modality Re-ID"></a>AGW: A New Baseline for Single-/Cross-Modality Re-ID</h1><h1 id="AGW-A-New-Baseline-for-Single-Cross-Modality-Re-ID-1"><a href="#AGW-A-New-Baseline-for-Single-Cross-Modality-Re-ID-1" class="headerlink" title="AGW: A New Baseline for Single-/Cross-Modality Re-ID"></a>AGW: A New Baseline for Single-/Cross-Modality Re-ID</h1><p>其为综述Deep Learning for Person Re-identification:A Survey and Outlook 中提出的方法</p>
+<p> AGW是在BagTricks的基础之上进行设计研究的，其主要包括以下三个主要的提升组件：</p>
+<ul>
+<li>Non-local Attention (Att) Block</li>
+<li>Generalized-mean (GeM) Pooling.</li>
+<li>Weighted Regularization Triplet (WRT) loss</li>
+</ul>
+<h2 id="Non-local-Attention-Att-Block"><a href="#Non-local-Attention-Att-Block" class="headerlink" title="Non-local Attention (Att) Block"></a>Non-local Attention (Att) Block</h2><p> 注意力的概念在ReID的学习中起到至关重要的作用，使用强大的非局部注意力块来获得各个位置特征的加权和。公式如下：$z_i = W_z ∗ φ(x_i) + x_i $，其中$W_z$是需要学习的权重矩阵，$φ()$表示非局部的操作，$+x_i$构建了一个残差策略。详情参见《Non-local neural networks》</p>
+<h2 id="Generalized-mean-GeM-Pooling"><a href="#Generalized-mean-GeM-Pooling" class="headerlink" title="Generalized-mean (GeM) Pooling."></a>Generalized-mean (GeM) Pooling.</h2><p>ReID任务可视为细粒度的实例检索，广泛使用的max-pooling或average-pooling无法捕获领域特定的鉴别特征。所以针对该问题采用可学习的池化层，称为Generalized-mean (GeM) Pooling，公式如下:</p>
+<p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230418144447925.png" alt="image-20230418144447925"></p>
+<p>$p_k$是一个池化超参数，可以在反向传播过程中学习，$p_k→∞$时近似最大池化，在$p_k = 1$时近似平均池化。详情参见《Fine-tuning cnn image retrieval with no human annotation》。可视为在最低维度上，对每个元素的p次方求均值再开p次方。</p>
+<h2 id="Weighted-Regularization-Triplet-WRT-loss"><a href="#Weighted-Regularization-Triplet-WRT-loss" class="headerlink" title="Weighted Regularization Triplet (WRT) loss"></a>Weighted Regularization Triplet (WRT) loss</h2><p>除了使用基于softmax的交叉熵之外，还使用了另一个加权正则化三元组损失。<br><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/20201026220254980.png" alt="在这里插入图片描述"><br>避免引入了margin参数，类似于《Multi-similarity loss with general pair weighting for deep metric learning》</p>
+<h2 id="完整流程如下所示"><a href="#完整流程如下所示" class="headerlink" title="完整流程如下所示"></a>完整流程如下所示</h2><p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3NpbmF0XzMxMjUzNTcz,size_16,color_FFFFFF,t_70#pic_center.png" alt="watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3NpbmF0XzMxMjUzNTcz,size_16,color_FFFFFF,t_70"></p>
+<p><strong>AGW在跨模态行人重识别中的效果：</strong><br><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3NpbmF0XzMxMjUzNTcz,size_16,color_FFFFFF,t_70#pic_center-16818009779205.png" alt="watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3NpbmF0XzMxMjUzNTcz,size_16,color_FFFFFF,t_70"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/" class="post-title-link" itemprop="url">Bag of Tricks and A Strong Baseline for Deep Person Re-identification.md</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-04-23 20:45:36 / 修改时间：20:51:25" itemprop="dateCreated datePublished" datetime="2023-04-23T20:45:36+08:00">2023-04-23</time>
             </span>
 
           
@@ -337,95 +409,37 @@
 <li><p>采用Adam方法对模型进行优化。初始学习率设置为0.00035，在第40 epoch和第70 epoch分别降低到初始学习率的0.1。总共有120个训练阶段。</p>
 </li>
 </ol>
-<h2 id="训练技巧"><a href="#训练技巧" class="headerlink" title="训练技巧"></a>训练技巧</h2><p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230417202016054.png" alt="image-20230417202016054"></p>
+<h2 id="训练技巧"><a href="#训练技巧" class="headerlink" title="训练技巧"></a>训练技巧</h2><p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417202016054.png" alt="image-20230417202016054"></p>
 <p>使用的训练技巧如下所示：</p>
 <ul>
 <li><code>Warmup Learning Rate</code>：学习率对模型的性能表现有很大的影响。在实践中，如下所示，使用10个epoch线性增加学习速率，从$3.5\times10^{-5}$到$3.5\times10^{-4}$。在第40 epoch和第70 epoch，学习率分别衰减到$3.5\times10^{-5}$和$3.5\times10^{-6}$。即第t时代的学习率lr(t)计算为:</li>
 </ul>
-<p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230417202745696.png" alt="image-20230417202745696"></p>
-<p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230417202823803.png" alt="image-20230417202823803"></p>
+<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417202745696.png" alt="image-20230417202745696"></p>
+<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417202823803.png" alt="image-20230417202823803"></p>
 <ul>
 <li><p><code>Random Erasing Augmentation</code>:在ReID任务中，图片中的人常被其他物体遮挡，为解决该问题并提高系统的泛化性，使用随机擦除增强方案。在实际使用中，对于mini-batch中的图片I，其被随机擦除的概率为$p_e$，即保持不变的概率为$1-p_e$，REA在图片$I$中随机选择尺寸大小为$(W_e,H_e)$的矩形区域$I_e$，并将其填充为随机的数值。假设图像I和区域$I_e$的面积分别为$S = W × H$和$S_e = W_e × H_e$，使用$r_e = S_e/S$为擦除矩形区域的面积比。此外，区域$I_e$的纵横比在$r_1$和$r_2$之间随机初始化。REA随机初始化一个点$P=(x_e, y_e)$。如果$x_e + W_e≤W$,$ y_e + H_e≤H$，则设区域$I_e = (x_e, y_e, x_e + W_e, y_e + H_e)$为所选矩形区域。否则，重复上述过程，直到选择合适的$I_e$。对于所选的擦除区域$I_e$, $I_e$​中的每个像素都被赋值为区域I的均值，本文中，设置超参数如下所示：$p = 0.5$, $0.02 &lt;S_e &lt; 0.4$, $r1 = 0.3$, $r2 = 3.33$,</p>
 </li>
 <li><p><code>Label Smoothing</code>:在标准的ReID任务中，ID Embedding是ReID的一个基础组件，其输出图片的ID预测。标准的交叉熵损失的计算如下所示。</p>
-<p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230417205337361.png" alt="image-20230417205337361"></p>
+<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417205337361.png" alt="image-20230417205337361"></p>
 <p>但是由于测试集的人员ID在训练集中未曾出现，所以防止ReID模型过度拟合训练ID较为重要，针对该问题，使用标签平滑（LS）方案，对应公式如下所示：</p>
-<p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230417205726034.png" alt="image-20230417205726034"></p>
+<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417205726034.png" alt="image-20230417205726034"></p>
 <p>其中$\epsilon$为一个较小的常数，其使模型在训练集上不那么武断、不那么自信，在本研究中，设置$\epsilon$为0.1。</p>
 </li>
 <li><p><code>Last Stride</code>:由于更高的空间分辨率所带来的特征的粒度就越丰富。故增加特征图的大小可以较明显的增强特征表述。假设输入的图片初始尺寸为$256\times128$，经过ResNet50网络进行特征提取之后，输出的特征图尺寸为$8\times4$，如果将其最终一步的stride由2更改为1，对应的输出的特征图尺寸为$16\times8$，从而实现特征更为丰富空间尺寸更大的特征图，并能带来显著的改善。</p>
 </li>
-<li><p><code>BNNeck</code>:前人的许多ReID相关的工作将ID loss和triplet loss相结合，从而联合训练ReID模型。标准的联合训练方式中，ID loss和 triplet loss 约束相同的特征f，但是这两个损失的目标在嵌入空间是不同的。大量前置的研究发现，分类损失其实是在特征空间学习几个超平面，把不同类别的特征分配到不同的子空间里面（类比于SVM分类器中的超平面）。并且从人脸的SphereFace到ReID的SphereReID等工作都显示，把特征归一化到超球面，然后再优化分类损失会更好。triplet loss适合在自由的欧式空间里约束。我们经常观察到，如果把feature归一化到超球面上然后再用triplet loss优化网络的话，通常性能会比不约束的时候要差。我们推断是因为，如果把特征约束到超球面上，特征分布的自由区域会大大减小，triplet loss把正负样本对推开的难度增加。而对于分类超平面，如果把特征约束到超球面上，分类超平面还是比较清晰的。对于标准的Baseline，一个可能发生的现象是，ID loss和triplet loss不会同步收敛。通常会发现一个loss一直收敛下降，另外一个loss在某个阶段会出现先增大再下降的现象。也就是说这两个task在更新的过程中梯度方向可能不一致。<br>针对该问题，希望找个一种方式，使得triplet loss能够在自由的欧式空间里约束feature，而ID loss可以在一个超球面附近约束feature，于是乎就出现了以下的BNNeck。BNNeck的原理也很简单，网络global pooling得到的feature是在欧式空间里的，我们直接连接triplet loss，我们把这个feature记作$f_t$ 。然后这个feature经过一个BN层得到$ f_i$，经过BN层的归一化之后，batch里面$f_i$的各个维度都被拉到差不多，最后近似地在超球面附近分布。<br><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230417210658881.png" alt="image-20230417210658881"><br>最后特征的分布可以大致认为如下分布：从而感性的感受到ID loss和 Triplet loss的区别以及BNNeck的用途。</p>
-<p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230418101628876.png" alt="image-20230418101628876"></p>
+<li><p><code>BNNeck</code>:前人的许多ReID相关的工作将ID loss和triplet loss相结合，从而联合训练ReID模型。标准的联合训练方式中，ID loss和 triplet loss 约束相同的特征f，但是这两个损失的目标在嵌入空间是不同的。大量前置的研究发现，分类损失其实是在特征空间学习几个超平面，把不同类别的特征分配到不同的子空间里面（类比于SVM分类器中的超平面）。并且从人脸的SphereFace到ReID的SphereReID等工作都显示，把特征归一化到超球面，然后再优化分类损失会更好。triplet loss适合在自由的欧式空间里约束。我们经常观察到，如果把feature归一化到超球面上然后再用triplet loss优化网络的话，通常性能会比不约束的时候要差。我们推断是因为，如果把特征约束到超球面上，特征分布的自由区域会大大减小，triplet loss把正负样本对推开的难度增加。而对于分类超平面，如果把特征约束到超球面上，分类超平面还是比较清晰的。对于标准的Baseline，一个可能发生的现象是，ID loss和triplet loss不会同步收敛。通常会发现一个loss一直收敛下降，另外一个loss在某个阶段会出现先增大再下降的现象。也就是说这两个task在更新的过程中梯度方向可能不一致。<br>针对该问题，希望找个一种方式，使得triplet loss能够在自由的欧式空间里约束feature，而ID loss可以在一个超球面附近约束feature，于是乎就出现了以下的BNNeck。BNNeck的原理也很简单，网络global pooling得到的feature是在欧式空间里的，我们直接连接triplet loss，我们把这个feature记作$f_t$ 。然后这个feature经过一个BN层得到$ f_i$，经过BN层的归一化之后，batch里面$f_i$的各个维度都被拉到差不多，最后近似地在超球面附近分布。<br><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417210658881.png" alt="image-20230417210658881"><br>最后特征的分布可以大致认为如下分布：从而感性的感受到ID loss和 Triplet loss的区别以及BNNeck的用途。</p>
+<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230418101628876.png" alt="image-20230418101628876"></p>
 </li>
 <li><p><code>Center Loss</code>:Triplet loss的公式为$L_{Tri} = [d_p − d_n + α]_+$，其中$d_p$为正例之间的距离度量，$d_n$为负例之间的距离度量，$\alpha$为triplet loss的余量，文章中设置为0.3 。然而Triplet loss值考虑了正例与负例之间的差值，但没有考虑正例和负例的绝对值。故引入Center Loss，其学习每个类的深层特征的中心，并惩罚深层特征与对应类中心之间的距离，其表达式为</p>
 <ul>
-<li><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230418110411492.png" alt="image-20230418110411492"></li>
+<li><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230418110411492.png" alt="image-20230418110411492"></li>
 <li>其中$y_j$为第一个mini-batch中第j个图像的标签，$c_{y_j}$为深层特征的第一级中心，B为batch size。其有效的描述了类内变化，增加了类间的紧凑型。</li>
 <li>最终的Loss表述为：$L=L_{ID}+L_{Triplet}+\beta L_C$，其中$\beta$为center loss的平衡系数，被设置为0.0005.</li>
 </ul>
 </li>
 </ul>
-<h2 id="试验效果"><a href="#试验效果" class="headerlink" title="试验效果"></a>试验效果</h2><p><img src="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/image-20230418135011856.png" alt="image-20230418135011856"></p>
+<h2 id="试验效果"><a href="#试验效果" class="headerlink" title="试验效果"></a>试验效果</h2><p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230418135011856.png" alt="image-20230418135011856"></p>
 
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/" class="post-title-link" itemprop="url">未命名</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-23 20:45:30 / 修改时间：20:46:35" itemprop="dateCreated datePublished" datetime="2023-04-23T20:45:30+08:00">2023-04-23</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
       
     </div>
 
