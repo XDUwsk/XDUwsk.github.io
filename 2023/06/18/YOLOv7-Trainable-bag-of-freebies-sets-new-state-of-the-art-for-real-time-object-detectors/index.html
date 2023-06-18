@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors文章主要贡献 设计了几种可训练的bag-of-freebies方法，使得实时目标检测在不增加推理成本的情况下大大提高了检测精度 对于目标检测方法的改进，我们发现了两个新问题，即重参数化模块如何替换原始模块，以及动态标签分">
+<meta property="og:type" content="article">
+<meta property="og:title" content="YOLOv7 Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors">
+<meta property="og:url" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors文章主要贡献 设计了几种可训练的bag-of-freebies方法，使得实时目标检测在不增加推理成本的情况下大大提高了检测精度 对于目标检测方法的改进，我们发现了两个新问题，即重参数化模块如何替换原始模块，以及动态标签分">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-1e9750e05bc3e329c7095388ea3583a7_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/d6fa41fd929243228535b61c93b6ea14.png">
+<meta property="og:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-b0bd82873eb6ae4998b9177000aebd9d_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-933dbca99e1b3195d97cf3e9535e2ca4_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-ba4eb83432276c6af04975f82a32d2a0_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-9888244b3a573b41257f5d5e2380b767_1440w.webp">
+<meta property="article:published_time" content="2023-06-18T09:04:34.000Z">
+<meta property="article:modified_time" content="2023-06-18T09:04:49.782Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-1e9750e05bc3e329c7095388ea3583a7_1440w.webp">
+
+<link rel="canonical" href="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>YOLOv7 Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          YOLOv7 Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-18 17:04:34 / 修改时间：17:04:49" itemprop="dateCreated datePublished" datetime="2023-06-18T17:04:34+08:00">2023-06-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors"><a href="#YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors" class="headerlink" title="YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors"></a>YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</h1><h2 id="文章主要贡献"><a href="#文章主要贡献" class="headerlink" title="文章主要贡献"></a>文章主要贡献</h2><ul>
+<li>设计了几种可训练的bag-of-freebies方法，使得实时目标检测在不增加推理成本的情况下大大提高了检测精度</li>
+<li>对于目标检测方法的改进，我们发现了两个新问题<strong>，即重参数化模块如何替换原始模块，以及动态标签分配策略如何处理对不同输出层的分配</strong>。此外，我们还提出了解决这些问题所带来的困难的方法</li>
+<li>提出了实时目标检测器的“扩展”和“复合缩放”方法，可以有效地利用参数和计算量</li>
+<li>本文提出的方法可有效减少当前实时目标检测器约40%的参数和50%的计算量，具有更快的推理速度和更高的检测精度。</li>
+</ul>
+<p>技术上的点为：</p>
+<p>1.模型重参数化<br>    YOLOV7将模型重参数化引入到网络架构中，重参数化这一思想最早出现于REPVGG中。<br>2.标签分配策略<br>    YOLOV7的标签分配策略采用的是YOLOV5的跨网格搜索，以及YOLOX的匹配策略。<br>3.ELAN高效网络架构<br>    YOLOV7中提出的一个新的网络架构，以高效为主。<br>4.带辅助头的训练<br>    YOLOV7提出了辅助头的一个训练方法，主要目的是通过增加训练成本，提升精度，同时不影响推理的时间，因为辅助头只会出现在训练过程中。</p>
+<h2 id="作者认为SOTA的目标检测所需要的部件"><a href="#作者认为SOTA的目标检测所需要的部件" class="headerlink" title="作者认为SOTA的目标检测所需要的部件"></a>作者认为SOTA的目标检测所需要的部件</h2><ul>
+<li>更快、更强的网络架构（backbone）</li>
+<li>一种更有效的特征提取方法（neck）</li>
+<li>更精确的检测方法（head）</li>
+<li>更具鲁棒性的损失函数（loss）</li>
+<li>更高效的标签分配方法（label assignment）</li>
+<li>更高效的训练方法（train strategy）</li>
+</ul>
+<h2 id="模型重参数化"><a href="#模型重参数化" class="headerlink" title="模型重参数化"></a>模型重参数化</h2><p>模型重参数化分为两种主要的技术手段</p>
+<ul>
+<li>模块级集成<ul>
+<li>在训练时将一个模块拆分为多个相同或不同的模块分支，在推理时将多个分支模块整合为一个完全等价的模块。</li>
+</ul>
+</li>
+<li>模型级继承<ul>
+<li>用不同的训练数据训练多个相同的模型，然后对多个训练模型的权值进行平均</li>
+<li>对不同迭代次数下的模型权值进行加权平均。</li>
+</ul>
+</li>
+</ul>
+<h2 id="模型缩放"><a href="#模型缩放" class="headerlink" title="模型缩放"></a>模型缩放</h2><p>模型缩放常有不同的缩放因子，如分辨率(输入图像的大小)、深度(层数)、宽度(通道数)和阶段(特征金字塔的数量)，从而在网络参数的数量、计算量、推理速度和精度上达到很好的权衡。我们观察到，所有基于连接的模型，如DenseNet或VoVNet，当这些模型的深度被缩放时，都会改变某些层的输入宽度。由于所提出的体系结构是基于串联的，我们必须为该模型设计一种新的复合缩放方法</p>
+<h2 id="模型结构图"><a href="#模型结构图" class="headerlink" title="模型结构图"></a>模型结构图</h2><p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-1e9750e05bc3e329c7095388ea3583a7_1440w.webp" alt="img"></p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/d6fa41fd929243228535b61c93b6ea14.png" alt="请添加图片描述"></p>
+<h3 id="扩展的高效层聚合网络E-ELAN"><a href="#扩展的高效层聚合网络E-ELAN" class="headerlink" title="扩展的高效层聚合网络E-ELAN"></a>扩展的高效层聚合网络E-ELAN</h3><p>要设计高效的网络结构，一般需要考虑参数量、计算量、计算密度、内存访问消耗memory access cost（MAC），还要输入输出通道比例、多分支结构和元素级的相加等等，此外在模型缩放时还要考虑激活函数。</p>
+<p>下图a、b是VovNet和改进的CSPVoVNet，CSPVoVNet分析了梯度路径，使得不同层的权重能够学习到更多的信息。ELAN考虑了如何设计一个更高效的网络结构：通过控制最短最长梯度路径，更深层能够更加高效地学习和收敛。</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-b0bd82873eb6ae4998b9177000aebd9d_1440w.webp" alt="img"></p>
+<p><strong>我们改进了ELAN结构，使用expand, shuffle, merge cardinality三种方式</strong>。</p>
+<p>expand即指提高channels数量（假设提高为g倍），使用组卷积来减少计算量。但是组卷积会使得特征层的不同组之间的信息无法交流，因此参考shufflenet网络，使用通道重排技术进行信息交互。假设group=g，那么对g组特征层使用通道重排技术，然后将其相cat。这时候，此时的每一个group的特征层的channels数量和输入特征层相同（因为输出通道数扩大了g倍），因此我们将g组特征层相加起来，得到新的特征层，这就是merge操作。改进的E-ELAN操作如图2d。（另外，读到后面可以知道，不是所有模型都使用E-ELAN，图1的结构图是YOLOv7的基础版，是没有使用E-ELAN，而是使用ELAN）</p>
+<h3 id="基于concatenation的模型的缩放策略"><a href="#基于concatenation的模型的缩放策略" class="headerlink" title="基于concatenation的模型的缩放策略"></a>基于concatenation的模型的缩放策略</h3><p>模型缩放是调整模型的尺寸，如增大模型提高精度，减小模型提高速度，来获得不同尺寸的模型以适应不同实际工程。如scaled-YOLOv4，它通过缩放stages的数量进行缩放模型。</p>
+<p>对于常用的网络如PlainNet或者ResNet，缩放模型后，模型的输入通道数和输出通道数不会发生改变，那么可以独立分析缩放的影响。（如YOLOX和YOLOv5通过控制CSP_Block中残差块的数量进行缩放，这种不会改变输出通道数）。<strong>但是基于concatenation的模型，增加卷积个数后，下一个层的入度将会改变。</strong>如图3a和b，添加了深度后，模块输出的通道数一样会改变。</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-933dbca99e1b3195d97cf3e9535e2ca4_1440w.webp" alt="img"></p>
+<p>因此，如果对于要使用cat的模型，添加了更多的卷积后，模型的输入输出通道数将会改变，那么将不好单独分析模型缩放深度和宽度的影响。因此为了解决此问题，<strong>我们提出了如图3c的模块</strong>，当模型缩放深度后（如图3c的scaling up depth），我们计算cat后的输出通道数，然后设置相应的宽度缩放因子（如图3c的scaling up width），以此来控制输出的通道数不会改变。也就是说，通过computational block控制缩放深度，通过Transition控制缩放宽度。</p>
+<h3 id="3-训练时的免费午餐"><a href="#3-训练时的免费午餐" class="headerlink" title="3 训练时的免费午餐"></a><strong>3 训练时的免费午餐</strong></h3><h3 id="3-1-planned重参数卷积"><a href="#3-1-planned重参数卷积" class="headerlink" title="3.1 planned重参数卷积"></a><strong>3.1 planned重参数卷积</strong></h3><p>尽管RepConv在VGG上取得巨大成功，但是当我们直接将其应用到ResNet和DenseNet或者其他结构时，其精度会较大下降。我们使用<strong>梯度流动传播路径方法</strong>去分析如何将重参数卷积结合到不同的网络。我们也设计了相应的planned重参数卷积。</p>
+<p>RepConv经常和$3<em>3$卷积、$1</em>1$卷积和恒等映射混合使用。在分析了RepConv和不同结构的结合的表现后，我们发现RepConv里面的恒等映射损害了ResNet的残差连接和DenseNet的cat操作，而这两个操作能够给不同特征层带来梯度的多样性。因此，<strong>我们设计了一个去除恒等映射的RepConv-N，如果遇到残差连接或者cat操作时，使用RepConv-N，而不是RepConv</strong>。</p>
+<p>如图4，在图4g和h中，RepConv去除了恒等分支。而图4d和f，因为输出时连接了残差，所以应该使用RepConv-N。</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-ba4eb83432276c6af04975f82a32d2a0_1440w.webp" alt="img"></p>
+<h3 id="3-2-粗到细的训练loss策略"><a href="#3-2-粗到细的训练loss策略" class="headerlink" title="3.2 粗到细的训练loss策略"></a><strong>3.2 粗到细的训练loss策略</strong></h3><p><strong>深度监督</strong>是训练深层网络时经常使用的技巧。它的主要思想是在网络的中间添加一个额外的辅助头，浅层网络的权重能够作为辅助损失去指导网络。甚至对于那些容易收敛的如ResNet、DenseNet等网络，深度监督依然能够为模型在多个任务上显著地提升表现。图5的a和b是采用与不采用深度监督后的模型结构，在本文中，我们将最终对输出负责的head称为lead head，辅助训练的head称为auxiliary head</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-9888244b3a573b41257f5d5e2380b767_1440w.webp" alt="img"></p>
+<p>然后，我们讨论了<strong>标签分配</strong>。在早期的工作中，标签分配通常是通过参考gt标签，然后给予一个硬标签。然而最近，开始考虑预测输出的质量和分布，然后基于此计算一个可信赖的软标签。比如YOLO使用预测框与真实框的IOU，作为软标签。本文将这种机制称作标签分配器（label assigner）。</p>
+<p>因为本文使用了深度监督策略，那么如何为auxiliary head和lead head分配软标签呢？主流的方法如图5c所示，即分别为Lead head和auxiliary head的预测结果做标签分配和loss计算。本文使用一种新颖的方法，即通过lead head的输出同时指导lead head和auxiliary head，也就是通过lead head的输出生成粗到细的层级标签。这两种提出的方法如图5d和e所示。</p>
+<p><strong>Lead head指导的标签分配器（如图5d）</strong>，主要基于lead的预测输出和ground truth进行计算，通过优化过程生成软标签。这些软标签，将会在训练时同时用于辅助头auxiliary head和导向头lead head。之所以这么做，是因为lead head的表征能力强，所以生成的软标签对源数据和目标的分布和关系，更具代表性。更进一步说，我们可以将这个过程当作<strong>一类泛化性的残差学习</strong>，浅层辅助头学习导向头已经学习过的信息，那么导向头能够更加关注学习以前未学过的残差信息。</p>
+<p><strong>粗到细的导向头指导的标签分配器（如图5e</strong>），它也使用lead head的预测和gt来生成软标签，但是它是生成两类标签，如coarse label和fine label。其中，fine标签和图5d的软标签生成过程相同，coarse标签通过放宽对正样本的约束，允许更多的网格被视作正样本，这就是粗标签生成过程。这是因为auxiliary head相对于lead head的学习能力较弱，为了避免信息丢失，对于auxiliary head我们聚焦于优化其召回率。此时，lead head能够从高召回率的结果中挑选高精度的结果。但是如果额外添加的粗标签的loss权重，和精标签的相同，那么可能会损害检测器。因此，为了使得粗标签中额外的正样本的权重减少，我们对解码器做了限制（具体如何限制文中未作解释，可能是对权重参数做了调整，具体信息得看源码才能知道），使得额外的粗正样本不能完美地产生软标签。以上的机制，允许粗标签和精标签的重要性在训练时动态调整，<strong>使得精标签的优化上界始终优于粗标签</strong>。</p>
+<h3 id="3-3-其他训练时的免费午餐"><a href="#3-3-其他训练时的免费午餐" class="headerlink" title="3.3 其他训练时的免费午餐"></a><strong>3.3 其他训练时的免费午餐</strong></h3><p>以下列了一些本文使用的方案，但是不是由本文最先提出的。</p>
+<ol>
+<li><strong>Conv-BN-Act策略</strong>。BN层直接与Conv层相连，这样在推理时，BN层能够与conv层相融合。</li>
+<li><strong>YOLOR的隐式知识建模</strong>（不太了解，所以没细看）。</li>
+<li><strong>EMA model</strong>。滑动平均训练策略，这是在训练时给近期数据更高权重的平均方法，用于对模型的参数做平均，以求提高测试指标并增加模型鲁棒。在推理时，我们使用了EMA模型作为最终的模型。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/" rel="prev" title="YOLOv6 A Single-Stage Object Detection Framework for Industrial  Applications">
+      <i class="fa fa-chevron-left"></i> YOLOv6 A Single-Stage Object Detection Framework for Industrial  Applications
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors"><span class="nav-number">1.</span> <span class="nav-text">YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E7%AB%A0%E4%B8%BB%E8%A6%81%E8%B4%A1%E7%8C%AE"><span class="nav-number">1.1.</span> <span class="nav-text">文章主要贡献</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%9C%E8%80%85%E8%AE%A4%E4%B8%BASOTA%E7%9A%84%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E9%83%A8%E4%BB%B6"><span class="nav-number">1.2.</span> <span class="nav-text">作者认为SOTA的目标检测所需要的部件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E9%87%8D%E5%8F%82%E6%95%B0%E5%8C%96"><span class="nav-number">1.3.</span> <span class="nav-text">模型重参数化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E7%BC%A9%E6%94%BE"><span class="nav-number">1.4.</span> <span class="nav-text">模型缩放</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84%E5%9B%BE"><span class="nav-number">1.5.</span> <span class="nav-text">模型结构图</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E7%9A%84%E9%AB%98%E6%95%88%E5%B1%82%E8%81%9A%E5%90%88%E7%BD%91%E7%BB%9CE-ELAN"><span class="nav-number">1.5.1.</span> <span class="nav-text">扩展的高效层聚合网络E-ELAN</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8Econcatenation%E7%9A%84%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E7%AD%96%E7%95%A5"><span class="nav-number">1.5.2.</span> <span class="nav-text">基于concatenation的模型的缩放策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%AE%AD%E7%BB%83%E6%97%B6%E7%9A%84%E5%85%8D%E8%B4%B9%E5%8D%88%E9%A4%90"><span class="nav-number">1.5.3.</span> <span class="nav-text">3 训练时的免费午餐</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-planned%E9%87%8D%E5%8F%82%E6%95%B0%E5%8D%B7%E7%A7%AF"><span class="nav-number">1.5.4.</span> <span class="nav-text">3.1 planned重参数卷积</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E7%B2%97%E5%88%B0%E7%BB%86%E7%9A%84%E8%AE%AD%E7%BB%83loss%E7%AD%96%E7%95%A5"><span class="nav-number">1.5.5.</span> <span class="nav-text">3.2 粗到细的训练loss策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%85%B6%E4%BB%96%E8%AE%AD%E7%BB%83%E6%97%B6%E7%9A%84%E5%85%8D%E8%B4%B9%E5%8D%88%E9%A4%90"><span class="nav-number">1.5.6.</span> <span class="nav-text">3.3 其他训练时的免费午餐</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

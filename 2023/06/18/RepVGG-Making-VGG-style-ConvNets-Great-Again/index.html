@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="RepVGG: Making VGG-style ConvNets Great Again主要贡献：提出了一种简单但功能强大的卷积神经网络结构，其网络结构，在推理时只具有3x3卷积和ReLU，在训练时具有多分支拓扑结构，通过结构重参数化技术实现训练时间和推理时间的解耦，并命名为RepVGG。 对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RepVGG Making VGG-style ConvNets Great Again">
+<meta property="og:url" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="RepVGG: Making VGG-style ConvNets Great Again主要贡献：提出了一种简单但功能强大的卷积神经网络结构，其网络结构，在推理时只具有3x3卷积和ReLU，在训练时具有多分支拓扑结构，通过结构重参数化技术实现训练时间和推理时间的解耦，并命名为RepVGG。 对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/4H7%7B5]]_TNU%XI%5PPH9KA9.png">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/aa1ad31949b54e76b0a282fab915478f.png">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-84cdab58644fcbcafb3c690c1669b879_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b438e3a2ee316a6054a4e4c45443fef3_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-cd0d2de067e4850fe4fafce70f58acf1_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-89854f076457c9c03b733a389db96993_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-88962d2f0fc8f1371d0d521c04c2a57d_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b7409c315f10a158331bf90fcf32efd6_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b05e6fa96bd642c1da2d36d39a543d7a_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-bc97e575d5007645901830109828a36f_1440w.webp">
+<meta property="og:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-f5ce0b89a10aa36223275dccd6327cbe_1440w.webp">
+<meta property="article:published_time" content="2023-06-18T09:02:39.000Z">
+<meta property="article:modified_time" content="2023-06-18T09:02:54.959Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/4H7%7B5]]_TNU%XI%5PPH9KA9.png">
+
+<link rel="canonical" href="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RepVGG Making VGG-style ConvNets Great Again | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RepVGG Making VGG-style ConvNets Great Again
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-18 17:02:39 / 修改时间：17:02:54" itemprop="dateCreated datePublished" datetime="2023-06-18T17:02:39+08:00">2023-06-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="RepVGG-Making-VGG-style-ConvNets-Great-Again"><a href="#RepVGG-Making-VGG-style-ConvNets-Great-Again" class="headerlink" title="RepVGG: Making VGG-style ConvNets Great Again"></a>RepVGG: Making VGG-style ConvNets Great Again</h2><p>主要贡献：提出了一种简单但功能强大的卷积神经网络结构，其网络结构，在推理时只具有3x3卷积和ReLU，在训练时具有多分支拓扑结构，通过结构重参数化技术实现训练时间和推理时间的解耦，并命名为RepVGG。</p>
+<h3 id="对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下："><a href="#对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：" class="headerlink" title="对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下："></a>对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：</h3><ul>
+<li>会降低模型的推理速度并且减少内存利用率</li>
+<li>有些节点及算子会增加内存消耗并且对别的设备不友好。</li>
+</ul>
+<p>论文中提到，大部分学者提到FLOPs（浮点运算的数量）会影响推理速度，但是论文中作者做了实验发现FLOPs对模型的速度并不是强相关。</p>
+<p>作者提出的RepVGG，其具有以下优点：</p>
+<ul>
+<li>该模型具有类似VGG的拓扑结构，没有任何分支，这意味着每一层都将其唯一前一层的输出作为输入，并将输出馈送到其唯一的后一层。</li>
+<li>该模型的主体部分仅使用3 × 3的conv和ReLU。</li>
+<li>模型的具体架构(包括具体的深度和层宽度)的实例化没有模型结构的自动搜索，手工细化，复合缩放，也没有其他代价较大的设计。</li>
+</ul>
+<h3 id="作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。"><a href="#作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。" class="headerlink" title="作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。"></a>作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。</h3><p>针对多分支架构的优点集中于训练上，而不希望用于推理上，故提出重参数化的方法来解耦训练时的多分支结构和推理时的简单架构，即意味着通过转换其参数将架构从一个转换到另一个。</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/4H7{5]]_TNU%XI%5PPH9KA9.png" alt="img"></p>
+<p>如上图中(b)和(c)所示，即为转换之后的RepVGG和转换之前的RepVGG。其将分支看作退化的1x1卷积，进一步看作退化的3x3卷积。从而可以从(b)中的模型架构转变为(c)中的模型架构，可以用3x3卷积、BN、1x1卷积等模块进行原模型的等效替换。从而提升计算速度。</p>
+<h3 id="本文的核心贡献点如下："><a href="#本文的核心贡献点如下：" class="headerlink" title="本文的核心贡献点如下："></a>本文的核心贡献点如下：</h3><ul>
+<li>我们提出了RepVGG，这是一种简单的架构，与最先进的技术相比，具有良好的速度-精度权衡。</li>
+<li>我们建议使用结构重参数化将训练时间的多分支拓扑与推理时间的平面结构解耦。</li>
+<li>我们展示了RepVGG在图像分类和语义分割方面的有效性，以及实现的效率和易用性。</li>
+</ul>
+<h3 id="如何实现结构重参数化："><a href="#如何实现结构重参数化：" class="headerlink" title="如何实现结构重参数化："></a>如何实现结构重参数化：</h3><p>在上述提到，RepVGG在训练时每一层都有三个分支，分别是identify，1x1，3x3，模型训练时，输出$ y=x+g(x)+f(x) $，每一层就需要3个参数块，对于n层网络，就需要$3*n$个参数块。所以我们需要重参数化，会使得推理时模型参数量小。</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/aa1ad31949b54e76b0a282fab915478f.png" alt="img"></p>
+<p>上图中的过程即为将训练好的多分支模型转换为单分支模型，从而达到推理时的高性能</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">对于重参数化的实现主要存在两个问题：</span><br><span class="line">第一个问题，在每个卷积后都接上一个BN，怎么将卷积和BN融合。</span><br><span class="line">第二个问题，存在不同大小的卷积，怎么将几个不同大小的卷积融合在一起。</span><br></pre></td></tr></table></figure>
+<p>对于第一个问题，在每个卷积后都接上一个BN，怎么将卷积和BN融合。</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-84cdab58644fcbcafb3c690c1669b879_1440w.webp" alt="v2-84cdab58644fcbcafb3c690c1669b879_1440w"></p>
+<p>这其实就是一个卷积层，只不过权重考虑了BN的参数 我们令：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b438e3a2ee316a6054a4e4c45443fef3_1440w.webp" alt="img"></p>
+<p>最终的融合结果即为：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-cd0d2de067e4850fe4fafce70f58acf1_1440w.webp" alt="img"></p>
+<h3 id="2-2-2-conv-3x3和conv-1x1合并"><a href="#2-2-2-conv-3x3和conv-1x1合并" class="headerlink" title="2.2.2. conv_3x3和conv_1x1合并"></a>2.2.2. conv_3x3和conv_1x1合并</h3><p> 这里为了详细说明下，假设输入特征图特征图尺寸为(1, 2, 3, 3)，输出特征图尺寸与输入特征图尺寸相同，且stride=1，下面展示是conv_3x3的卷积过程：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-89854f076457c9c03b733a389db96993_1440w.webp" alt="img"></p>
+<p> conv_3x3卷积过程大家都很熟悉，看上图一目了然，首先将特征图进行pad=kernel_size//2，然后从左上角开始(上图中红色位置)做卷积运算，最终得到右边output输出。下面是conv_1x1卷积过程：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-88962d2f0fc8f1371d0d521c04c2a57d_1440w.webp" alt="img"></p>
+<p> 同理，conv_1x1跟conv_3x3卷积过程一样，从上图中左边input中红色位置开始进行卷积，得到右边的输出，观察conv_1x1和conv_3x3的卷积过程，可以发现他们都是从input中红色起点位置开始，走过相同的路径，因此，将conv_3x3和conv_1x1进行融合，只需要将conv_1x1卷积核padding成conv_3x3的形式，然后于conv_3x3相加，再与特征图做卷积(这里依据卷积的可加性原理)即可，也就是conv_1x1的卷积过程变成如下形式：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b7409c315f10a158331bf90fcf32efd6_1440w.webp" alt="img"></p>
+<h3 id="2-2-3-identity-等效为特殊权重的卷积层"><a href="#2-2-3-identity-等效为特殊权重的卷积层" class="headerlink" title="2.2.3. identity 等效为特殊权重的卷积层"></a>2.2.3. identity 等效为特殊权重的卷积层</h3><p> identity层就是输入直接等于输出，也即input中每个通道每个元素直接输出到output中对应的通道，用一个什么样的卷积层来等效这个操作呢，我们知道，卷积操作必须涉及要将每个通道加起来然后输出的，然后又要保证input中的每个通道每个元素等于output中，从这一点，我们可以从PWconv想到，只要令当前通道的卷积核参数为1，其余的卷积核参数为0，就可以做到；从DWconv中可以想到，用conv_1x1卷积且卷积核权重为1，就能保证每次卷积不改变输入，因此，identity可以等效成如下的conv_1x1的卷积形式：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b05e6fa96bd642c1da2d36d39a543d7a_1440w.webp" alt="img"></p>
+<p>从上面的分析，我们进一步可以将indentity -&gt; conv_1x1 -&gt; conv_3x3的形式，如下所示：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-bc97e575d5007645901830109828a36f_1440w.webp" alt="img"></p>
+<p> 上述过程就是对应论文中所属的下述从step1到step2的变换过程，涉及conv于BN层融合，conv_1x1与identity转化为等价的conv_3x3的形式：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-f5ce0b89a10aa36223275dccd6327cbe_1440w.webp" alt="img"></p>
+<p> 结构重参数化的最后一步也就是上图中step2 -&gt; step3， 这一步就是利用卷积可加性原理，将三个分支的卷积层和bias对应相加组成最终一个conv<em>3x3的形式即可。</em><br>这里，大家可能既然把BN，identity，conv_1x1和conv_3x3都融合在一起了，为什么不干脆把ReLU也融合进去呢？其实也是可以将ReLU层进行融合的，<strong>但是需要进行量化</strong>，<strong>conv输出tensor的值域直接使用relu输出的值阈（同时对应计算Ｓ和Z），就可以完成conv和relu合并。无量化动作的优化是无法完成conv+relu的合并*</strong>。这里的知识请大家参考论文：<em><br><em>*<a href="https://link.zhihu.com/?target=https%3A//arxiv.org/abs/1712.05877">Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference</a>。</em></em></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/" rel="prev" title="A New Baseline for Single-/Cross-Modality Re-ID">
+      <i class="fa fa-chevron-left"></i> A New Baseline for Single-/Cross-Modality Re-ID
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/" rel="next" title="YOLOv6 A Single-Stage Object Detection Framework for Industrial  Applications">
+      YOLOv6 A Single-Stage Object Detection Framework for Industrial  Applications <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RepVGG-Making-VGG-style-ConvNets-Great-Again"><span class="nav-number">1.</span> <span class="nav-text">RepVGG: Making VGG-style ConvNets Great Again</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E4%BA%8E%E8%BE%83%E4%B8%BA%E5%A4%8D%E6%9D%82%E7%9A%84%E7%BD%91%E7%BB%9C%EF%BC%88ResNet%E7%9A%84%E6%AE%8B%E5%B7%AE%E5%9D%97%E4%BB%A5%E5%8F%8AInception%E7%9A%84%E5%88%86%E6%94%AF%E8%BF%9E%E6%8E%A5%EF%BC%89%EF%BC%8C%E5%85%B6%E7%B2%BE%E5%BA%A6%E5%BE%80%E5%BE%80%E8%BE%83%E5%A5%BD%EF%BC%8C%E4%BD%86%E5%85%B6%E6%9C%AC%E8%BA%AB%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98%E5%A6%82%E4%B8%8B%EF%BC%9A"><span class="nav-number">1.1.</span> <span class="nav-text">对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%9C%E8%80%85%E8%AE%A4%E4%B8%BA%EF%BC%8C%E5%A4%9A%E5%88%86%E6%94%AF%E6%9E%B6%E6%9E%84%E5%8F%AF%E4%BB%A5%E7%9C%8B%E4%BD%9C%E4%B8%BA%E8%AE%B8%E5%A4%9A%E8%BE%83%E6%B5%85%E6%A8%A1%E5%9E%8B%E7%9A%84%E9%9A%90%E5%BC%8F%E9%9B%86%E6%88%90%EF%BC%8C%E5%B9%B6%E4%B8%94%E5%85%B7%E6%9C%89%E8%BE%83%E5%A5%BD%E7%9A%84%E6%80%A7%E8%83%BD%E6%B0%B4%E5%B9%B3%E3%80%82"><span class="nav-number">1.2.</span> <span class="nav-text">作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E7%9A%84%E6%A0%B8%E5%BF%83%E8%B4%A1%E7%8C%AE%E7%82%B9%E5%A6%82%E4%B8%8B%EF%BC%9A"><span class="nav-number">1.3.</span> <span class="nav-text">本文的核心贡献点如下：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E7%BB%93%E6%9E%84%E9%87%8D%E5%8F%82%E6%95%B0%E5%8C%96%EF%BC%9A"><span class="nav-number">1.4.</span> <span class="nav-text">如何实现结构重参数化：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-2-conv-3x3%E5%92%8Cconv-1x1%E5%90%88%E5%B9%B6"><span class="nav-number">1.5.</span> <span class="nav-text">2.2.2. conv_3x3和conv_1x1合并</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-3-identity-%E7%AD%89%E6%95%88%E4%B8%BA%E7%89%B9%E6%AE%8A%E6%9D%83%E9%87%8D%E7%9A%84%E5%8D%B7%E7%A7%AF%E5%B1%82"><span class="nav-number">1.6.</span> <span class="nav-text">2.2.3. identity 等效为特殊权重的卷积层</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

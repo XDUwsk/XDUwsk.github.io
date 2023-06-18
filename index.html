@@ -148,6 +148,342 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/" class="post-title-link" itemprop="url">YOLOv7 Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-18 17:04:34 / 修改时间：17:04:49" itemprop="dateCreated datePublished" datetime="2023-06-18T17:04:34+08:00">2023-06-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors"><a href="#YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors" class="headerlink" title="YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors"></a>YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</h1><h2 id="文章主要贡献"><a href="#文章主要贡献" class="headerlink" title="文章主要贡献"></a>文章主要贡献</h2><ul>
+<li>设计了几种可训练的bag-of-freebies方法，使得实时目标检测在不增加推理成本的情况下大大提高了检测精度</li>
+<li>对于目标检测方法的改进，我们发现了两个新问题<strong>，即重参数化模块如何替换原始模块，以及动态标签分配策略如何处理对不同输出层的分配</strong>。此外，我们还提出了解决这些问题所带来的困难的方法</li>
+<li>提出了实时目标检测器的“扩展”和“复合缩放”方法，可以有效地利用参数和计算量</li>
+<li>本文提出的方法可有效减少当前实时目标检测器约40%的参数和50%的计算量，具有更快的推理速度和更高的检测精度。</li>
+</ul>
+<p>技术上的点为：</p>
+<p>1.模型重参数化<br>    YOLOV7将模型重参数化引入到网络架构中，重参数化这一思想最早出现于REPVGG中。<br>2.标签分配策略<br>    YOLOV7的标签分配策略采用的是YOLOV5的跨网格搜索，以及YOLOX的匹配策略。<br>3.ELAN高效网络架构<br>    YOLOV7中提出的一个新的网络架构，以高效为主。<br>4.带辅助头的训练<br>    YOLOV7提出了辅助头的一个训练方法，主要目的是通过增加训练成本，提升精度，同时不影响推理的时间，因为辅助头只会出现在训练过程中。</p>
+<h2 id="作者认为SOTA的目标检测所需要的部件"><a href="#作者认为SOTA的目标检测所需要的部件" class="headerlink" title="作者认为SOTA的目标检测所需要的部件"></a>作者认为SOTA的目标检测所需要的部件</h2><ul>
+<li>更快、更强的网络架构（backbone）</li>
+<li>一种更有效的特征提取方法（neck）</li>
+<li>更精确的检测方法（head）</li>
+<li>更具鲁棒性的损失函数（loss）</li>
+<li>更高效的标签分配方法（label assignment）</li>
+<li>更高效的训练方法（train strategy）</li>
+</ul>
+<h2 id="模型重参数化"><a href="#模型重参数化" class="headerlink" title="模型重参数化"></a>模型重参数化</h2><p>模型重参数化分为两种主要的技术手段</p>
+<ul>
+<li>模块级集成<ul>
+<li>在训练时将一个模块拆分为多个相同或不同的模块分支，在推理时将多个分支模块整合为一个完全等价的模块。</li>
+</ul>
+</li>
+<li>模型级继承<ul>
+<li>用不同的训练数据训练多个相同的模型，然后对多个训练模型的权值进行平均</li>
+<li>对不同迭代次数下的模型权值进行加权平均。</li>
+</ul>
+</li>
+</ul>
+<h2 id="模型缩放"><a href="#模型缩放" class="headerlink" title="模型缩放"></a>模型缩放</h2><p>模型缩放常有不同的缩放因子，如分辨率(输入图像的大小)、深度(层数)、宽度(通道数)和阶段(特征金字塔的数量)，从而在网络参数的数量、计算量、推理速度和精度上达到很好的权衡。我们观察到，所有基于连接的模型，如DenseNet或VoVNet，当这些模型的深度被缩放时，都会改变某些层的输入宽度。由于所提出的体系结构是基于串联的，我们必须为该模型设计一种新的复合缩放方法</p>
+<h2 id="模型结构图"><a href="#模型结构图" class="headerlink" title="模型结构图"></a>模型结构图</h2><p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-1e9750e05bc3e329c7095388ea3583a7_1440w.webp" alt="img"></p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/d6fa41fd929243228535b61c93b6ea14.png" alt="请添加图片描述"></p>
+<h3 id="扩展的高效层聚合网络E-ELAN"><a href="#扩展的高效层聚合网络E-ELAN" class="headerlink" title="扩展的高效层聚合网络E-ELAN"></a>扩展的高效层聚合网络E-ELAN</h3><p>要设计高效的网络结构，一般需要考虑参数量、计算量、计算密度、内存访问消耗memory access cost（MAC），还要输入输出通道比例、多分支结构和元素级的相加等等，此外在模型缩放时还要考虑激活函数。</p>
+<p>下图a、b是VovNet和改进的CSPVoVNet，CSPVoVNet分析了梯度路径，使得不同层的权重能够学习到更多的信息。ELAN考虑了如何设计一个更高效的网络结构：通过控制最短最长梯度路径，更深层能够更加高效地学习和收敛。</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-b0bd82873eb6ae4998b9177000aebd9d_1440w.webp" alt="img"></p>
+<p><strong>我们改进了ELAN结构，使用expand, shuffle, merge cardinality三种方式</strong>。</p>
+<p>expand即指提高channels数量（假设提高为g倍），使用组卷积来减少计算量。但是组卷积会使得特征层的不同组之间的信息无法交流，因此参考shufflenet网络，使用通道重排技术进行信息交互。假设group=g，那么对g组特征层使用通道重排技术，然后将其相cat。这时候，此时的每一个group的特征层的channels数量和输入特征层相同（因为输出通道数扩大了g倍），因此我们将g组特征层相加起来，得到新的特征层，这就是merge操作。改进的E-ELAN操作如图2d。（另外，读到后面可以知道，不是所有模型都使用E-ELAN，图1的结构图是YOLOv7的基础版，是没有使用E-ELAN，而是使用ELAN）</p>
+<h3 id="基于concatenation的模型的缩放策略"><a href="#基于concatenation的模型的缩放策略" class="headerlink" title="基于concatenation的模型的缩放策略"></a>基于concatenation的模型的缩放策略</h3><p>模型缩放是调整模型的尺寸，如增大模型提高精度，减小模型提高速度，来获得不同尺寸的模型以适应不同实际工程。如scaled-YOLOv4，它通过缩放stages的数量进行缩放模型。</p>
+<p>对于常用的网络如PlainNet或者ResNet，缩放模型后，模型的输入通道数和输出通道数不会发生改变，那么可以独立分析缩放的影响。（如YOLOX和YOLOv5通过控制CSP_Block中残差块的数量进行缩放，这种不会改变输出通道数）。<strong>但是基于concatenation的模型，增加卷积个数后，下一个层的入度将会改变。</strong>如图3a和b，添加了深度后，模块输出的通道数一样会改变。</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-933dbca99e1b3195d97cf3e9535e2ca4_1440w.webp" alt="img"></p>
+<p>因此，如果对于要使用cat的模型，添加了更多的卷积后，模型的输入输出通道数将会改变，那么将不好单独分析模型缩放深度和宽度的影响。因此为了解决此问题，<strong>我们提出了如图3c的模块</strong>，当模型缩放深度后（如图3c的scaling up depth），我们计算cat后的输出通道数，然后设置相应的宽度缩放因子（如图3c的scaling up width），以此来控制输出的通道数不会改变。也就是说，通过computational block控制缩放深度，通过Transition控制缩放宽度。</p>
+<h3 id="3-训练时的免费午餐"><a href="#3-训练时的免费午餐" class="headerlink" title="3 训练时的免费午餐"></a><strong>3 训练时的免费午餐</strong></h3><h3 id="3-1-planned重参数卷积"><a href="#3-1-planned重参数卷积" class="headerlink" title="3.1 planned重参数卷积"></a><strong>3.1 planned重参数卷积</strong></h3><p>尽管RepConv在VGG上取得巨大成功，但是当我们直接将其应用到ResNet和DenseNet或者其他结构时，其精度会较大下降。我们使用<strong>梯度流动传播路径方法</strong>去分析如何将重参数卷积结合到不同的网络。我们也设计了相应的planned重参数卷积。</p>
+<p>RepConv经常和$3<em>3$卷积、$1</em>1$卷积和恒等映射混合使用。在分析了RepConv和不同结构的结合的表现后，我们发现RepConv里面的恒等映射损害了ResNet的残差连接和DenseNet的cat操作，而这两个操作能够给不同特征层带来梯度的多样性。因此，<strong>我们设计了一个去除恒等映射的RepConv-N，如果遇到残差连接或者cat操作时，使用RepConv-N，而不是RepConv</strong>。</p>
+<p>如图4，在图4g和h中，RepConv去除了恒等分支。而图4d和f，因为输出时连接了残差，所以应该使用RepConv-N。</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-ba4eb83432276c6af04975f82a32d2a0_1440w.webp" alt="img"></p>
+<h3 id="3-2-粗到细的训练loss策略"><a href="#3-2-粗到细的训练loss策略" class="headerlink" title="3.2 粗到细的训练loss策略"></a><strong>3.2 粗到细的训练loss策略</strong></h3><p><strong>深度监督</strong>是训练深层网络时经常使用的技巧。它的主要思想是在网络的中间添加一个额外的辅助头，浅层网络的权重能够作为辅助损失去指导网络。甚至对于那些容易收敛的如ResNet、DenseNet等网络，深度监督依然能够为模型在多个任务上显著地提升表现。图5的a和b是采用与不采用深度监督后的模型结构，在本文中，我们将最终对输出负责的head称为lead head，辅助训练的head称为auxiliary head</p>
+<p><img src="/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/v2-9888244b3a573b41257f5d5e2380b767_1440w.webp" alt="img"></p>
+<p>然后，我们讨论了<strong>标签分配</strong>。在早期的工作中，标签分配通常是通过参考gt标签，然后给予一个硬标签。然而最近，开始考虑预测输出的质量和分布，然后基于此计算一个可信赖的软标签。比如YOLO使用预测框与真实框的IOU，作为软标签。本文将这种机制称作标签分配器（label assigner）。</p>
+<p>因为本文使用了深度监督策略，那么如何为auxiliary head和lead head分配软标签呢？主流的方法如图5c所示，即分别为Lead head和auxiliary head的预测结果做标签分配和loss计算。本文使用一种新颖的方法，即通过lead head的输出同时指导lead head和auxiliary head，也就是通过lead head的输出生成粗到细的层级标签。这两种提出的方法如图5d和e所示。</p>
+<p><strong>Lead head指导的标签分配器（如图5d）</strong>，主要基于lead的预测输出和ground truth进行计算，通过优化过程生成软标签。这些软标签，将会在训练时同时用于辅助头auxiliary head和导向头lead head。之所以这么做，是因为lead head的表征能力强，所以生成的软标签对源数据和目标的分布和关系，更具代表性。更进一步说，我们可以将这个过程当作<strong>一类泛化性的残差学习</strong>，浅层辅助头学习导向头已经学习过的信息，那么导向头能够更加关注学习以前未学过的残差信息。</p>
+<p><strong>粗到细的导向头指导的标签分配器（如图5e</strong>），它也使用lead head的预测和gt来生成软标签，但是它是生成两类标签，如coarse label和fine label。其中，fine标签和图5d的软标签生成过程相同，coarse标签通过放宽对正样本的约束，允许更多的网格被视作正样本，这就是粗标签生成过程。这是因为auxiliary head相对于lead head的学习能力较弱，为了避免信息丢失，对于auxiliary head我们聚焦于优化其召回率。此时，lead head能够从高召回率的结果中挑选高精度的结果。但是如果额外添加的粗标签的loss权重，和精标签的相同，那么可能会损害检测器。因此，为了使得粗标签中额外的正样本的权重减少，我们对解码器做了限制（具体如何限制文中未作解释，可能是对权重参数做了调整，具体信息得看源码才能知道），使得额外的粗正样本不能完美地产生软标签。以上的机制，允许粗标签和精标签的重要性在训练时动态调整，<strong>使得精标签的优化上界始终优于粗标签</strong>。</p>
+<h3 id="3-3-其他训练时的免费午餐"><a href="#3-3-其他训练时的免费午餐" class="headerlink" title="3.3 其他训练时的免费午餐"></a><strong>3.3 其他训练时的免费午餐</strong></h3><p>以下列了一些本文使用的方案，但是不是由本文最先提出的。</p>
+<ol>
+<li><strong>Conv-BN-Act策略</strong>。BN层直接与Conv层相连，这样在推理时，BN层能够与conv层相融合。</li>
+<li><strong>YOLOR的隐式知识建模</strong>（不太了解，所以没细看）。</li>
+<li><strong>EMA model</strong>。滑动平均训练策略，这是在训练时给近期数据更高权重的平均方法，用于对模型的参数做平均，以求提高测试指标并增加模型鲁棒。在推理时，我们使用了EMA模型作为最终的模型。</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/" class="post-title-link" itemprop="url">YOLOv6 A Single-Stage Object Detection Framework for Industrial  Applications</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-18 17:03:19 / 修改时间：17:04:07" itemprop="dateCreated datePublished" datetime="2023-06-18T17:03:19+08:00">2023-06-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications"><a href="#YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications" class="headerlink" title="YOLOv6: A Single-Stage Object Detection Framework for Industrial  Applications"></a>YOLOv6: A Single-Stage Object Detection Framework for Industrial  Applications</h1><h2 id="YOLOv6发现以往的模型存在以下问题："><a href="#YOLOv6发现以往的模型存在以下问题：" class="headerlink" title="YOLOv6发现以往的模型存在以下问题："></a>YOLOv6发现以往的模型存在以下问题：</h2><ul>
+<li>来自RepVGG的重参数化是一种尚未在检测中得到很好利用的优越技术。我们还注意到，对于RepVGG块，简单的模型缩放变得不切实际，因此我们认为小型和大型网络之间的网络设计的优雅一致性是不必要的。对于小型网络，简单的单路径架构是更好的选择，但对于大型模型，单路径架构的参数和计算成本的指数增长使其不可行</li>
+<li>基于重参数化的检测器的量化也需要细致的处理，否则在训练和推理过程中由于其异构配置而导致的性能下降将难以处理。</li>
+<li>以前的工作往往不太关注部署，其延迟通常在V100等高成本机器上进行比较。当涉及到真正的服务环境时，存在硬件差距。通常，像Tesla T4这样的低功耗gpu成本更低，并且提供相当好的推理性能。</li>
+<li>考虑到架构差异，标签分配和损失函数设计等高级领域特定策略需要进一步验证;</li>
+<li>对于部署，我们可以容忍训练策略的调整，以提高精度性能，但不增加推理成本，例如知识蒸馏。</li>
+</ul>
+<h2 id="本文的主要工作"><a href="#本文的主要工作" class="headerlink" title="本文的主要工作"></a>本文的主要工作</h2><ul>
+<li>我们重新设计了一系列不同规模的网络，为不同场景的工业应用量身定制。</li>
+<li>不同规模的架构不同，以实现最佳的速度和精度权衡，其中小模型具有简单的单路径主干，而大模型构建在高效的多分支块上。</li>
+<li>我们为YOLOv6注入了一种自蒸馏策略，同时执行分类任务和回归任务。同时，我们动态调整来自老师和标签的知识，帮助学生模型在所有训练阶段更有效地学习知识。</li>
+<li>我们广泛验证了标签分配、损失函数和数据增强技术的先进检测技术，并有选择地采用它们来进一步提高性能。</li>
+<li>我们在RepOptimizer和通道式蒸馏的帮助下，对检测的量化方案进行了改革，这导致了一个永远快速和准确的检测器，在batchsize大小为32时，具有43.3%的COCO AP和869 FPS的吞吐量。</li>
+</ul>
+<h2 id="使用的方法-amp-模型的具体结构"><a href="#使用的方法-amp-模型的具体结构" class="headerlink" title="使用的方法&amp;模型的具体结构"></a>使用的方法&amp;模型的具体结构</h2><p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/b55cad01c6aa466c8df35624466f1a49.png" alt="img"></p>
+<ul>
+<li><strong>网络设计</strong>:<ul>
+<li><strong>backbone</strong>:与其他主流架构相比，我们发现在相似的推理速度下，RepVGG骨干网在<strong>小型网络</strong>中具有更强的特征表示能力，但由于参数和计算成本的爆炸式增长，它难以扩展以获得更大的模型。在这方面，我们将RepBlock作为我们小型网络的构建块。对于<strong>大型模型</strong>，我们修改了一个更有效的CSP块，命名为CSPStackRep块。</li>
+<li><strong>neck</strong>:YOLOv6的颈部在YOLOv4和YOLOv5之后采用PAN拓扑。我们用RepBlocks或CSPStackRep Blocks增强颈部以获得RepPAN。</li>
+<li><strong>head</strong>:我们简化了解耦头，使其更高效，称为高效解耦头。</li>
+</ul>
+</li>
+<li><strong>标签分配</strong>:我们通过大量实验评估了标签分配策略的最新进展，结果表明<strong>TAL</strong>更有效，更适合训练。</li>
+<li><strong>损失函数</strong>:主流无锚目标检测器的损失函数包含分类损失，anchor回归损失和对象损失。对于每一种损失，我们系统地用所有可用的技术进行实验，最终选择<strong>VariFocal loss</strong>作为我们的分类损失，<strong>SIoU/GIoU loss</strong>作为我们的回归损失</li>
+<li><strong>行业便利的改进</strong>:我们引入了额外的常见做法和技巧来提高性能，包括<strong>自蒸馏</strong>和<strong>更多的训练epoch</strong>。分类和anchor回归分别由教师模型监督。由于DFL，anchor回归的精馏成为可能。此外，通过余弦衰减动态衰减软、硬标签信息的比例，帮助学员在训练过程中有选择地获取不同阶段的知识。此外，我们在评估中遇到了没有增加额外灰色边界的性能受损问题，对此我们提供了一些补救措施。</li>
+<li><strong>量化和部署</strong>:为了解决基于再参数化的量化模型的性能下降问题，我们使用<strong>RepOptimizer</strong>训练YOLOv6，以获得ptq友好的权重。我们进一步采用QAT与通道智能蒸馏和图优化来追求极致的性能。</li>
+</ul>
+<h2 id="Network-Design"><a href="#Network-Design" class="headerlink" title="Network Design"></a>Network Design</h2><p>​    单阶段物体探测器通常由以下几个部分组成：主干、颈部和头部。主干网主要决定了特征表示能力，而其设计由于计算成本较大，对推理效率的影响很大。颈部用于将低级的物理特征与高级的语义特征进行聚合，然后在所有层次上建立金字塔形特征映射。头部由几个卷积层组成，并根据颈部组装的多层次特征来预测动态检测结果。从结构的角度来看，它可以分为基于锚头和无锚头，或者是参数耦合头和参数解耦头。 </p>
+<p>​    在YOLOv6中，基于硬件友好的网络设计的原则，我们提出了两个缩放的可再参数化的骨干和颈，以适应不同大小的模型，以及一个有效的解耦与混合通道策略的头。YOLOv6的整体架构如图所示。</p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/b55cad01c6aa466c8df35624466f1a49-16867300125633.png" alt="img"></p>
+<h3 id="Backbone"><a href="#Backbone" class="headerlink" title="Backbone"></a><strong>Backbone</strong></h3><p>​    多分支网络通常比单路径网络具有更好的分类性能，但它往往伴随着并行性的降低，并导致推理延迟的增加。相反，像VGG这样的普通单路网络具有高并行性和更少的内存占用的优点，从而获得了更高的推理效率。最近在RepVGG中，提出了一种结构重参数化方法，将训练时间的多分支拓扑与推理时间的平面架构解耦，以实现更好的速度精度权衡。</p>
+<p>​     <strong>受上述工作的启发，我们设计了一个高效的可重新参数化的骨干，称为EffificientRep。对于小模型，训练阶段骨干的主要成分是RepBlock</strong>，如下图所示在推理阶段，每个RepBlock转换为3×3卷积层（表示为RepConv），具有ReLU激活函数，3×3卷积在主流gpu和cpu上得到了高度优化，并且它具有更高的计算密度。因此，高效的代表骨干网充分利用了硬件的计算能力，从而显著降低了推理延迟，同时提高了表示能力。</p>
+<p>​    然而，<strong>随着模型容量的进一步扩大，单路网络中的计算成本和参数数量呈指数级增长。</strong>为了更好地实现计算负担和准确性之间的权衡，我们修改了CSPStackRep块来构建中大型网络的主干。如图所示，<strong>CSPStackRepBlock</strong>由三个1×1卷积层和一堆由两个RepVGGBlock或RepConv（分别在训练或推理时）组成，具有残差连接。此外，采用跨阶段部分（CSP）连接，在不增加计算成本的情况下提高性能。</p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/17095d3e9d894251b1542f04500d7653.png" alt="img"></p>
+<h3 id="Neck"><a href="#Neck" class="headerlink" title="Neck"></a><strong>Neck</strong></h3><p>​    <strong>采用YOLO v4和YOLO v5的PAN结构，将RepBlock（用于小型模型）或CSPStackRep块替换为YOLOv5中使用的CSPBlock)，</strong>并相应地调整宽度和深度。YOLOv6的颈部被表示为Rep-PAN。 </p>
+<h3 id="Head"><a href="#Head" class="headerlink" title="Head"></a><strong>Head</strong></h3><p>​    <strong>Effificient decoupled head：</strong> YOLOv5的检测头是一个耦合头，分类和定位分支共享参数，而FCOS和YOLOX的检测头将两个分支解耦，并在每个分支中额外引入两个3×3卷积层来提高性能。在YOLOv6中，我们采用了一种混合信道策略来构建一个更有效的解耦头。具体来说，我们将中间的3个3×3卷积层的数量减少到只有一个。头部的宽度由主干和颈部的宽度乘数共同缩放。这些修改进一步降低了计算成本，以实现更低的推理延迟。 </p>
+<p>​    <strong>Achor-free：</strong> Achor-free检测头因其更好的泛化能力和解码预测结果的简单性而脱颖而出。其后处理的时间成本大大降低了。无锚点探测器有两种类型的无锚点检测器：基于锚点的和基于关键点的。<strong>在YOLOv6中，我们采用了基于锚点的范式，其框回归分支实际上预测了从锚点到边界框四边的距离。</strong></p>
+<h3 id="Label-Assignment"><a href="#Label-Assignment" class="headerlink" title="Label Assignment"></a>Label Assignment</h3><p>​    标签分配负责在训练阶段为预定义的锚点分配标签。先前的工作提出了各种标签分配策略，从简单的基于iou的策略和内部地面真值方法到其他更复杂的方案。</p>
+<p>​    <strong>SimOTA</strong> OTA认为目标检测中的标签分配是一个最优的传输问题。它从全局的角度为每个地面真实对象定义了正/负的训练样本。SimOTA是OTA的一个简化版本，它减少了额外的超参数并保持了性能。在YOLOv6的早期版本中，使用了SimOTA作为标签分配方法。然而，在实践中，<strong>我们发现引入SimOTA会减慢培训过程。而且经常陷入不稳定的训练。因此，我们希望有一个替代SimOTA。</strong> </p>
+<p>​    <strong>Task alignment learning</strong> 任务对齐学习（TAL）首次在TOOD中提出，其中设计了一个统一的分类分数和预测框质量的统一度量。用此度量替换IoU以分配对象标签。在一定程度上，缓解了任务（分类和预测框回归）的错位问题。TOOD的另一个主要贡献是关于任务状头（T-head）。T-head堆栈卷积层来构建交互式特性，在此之上使用了任务对齐预测器（TAP）。PP-YOLOE用轻量级ESE注意取代T-head的层注意，形成ET-head。<strong>然而，我们发现ET-head会恶化我们模型的推理速度，它没有精度增益。因此，我们保留了我们的高效解耦头的设计。</strong></p>
+<p>​    <strong>此外，我们观察到TAL比SimOTA带来更多的性能改善，稳定训练。因此，我们在YOLOv6中采用TAL作为默认的标签分配策略。</strong></p>
+<h3 id="Loss-Functions"><a href="#Loss-Functions" class="headerlink" title="Loss Functions"></a>Loss Functions</h3><p>​    对象检测包含两个子任务：分类和定位，对应于两个损失函数：分类损失和预测框回归损失。对于每个子任务，近年来都有各种不同的损失函数。在本节中，我们将介绍这些损失函数，并描述我们如何为YOLOv6选择最佳的损失函数。 </p>
+<h4 id="Classifification-Loss"><a href="#Classifification-Loss" class="headerlink" title="Classifification Loss"></a><strong>Classifification Loss</strong></h4><p>​     提高分类器的性能是优化检测器的关键部分。Focal Loss改进了传统的交叉熵损失，解决了正负样本或硬易样本之间的类不平衡问题。为了解决训练和推理之间质量估计和分类使用不一致的问题，Quality Focal Loss（QFL）进一步扩展了Focal Loss，并将分类评分和定位质量联合表示出来进行分类监督。<strong>而VariFocal Loss (VFL)来源于Focal Loss，但它不对称地处理正样本和负样本。通过考虑不同重要程度的正样本和负样本，它平衡了来自两个样本的学习信号。Poly Loss将常用的分类损失分解为一系列加权多项式基。它在不同的任务和数据集上调整多项式系数，通过实验证明了其优于交叉熵损失和焦点损失。</strong></p>
+<p>​    我们评估了YOLOv6上的所有这些高级分类损失，并最终采用了VFL 。</p>
+<h4 id="Box-Regression-Loss"><a href="#Box-Regression-Loss" class="headerlink" title="Box Regression Loss"></a>Box Regression Loss</h4><p>​    预测框回归损失提供了重要的学习信号精确的定位边界框。L1损失是早期工作中原始的预测框回归损失。逐渐地，各种设计良好的预测框回归损失已经出现，如iou系列损失和概率损失。</p>
+<p>​    <strong>IoU-series Loss</strong> IoU损失回归了一个预测框作为一个整体单位的四个边界。由于它与评价度量的一致性，它已被证明是有效的。IoU有许多变体，如GIoU、DIoU、CIoU、α-IoU和SIoU等，形成了相关的损失函数。我们用GIoU、CIoU和SIoU进行了实验。而SIOU应用于YOLOv6-N和YOLOv6-T，而其他的则使用GIoU。</p>
+<p>​    <strong>Probability Loss</strong>  Distribution Focal Loss<strong>（DFL）将预测框位置的基本连续分布简化为一个离散的概率分布。</strong>它在不引入任何其他强先验的情况下考虑数据中的模糊性和不确定性，有助于提高<strong>预测框</strong>的定位精度，特别是在地面-真值盒的边界模糊的情况下。在DFL的基础上，DFLv2 开发了一个轻量级的子网络，以利用分布统计数据与真实定位质量之间的密切相关性，进一步提高了检测性能。<strong>然而，DFL通常比一般的预测框回归多输出17×的回归值，这导致了大量的开销。额外的计算成本明显地阻碍了对小模型的训练。而DFLv2则由于额外的子网络而进一步增加了计算负担。</strong>在我们的实验中，DFLv2在我们的模型上带来了与DFL相似的性能增益。因此，我们只在YOLOv6-M/L中采用DFL。实验细节见第3.3.3节。</p>
+<h4 id="Object-Loss"><a href="#Object-Loss" class="headerlink" title="Object Loss"></a><strong>Object Loss</strong></h4><p>​    Object loss首先是在FCOS中提出的，以降低低质量的边界框的得分，以便在后处理中可以过滤掉它们。它也被用于YOLOX来加速收敛和提高网络精度。作为像FCOS和YOLOX这样的无锚框架，我们尝试在YOLOv6中使用ObjectLoss。不幸的是，它并没有带来许多积极的影响。</p>
+<h3 id="Industry-handy-improvements"><a href="#Industry-handy-improvements" class="headerlink" title="Industry-handy improvements"></a>Industry-handy improvements</h3><h4 id="More-training-epochs"><a href="#More-training-epochs" class="headerlink" title="More training epochs"></a><strong>More training epochs</strong></h4><p>​    实验结果表明，训练时间越长，探测器就具有进步的性能。<strong>我们将训练从300个epochs延长到400个epochs，以达到更好的收敛性。</strong></p>
+<h4 id="Self-distillation"><a href="#Self-distillation" class="headerlink" title="Self-distillation"></a><strong>Self-distillation</strong></h4><p>​    为了进一步提高模型的准确性，同时不引入太多额外的计算成本，<strong>我们采用经典的知识蒸馏技术来最小化教师模型和学生模型之间预测的KL散度。</strong>我们限制教师模型是预先训练的学生模型，因此我们称之为自我蒸馏。请注意，kl-散度通常用于度量数据分布之间的差异。然而，在目标检测中有两个子任务，其中只有分类任务可以直接利用基于kl-散度的知识精馏。由于DFL损失[20]，我们也可以在预测框回归上执行它。知识蒸馏损失可以表述为： </p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/9ef8cfa56b40480e94f5ce1b36eb5875.png" alt="img"></p>
+<p>​    其中<img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/70e48551855e4598af43ca460c462046.png" alt="img">和<img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/956c6028740d47c398f7ef336d6e5ffb.png" alt="img">分别为教师模型和学生模型的类别预测，因此<img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/2421a4e7d6da4247af9d11f7fefe46dc.png" alt="img">和<img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/7628f443735a4c1e9c0a75518ea107e7.png" alt="img">为预测框回归预测。总体损失函数现在可以表述为： </p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/1879de4162f44bb080647818d6350ce4.png" alt="img"></p>
+<p>​    其中，Ldet是用预测和标签计算出的检测损失。引入超参数α来平衡两个损失。在训练的早期阶段，从教师模型那里得到的软标签更容易学习。随着训练的继续，学生模型的表现将与教师模型相匹配，这样硬标签将对学生更有帮助。在此基础上，我们将余弦权值衰减应用于α，以动态调整来自教师的硬标签和软标签的信息。</p>
+<h4 id="Gray-border-of-images"><a href="#Gray-border-of-images" class="headerlink" title="Gray border of images"></a><strong>Gray border of images</strong></h4><p>​    我们注意到，<strong>在评估YOLOv5 和YOLOv7 实现中的模型性能时，在每个图像周围都设置了一个半步幅的灰色边界。</strong>虽然没有添加任何有用的信息，但它有助于检测图像边缘附近的物体。这个技巧也适用于YOLOv6。 <strong>然而，额外的灰度像素明显降低了推理速度。如果没有灰色边框，YOLOv6的性能就会恶化</strong>。我们假设该问题与Mosaic augmentation中的灰色边界填充有关。实验在关闭mosaic增强在最后的epochs进行验证。在这方面，我们改变了灰度边界的面积，并将具有灰度边界的图像的大小直接调整为目标图像的大小。结合这两种策略，我们的模型可以保持甚至提高性能，而不降低推理速度。</p>
+<h3 id="Quantization-and-Deployment"><a href="#Quantization-and-Deployment" class="headerlink" title="Quantization and Deployment"></a><strong>Quantization and Deployment</strong></h3><p>​    对于工业部署，通常的做法是采用量化以进一步加快运行时，而不会影响太多性能。训练后量化（PTQ）直接用一个小的校准集对模型进行量化。而量化感知训练（QAT）进一步提高了对训练集的访问的性能，这通常与蒸馏联合使用。<strong>然而，由于在YOLOv6中大量使用重新参数化块，以前的PTQ技术不能产生高性能，而在训练和推理过程中匹配假量化器时，很难合并QAT。</strong>我们在这里展示了在部署期间的陷阱和我们的解决方法。 </p>
+<h4 id="Reparameterizing-Optimizer"><a href="#Reparameterizing-Optimizer" class="headerlink" title="Reparameterizing Optimizer"></a><strong>Reparameterizing Optimizer</strong></h4><p>​    RepOptimizer<strong>在每个优化步骤中提出梯度重新参数化。</strong>该技术也能很好地解决了基于再参数化的模型的量化问题。因此，我们以这种方式重建了YOLOv6的重新参数化块，并使用重新优化器对其进行训练，以获得对PTQ友好的权值。特征图的分布很窄，这大大有利于量化过程。 </p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/408b78b8e84d40c590319c35205855c0.png" alt="img"></p>
+<h4 id="Sensitivity-Analysis"><a href="#Sensitivity-Analysis" class="headerlink" title="Sensitivity Analysis"></a><strong>Sensitivity Analysis</strong></h4><p>​    我们通过将量化敏感操作部分转换为浮点计算，进一步提高了PTQ的性能。为了获得灵敏度分布，我们常用了几个指标，即均方误差（MSE）、信噪比（SNR）和余弦相似度。通常，为了进行比较，可以选择输出特征映射（在激活某一层之后）来计算有量化和没有量化的这些度量。作为一种替代方法，它也可以通过开关特定层的量化来计算验证AP。</p>
+<p>​    我们在使用重新优化器训练的YOLOv6-S模型上计算所有这些指标，并选择前6个敏感层，以浮动形式运行。敏感性分析的完整图表见B.2。</p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/88873d7d91d945c79f54014e725fbe13.png" alt="img"> </p>
+<h4 id="Quantization-aware-Training-with-Channel-wise-Distillation"><a href="#Quantization-aware-Training-with-Channel-wise-Distillation" class="headerlink" title="Quantization-aware Training with Channel-wise Distillation"></a><strong>Quantization-aware Training with Channel-wise</strong> <strong>Distillation</strong></h4><p>​    <strong>在PTQ不足的情况下，我们建议涉及量化感知训练（QAT）来提高量化性能。为了解决在训练和推理过程中假量化器的不一致性问题，有必要在重新优化器上建立QAT。</strong>此外，在YOLOv6框架内采用了通道蒸馏（后来称为CW蒸馏），如图5所示。这也是一种自蒸馏的方法，其中教师网络是在fp32精度上的学生模型。参见第3.5.1节中的实验。 </p>
+<p><img src="/2023/06/18/YOLOv6-A-Single-Stage-Object-Detection-Framework-for-Industrial-Applications/cda38d2ac2884096b174b6dc66edbb6e-168707903752712.png" alt="cda38d2ac2884096b174b6dc66edbb6e"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/" class="post-title-link" itemprop="url">RepVGG Making VGG-style ConvNets Great Again</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-18 17:02:39 / 修改时间：17:02:54" itemprop="dateCreated datePublished" datetime="2023-06-18T17:02:39+08:00">2023-06-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="RepVGG-Making-VGG-style-ConvNets-Great-Again"><a href="#RepVGG-Making-VGG-style-ConvNets-Great-Again" class="headerlink" title="RepVGG: Making VGG-style ConvNets Great Again"></a>RepVGG: Making VGG-style ConvNets Great Again</h2><p>主要贡献：提出了一种简单但功能强大的卷积神经网络结构，其网络结构，在推理时只具有3x3卷积和ReLU，在训练时具有多分支拓扑结构，通过结构重参数化技术实现训练时间和推理时间的解耦，并命名为RepVGG。</p>
+<h3 id="对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下："><a href="#对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：" class="headerlink" title="对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下："></a>对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：</h3><ul>
+<li>会降低模型的推理速度并且减少内存利用率</li>
+<li>有些节点及算子会增加内存消耗并且对别的设备不友好。</li>
+</ul>
+<p>论文中提到，大部分学者提到FLOPs（浮点运算的数量）会影响推理速度，但是论文中作者做了实验发现FLOPs对模型的速度并不是强相关。</p>
+<p>作者提出的RepVGG，其具有以下优点：</p>
+<ul>
+<li>该模型具有类似VGG的拓扑结构，没有任何分支，这意味着每一层都将其唯一前一层的输出作为输入，并将输出馈送到其唯一的后一层。</li>
+<li>该模型的主体部分仅使用3 × 3的conv和ReLU。</li>
+<li>模型的具体架构(包括具体的深度和层宽度)的实例化没有模型结构的自动搜索，手工细化，复合缩放，也没有其他代价较大的设计。</li>
+</ul>
+<h3 id="作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。"><a href="#作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。" class="headerlink" title="作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。"></a>作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。</h3><p>针对多分支架构的优点集中于训练上，而不希望用于推理上，故提出重参数化的方法来解耦训练时的多分支结构和推理时的简单架构，即意味着通过转换其参数将架构从一个转换到另一个。</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/4H7{5]]_TNU%XI%5PPH9KA9.png" alt="img"></p>
+<p>如上图中(b)和(c)所示，即为转换之后的RepVGG和转换之前的RepVGG。其将分支看作退化的1x1卷积，进一步看作退化的3x3卷积。从而可以从(b)中的模型架构转变为(c)中的模型架构，可以用3x3卷积、BN、1x1卷积等模块进行原模型的等效替换。从而提升计算速度。</p>
+<h3 id="本文的核心贡献点如下："><a href="#本文的核心贡献点如下：" class="headerlink" title="本文的核心贡献点如下："></a>本文的核心贡献点如下：</h3><ul>
+<li>我们提出了RepVGG，这是一种简单的架构，与最先进的技术相比，具有良好的速度-精度权衡。</li>
+<li>我们建议使用结构重参数化将训练时间的多分支拓扑与推理时间的平面结构解耦。</li>
+<li>我们展示了RepVGG在图像分类和语义分割方面的有效性，以及实现的效率和易用性。</li>
+</ul>
+<h3 id="如何实现结构重参数化："><a href="#如何实现结构重参数化：" class="headerlink" title="如何实现结构重参数化："></a>如何实现结构重参数化：</h3><p>在上述提到，RepVGG在训练时每一层都有三个分支，分别是identify，1x1，3x3，模型训练时，输出$ y=x+g(x)+f(x) $，每一层就需要3个参数块，对于n层网络，就需要$3*n$个参数块。所以我们需要重参数化，会使得推理时模型参数量小。</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/aa1ad31949b54e76b0a282fab915478f.png" alt="img"></p>
+<p>上图中的过程即为将训练好的多分支模型转换为单分支模型，从而达到推理时的高性能</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">对于重参数化的实现主要存在两个问题：</span><br><span class="line">第一个问题，在每个卷积后都接上一个BN，怎么将卷积和BN融合。</span><br><span class="line">第二个问题，存在不同大小的卷积，怎么将几个不同大小的卷积融合在一起。</span><br></pre></td></tr></table></figure>
+<p>对于第一个问题，在每个卷积后都接上一个BN，怎么将卷积和BN融合。</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-84cdab58644fcbcafb3c690c1669b879_1440w.webp" alt="v2-84cdab58644fcbcafb3c690c1669b879_1440w"></p>
+<p>这其实就是一个卷积层，只不过权重考虑了BN的参数 我们令：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b438e3a2ee316a6054a4e4c45443fef3_1440w.webp" alt="img"></p>
+<p>最终的融合结果即为：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-cd0d2de067e4850fe4fafce70f58acf1_1440w.webp" alt="img"></p>
+<h3 id="2-2-2-conv-3x3和conv-1x1合并"><a href="#2-2-2-conv-3x3和conv-1x1合并" class="headerlink" title="2.2.2. conv_3x3和conv_1x1合并"></a>2.2.2. conv_3x3和conv_1x1合并</h3><p> 这里为了详细说明下，假设输入特征图特征图尺寸为(1, 2, 3, 3)，输出特征图尺寸与输入特征图尺寸相同，且stride=1，下面展示是conv_3x3的卷积过程：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-89854f076457c9c03b733a389db96993_1440w.webp" alt="img"></p>
+<p> conv_3x3卷积过程大家都很熟悉，看上图一目了然，首先将特征图进行pad=kernel_size//2，然后从左上角开始(上图中红色位置)做卷积运算，最终得到右边output输出。下面是conv_1x1卷积过程：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-88962d2f0fc8f1371d0d521c04c2a57d_1440w.webp" alt="img"></p>
+<p> 同理，conv_1x1跟conv_3x3卷积过程一样，从上图中左边input中红色位置开始进行卷积，得到右边的输出，观察conv_1x1和conv_3x3的卷积过程，可以发现他们都是从input中红色起点位置开始，走过相同的路径，因此，将conv_3x3和conv_1x1进行融合，只需要将conv_1x1卷积核padding成conv_3x3的形式，然后于conv_3x3相加，再与特征图做卷积(这里依据卷积的可加性原理)即可，也就是conv_1x1的卷积过程变成如下形式：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b7409c315f10a158331bf90fcf32efd6_1440w.webp" alt="img"></p>
+<h3 id="2-2-3-identity-等效为特殊权重的卷积层"><a href="#2-2-3-identity-等效为特殊权重的卷积层" class="headerlink" title="2.2.3. identity 等效为特殊权重的卷积层"></a>2.2.3. identity 等效为特殊权重的卷积层</h3><p> identity层就是输入直接等于输出，也即input中每个通道每个元素直接输出到output中对应的通道，用一个什么样的卷积层来等效这个操作呢，我们知道，卷积操作必须涉及要将每个通道加起来然后输出的，然后又要保证input中的每个通道每个元素等于output中，从这一点，我们可以从PWconv想到，只要令当前通道的卷积核参数为1，其余的卷积核参数为0，就可以做到；从DWconv中可以想到，用conv_1x1卷积且卷积核权重为1，就能保证每次卷积不改变输入，因此，identity可以等效成如下的conv_1x1的卷积形式：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-b05e6fa96bd642c1da2d36d39a543d7a_1440w.webp" alt="img"></p>
+<p>从上面的分析，我们进一步可以将indentity -&gt; conv_1x1 -&gt; conv_3x3的形式，如下所示：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-bc97e575d5007645901830109828a36f_1440w.webp" alt="img"></p>
+<p> 上述过程就是对应论文中所属的下述从step1到step2的变换过程，涉及conv于BN层融合，conv_1x1与identity转化为等价的conv_3x3的形式：</p>
+<p><img src="/2023/06/18/RepVGG-Making-VGG-style-ConvNets-Great-Again/v2-f5ce0b89a10aa36223275dccd6327cbe_1440w.webp" alt="img"></p>
+<p> 结构重参数化的最后一步也就是上图中step2 -&gt; step3， 这一步就是利用卷积可加性原理，将三个分支的卷积层和bias对应相加组成最终一个conv<em>3x3的形式即可。</em><br>这里，大家可能既然把BN，identity，conv_1x1和conv_3x3都融合在一起了，为什么不干脆把ReLU也融合进去呢？其实也是可以将ReLU层进行融合的，<strong>但是需要进行量化</strong>，<strong>conv输出tensor的值域直接使用relu输出的值阈（同时对应计算Ｓ和Z），就可以完成conv和relu合并。无量化动作的优化是无法完成conv+relu的合并*</strong>。这里的知识请大家参考论文：<em><br><em>*<a href="https://link.zhihu.com/?target=https%3A//arxiv.org/abs/1712.05877">Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference</a>。</em></em></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/23/AGW%20A%20New%20Baseline%20for%20Single-Cross-Modality%20Re-ID/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1912,438 +2248,6 @@ if __name__ == &quot;__main__&quot;:
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/" class="post-title-link" itemprop="url">Towards Data-Efficient Detection Transformer</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-08-22 21:01:24 / 修改时间：21:34:28" itemprop="dateCreated datePublished" datetime="2022-08-22T21:01:24+08:00">2022-08-22</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Towards-Data-Efficient-Detection-Transformers"><a href="#Towards-Data-Efficient-Detection-Transformers" class="headerlink" title="Towards Data-Efficient Detection Transformers"></a>Towards Data-Efficient Detection Transformers</h2><h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>DETR在足量样本的COCO数据集上表现出了有竞争性的效果。然而我们发现许多DETR类的方法在内容数量较少的数据集上（如Cityscapes）会有明显的性能的下降。换而言之，DETR通常需要大量的数据。为了处理这个问题。我们逐步的将数据效率高的RCNN变换为代表性的DETR，分析了影响数据效率（data efficiency）的因素。试验结果表明从局部图片进行稀疏特征采样是影响的关键。基于这个观察，本文通过简单的交替 key 和 value序列在cross attention中的构造方式，用对原始模型最少的改变的方式缓解了现存DETR方法对数据需求量巨大的问题。另外，我们介绍了一个简单但有效的数据增强的方法，从而提供更丰富的监督并提高了数据效率。实验证明，我们的方法可以被很容易的应用到不同的DETR变种上去，并在较小和较大的数据集上均可提升检测效果。</p>
-<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>目标检测是在计算机视觉领域里面的长盛不衰的话题。最近一种新型的目标检测算法，名叫detection transformer，因为其的简单和尚可的检测效果吸引了许多的注意力。这个类别的先驱工作是DETR，其将目标检测的任务看作是直接的集合预测问题，并利用transformer直接将目标查询转换为目标对象。其实现了相对于开创性的Faster RCNN在常用的COCO数据集上更好的效果，但其具有收敛速度显著慢于基于CNN系列检测器的缺点。因为这个原因，许多随后的工作都是致力于提高DETR的收敛速度。</p>
-<ul>
-<li>Deformable DETR：通过efficient attention mechanism机制</li>
-<li>Swin transformer：通过conditional spatial query机制</li>
-<li>（SMCA）Fast convergence of detr with spatially modulated co-attention：通过regression-aware co-attention机制</li>
-</ul>
-<p>这些上述的方法都可以在COCO数据集上以相似的训练代价，实现相对于Faster RCNN而言更好的检测效果，证明了DETR类方法的优越性。</p>
-<p>现有的工作大都认为DETR类的方法在简单性和模型效果上均优于基于CNN的目标检测器。然而本文发现，DETR只有在充足的训练数据的情况下（例如COCO2017,有118K训练数据）才能展现出其优越的性能，然而在训练数据量不是非常充足的时候，其的效果会出现明显的下降。以自动驾驶领域常用的数据集Cityscapes（约3k训练数据）为例，大部分的DETR类的方法的AP小于Faster RCNN的AP的一半。且不同的DETR类的检测器，其性能的差距在COCO数据集上是小于3AP的，但在数量较小的Cityscapes数据集上，其会存在一个明显的差距，其性能差距约有15AP。如下图所示：</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220811161935395.png" alt="image-20220811161935395"></p>
-<p>这些发现证明了DETR类的目标检测相较于CNN类的目标检测器而言，更需要大量的数量进行训练。然而带有标签的数据的获取是需要大量的时间和人力的。</p>
-<p>总而言之，为了迎合目前现存的DETR对训练数据的需求，需要大量的人力和计算资源。为了应对这个问题，本文首先从实验上，通过逐步的将数据高效的Sparse RCNN转换为DETR，分析了影响DETR中影响数据效率的关键性因素。我们的发现和分析表明：</p>
-<ul>
-<li>稀疏的局部特征采样是影响数据效率的关键，<ul>
-<li>其缓解了学习注意到特定物体的困难</li>
-<li>其避免了图像像素两倍的计算复杂度</li>
-<li>令利用多尺度的特征成为可能，多尺度的特征已经被证明在目标检测任务中是关键的</li>
-</ul>
-</li>
-</ul>
-<p>基于上述的观察，我们通过简单的交替 key 和 value序列在cross attention中的构造方式，提升了现存的DETR类的目标检测算法的数据效率。具体来说，我们在前一个解码器层预测的边界框的指导下，对发送到交叉注意力层的键和值特征执行稀疏采样特征，这样对原始模型的修改最少，并且没有任何专门的模块。另外，本文通过提供给DETR丰富的监督信号来缓解对数据的需求。为达到这个目的，本文提出了一种标签加强的方式，通过在标签分配的过程中重复前景物体的label去高效并简单的执行。这个方法可以被应用在不同的DETR类的方法从而提升其的数据效率。有趣的是，其依旧带来了在训练数据充足的COCO数据集上的性能提升。</p>
-<p>本文的贡献如下总结所示：</p>
-<ul>
-<li>本文确定了DETR的数据效率的问题。虽然DETR实现了在COCO数据集上的优秀效果，其一般会在小规模的数据集上遭受到明显的性能下降。</li>
-<li>本文通过从 Sparse RCNN 到 DETR 的逐步模型转换，通过实验分析了影响检测转换器数据效率的关键因素，并发现局部区域的稀疏特征采样是数据效率的关键。</li>
-<li>本文通过简单的交替在cross-attention模块中key和value序列的构造方式，明显的提升了现存的DETR方法的数据效率</li>
-<li>本文提出了一种简单但有效的标签增强策略，从而提供更丰富的监督信号并提升了数据效率。其可以与不同的方法融合，从而实现在不同数据集上的性能增益。</li>
-</ul>
-<h3 id="相关工作"><a href="#相关工作" class="headerlink" title="相关工作"></a>相关工作</h3><h4 id="目标检测"><a href="#目标检测" class="headerlink" title="目标检测"></a>目标检测</h4><p>目标检测在许多现实生活中是非常必要的，例如自动驾驶，缺陷检测和遥感。最具有代表性的目标检测的工作可以被粗略的分为两类，两阶段的Faster RCNN和一阶段的YOLO和RetinaNet。虽然上述方法有效，但上述方法一般而言是需要以来与许多人工设计（启发式算法）的先验，例如anchor generation和rule based 标签分配方式。</p>
-<p>最近DETR提供了一种简单并且干净的目标检测的计算流程。其将目标检测看作是集合预测的任务，并应用transformer将稀疏的目标候选转换为目标物体。DETR的成功引爆了最近井喷的DETR类的方法，并且许多最近的工作都致力于缓解DETR的收敛速度慢的问题。</p>
-<ul>
-<li>DeformDETR 提出了可学习的稀疏特征采样的可变形注意力机制并聚合多尺度特征以加速模型收敛并提高模型性能。</li>
-<li>CondDETR 提出从解码器嵌入中学习条件空间查询，这有助于模型快速学习定位四个末端以进行检测</li>
-</ul>
-<p>这些工作实现了在COCO 2017数据集上用相似的训练代价得到Faster RCNN更好的性能。这似乎表明DETR类的方法已经在简单性和性能上压制了Faster RCNN。但本文发现DETR通常需要更多的数据，并在小规模的数据集上表现比Faster RCNN要差。</p>
-<h4 id="目标检测中的标签分配"><a href="#目标检测中的标签分配" class="headerlink" title="目标检测中的标签分配"></a>目标检测中的标签分配</h4><p>在目标检测中，标签分配是一个十分重要的组件。其将一个物体的ground truth与从模型中的一个预测相匹配，从而为训练提供监督信号。在DETR之前，许多的目标检测器采用的是一对多的匹配策略，其将每个ground trurh基于局部空间关系分类给多个预测框。而DETR相反，其是采用的一对一的匹配策略，将ground truth与预测框之间通过最小化全局匹配损失来进行匹配。这个标签分配方式被许多的后续的DETR方法所采用。尽管这样的分配方式具有避免了重复移除的过程的优点，但只有少量的候选目标在每次迭代的过程中被目标标签所监督。这样就会导致模型必须从大量的数据中获得足够的监督信号或需要更多论次的训练。为了解决这个问题，本文提出了一种标签增强的方式去提供更丰富的监督信号。</p>
-<h4 id="视觉transformer（ViT）中的数据效率"><a href="#视觉transformer（ViT）中的数据效率" class="headerlink" title="视觉transformer（ViT）中的数据效率"></a>视觉transformer（ViT）中的数据效率</h4><p>视觉transformer正在成为特征提取器和视觉识别的CNN的替代品。尽管其具有优秀的性能表现，但其一般而言需要比CNN需要更多的数据，并依赖于大量的数据和更多轮次的训练。</p>
-<ul>
-<li>DeiT 通过从预训练的CNN上进行知识蒸馏，配合上更好的训练配方，从而提高了数据效率</li>
-<li>Liu等人提出了一个密集的相对定位损失去提高ViT类算法的数据效率（Efficient training of visual transformers with small datasets）</li>
-</ul>
-<p>与之前专注于transformer主干在图像分类任务上的数据效率问题不同，本文在目标检测任务上处理DETR数据效率的问题</p>
-<h3 id="RCNN类算法与DETR类算法的不同之处分析"><a href="#RCNN类算法与DETR类算法的不同之处分析" class="headerlink" title="RCNN类算法与DETR类算法的不同之处分析"></a>RCNN类算法与DETR类算法的不同之处分析</h3><p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png" alt="image-20220812084137035"></p>
-<p>上图为从SRCN（Sparse RCNN）逐渐转化为DETR的过程中，在Ciytscapes数据集上，分别在训练50 epoch和300 epoch的情况下的AP情况。</p>
-<p>对上图进行分析可得，DETR一般而言相比与RCNN需要更多的数据。为了寻找影响数据效率的关键性因素，本文将数据效率高的RCNN逐步的转变为数据效率较低的DETR，从而消融不同设计的影响。相同的实验方法在ATSS和Visformer中被使用，但实验目的不同。</p>
-<h4 id="检测器的选择"><a href="#检测器的选择" class="headerlink" title="检测器的选择"></a>检测器的选择</h4><p>为了从模型的转换中获得有效的结果，需要选择适当的检测器去参与实验。为了达到这个目的，本文选择Sparse RCNN和DETR作为实验模型，原因如下所示：</p>
-<ul>
-<li>两个模型都是在各自的领域里（RCNN类和DETR类）具有代表性的模型。所以由这两者的转换得出的结论可以推广到其他的探测器中去。</li>
-<li>这两个模型在数据效率方面有巨大的差异</li>
-<li>其在标签分配（label assignment）、损失函数设计（loss design），优化器选择（optimization）上具有许多的相似之处。这些相似之处可以在我们专注于核心部件的不同的时候消除没有那么重要的部件的影响。</li>
-</ul>
-<h4 id="Sparse-RCNN到DETR的转换"><a href="#Sparse-RCNN到DETR的转换" class="headerlink" title="Sparse RCNN到DETR的转换"></a>Sparse RCNN到DETR的转换</h4><ul>
-<li>交替训练方式<ul>
-<li>虽然Sparse RCNN和DETR有许多的相似之处，但其在训练策略（训练方式）上依旧有所不同。如分类损失、object query的数量，学习率和梯度剪切。本文首先通过将Sparse RCNN的训练策略用DETR的训练策略替代，我们发现Sparse RCNN用DETR的训练策略进行训练时，其在50 epoch时表现稍好，但在300epoch时表现较差。消除训练策略的差异可以帮助我们关注与影响数据效率的更核心的因素。</li>
-</ul>
-</li>
-<li>移除FPN：<ul>
-<li>多尺度特征融合已经被证明对目标检测是有效的。当CNN类的FPN neck可以实现在较小的计算代价的情况下完成多尺度特征融合，注意力机制有输入图像尺寸的平方的计算复杂度，使在DETR中对多尺度特征融合代价昂贵。因此DETR只采用了原图像经过32倍下采样的单尺度特征进行预测。在这个阶段，我们移除了FPN neck部分，并只将经过32倍下采样的特征传入检测头。模型在50epoch的情况下性能明显的下降了7.3AP</li>
-</ul>
-</li>
-<li>引入transformer encoder：<ul>
-<li>在DETR中，transformer encoder可以被认为是检测器的neck部分，其被用来处理被backbone提取出的特征。在移除了FPN neck之后，我们加入transformer encoder作为网络的neck。与在DETR中相似，backbone提取出的特征投影和位置编码同样被引入。试验结果表明AP在50epoch的时候有所下降，在300eopch的时候有所上升。我们推测其与ViT中相似，注意力机制因为其平方项的复杂度和缺少先验知识，其需要更长的训练epoch去收敛和发展其的优势。</li>
-</ul>
-</li>
-<li>使用cross-attention替代dynamic convolutions<ul>
-<li>在Sparse RCNN中的dynamic convolutions（动态卷积）和DETR中的cross-attention（互注意力）的作用相似。它们都基于图像特征的相似性自适应地将上下文聚合到候选对象。在这个步骤中，我们将dynamic convolutions替换为带有可学习的query positional embedding，其结果反直觉的表示：大量可学习的参数不一定会让模型需要更多的数据。事实上，动态卷积的70M的参数可以展现出相较于cross-attention而言更好的数据效率。</li>
-</ul>
-</li>
-<li>对齐解码器中的dropout设置<ul>
-<li>在Sparse RCNN和DETR中的decoder是非常相似的。在将dynamic convolution 用cross-attention替代之后，其可以被认为是transformer decoder。在其之间有一个轻微的不同是dropout layer在self-attention和FFN之间的使用。我们消除了这个影响。</li>
-</ul>
-</li>
-<li>移除级联边缘框细化<ul>
-<li>Sparse RCNN遵循了Cascade RCNN中的级联边缘框回归，其中每个decoder层都迭代的细化前一层做的边缘框预测。本文移除了这个步骤，模型性能有所下降。虽然级联边缘框细化没有被大多数的DETR类的检测器所使用，但其可以自然的被级联解码器所包含。</li>
-</ul>
-</li>
-<li>移除ROIAlign<ul>
-<li>Sparse RCNN和其余RCNN类的检测其相同，从感兴趣的局部区域采样特征，然后根据采样的稀疏特征进行预测。而每个DETR中的内容查询直接从全局的特征图中聚合特定于对象的信息。在这个步骤中，我们移除了Sparse RCNN中的ROIAlign，box target transformation也被移除。我们可以发现，模型的性能出现了明显的下降，在50epoch的情况下出现了8.4Ap的下降。我们推测从整个特征图上学习到局部对象区域的代价较大，所以模型需要更多的数据和训练epoch去获取局部属性。</li>
-</ul>
-</li>
-<li>移除初始的proposals<ul>
-<li>最终，DETR直接预测了目标的bounding box，RCNN类预测使用了一些初始化的先验。在这个步骤中，我们通过移除初始的proposals消除了影响。预料之外的是，这个小改变使模型性能出现了明显的下降。我们人文初始的proposals作为空间上的先验，帮助模型聚焦于局部空间信息，从而减少了从大量训练数据中学习局部性的需要</li>
-</ul>
-</li>
-</ul>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>如上所示，从Sparse RCNN转换为DETR的结果和分析如下所示：</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812084137035.png" alt="image-20220812084137035"></p>
-<p>其在更改之后对AP影响大于5AP的本文认为是影响数据效率的关键因素，如下所示：</p>
-<ol>
-<li>局部稀疏特征采样</li>
-<li>依赖稀疏特征采样的多尺度特征拥有可接受的计算复杂度</li>
-<li>依赖于空间先验的预测</li>
-</ol>
-<p>其中，1和3有助于模型关注局部对象区域，减轻从大量数据中学习局部性的需求，而2有助于更全面地利用和增强图像特征，但它也依赖于稀疏特征。</p>
-<p>DeformDETR是在DETR中特殊的一种，其表现出了与Sparse RCNN相比而言有可比性的数据效率。我们从Sparse RCNN到DETR的变换过程中可以对DeformDETR的数据效率进行解释：multi-scale deformable attention从图像的局部区域采样稀疏特征并利用多尺度特征。 模型的预测是相对于初始参考点的。 因此，DeformDETR 尽管没有专门设计在小型数据集上实现数据高效，但其满足了所有三个关键因素。</p>
-<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><p>本节主要利用现有的DETR类方法，在对原始的设计做最小的改变的前提下提升数据效率。</p>
-<ul>
-<li>本文重新对现有的DETR类算法进行了审视思考</li>
-<li>基于前文的实验和分析，对现有的数据需求量巨大的DETR类模型做最少的改变并显著的提升他们的数据效率。</li>
-<li>提供一种简单但有效的标签增强方法，从而为DETR提供更丰富的监督信号提升数据效率。</li>
-</ul>
-<h4 id="对DETR的重新审视"><a href="#对DETR的重新审视" class="headerlink" title="对DETR的重新审视"></a>对DETR的重新审视</h4><h5 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h5><p>DETR通常来说，由backbone，transformer encoder，transformer decoder，prediction head构成。</p>
-<ul>
-<li><p>backbone：backbone首先从输入图片中提取多尺度的特征，被称作$\{f^l\}^L_{l=1}$，其中$f^l \in R^{H ×W ×C}$。最后一个特征曾有着最小的分辨率，将其展平并嵌入以获得$z^L \in R^{S^L \times D}$，其中$S^L =H^L \times W^L$是序列长度，$D$是特征维度。相应的，位置编码嵌入被表示为$p^L \in R^{S^L\times D}$。</p>
-</li>
-<li><p>transformer encoder：之后单尺度序列特征被transformer编码，并获得$Z^L_e \in R^{S^L \times D}$。</p>
-</li>
-<li><p>transformer decoder：decoder包含了$L_d$层的decoder layers。 查询内容的嵌入表示被初始化为$q_0\in R^{N\times D}$，其中$N$是查询的数量。每个decoder层 $DecoderLayer_l$采用上一个decoder的输出$q_{l-1}$，查询位置编码$p_l$，图像序列特征$z_l$和其位置嵌入$p_l$作为输入，输出为解码序列特征。即</p>
-<p>$q _l= DecoderLayer_l (q_{l−1} , p_q , z_l, p_l),= 1 . . . L_d $</p>
-<p>在大多数DETR类检测器中，例如DETR和CondDETR，单尺度的图像特征被解码器所利用，因此$z_l=z^L_e$、$p_l=p^L$，其中$l=1…L_d$</p>
-<ul>
-<li>prediction head ：DETR的head是使用的单纯的FFN前馈网络加上softmax进行的判断</li>
-</ul>
-</li>
-</ul>
-<h5 id="标签分配"><a href="#标签分配" class="headerlink" title="标签分配"></a>标签分配</h5><p>DETR将目标检测任务视作集合预测的问题，并对每个解码器层的预测执行深度监督。在这个过程中，标签集可以被表示如下：$y=\{y_1,…,y_M,\emptyset,…,\emptyset\}$，其中$M$为前景物体的在图像中的数量，$\emptyset$(no object)被填充到标签集合里，使标签集合的大小为$N$。相应的，每个decoder的输出可以被写作$\hat y = \{\hat y\}_{i=1}$。在标签分配的过程中，DETR搜寻一个最优的$τ \in T_N$，使得下述的匹配损失最小：</p>
-<script type="math/tex; mode=display">
-\hat τ= argmin_{$τ \in T_N}\sum^N_iL_{ match} (y_i , \hat y_{τ (i)})</script><p>其中$L_{ match} (y_i , \hat y_{τ (i)})$为在ground truth和index为$τ (i)$的预测之间的配对损失。</p>
-<h4 id="模型的提升"><a href="#模型的提升" class="headerlink" title="模型的提升"></a>模型的提升</h4><h5 id="系数特征采样"><a href="#系数特征采样" class="headerlink" title="系数特征采样"></a>系数特征采样</h5><p>根据上述RCNN类算法与DETR类算法的不同之处分析，我们分析可得局部特征采样对数据效率是非常关键的。幸运的是，在DETR中，物体位置是在每个decoder layer之后预测得出的，因此，我们可以在上一个decoder预测的bounding box的指导下不需要引入新的参数的采样局部特征。如下图所示：</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/vz2GLTd9Ylg5q.png" alt="img"></p>
-<p>虽然有更复杂的局部特征采样方法可以使用，本文只采用了最常用的RoIAlign。采样操作可以被写成如下形式：</p>
-<p>$z_L = RoIAlign(z^L_e , b_{l-1}),\ \ \ l=2…L_d$</p>
-<p>其中$b_{l-1}$是上一层预测得出的边缘框，$z_l^L\in R^{N\times K^2\times D}$是被采样的特征，$K$是在RoIAlign采样的特征分辨率。注意reshape操作和flatten操作在上式中被省略。类似的，可以得到对应的position embedding  $p^L_l$。</p>
-<p>在DETR中的级联结构使使用逐层边界框细化来提升检测性能很自然。本文在RCNN类算法与DETR类算法的不同之处分析处也验证了迭代细化和对初始空间参考进行预测的有效性。因此，本文如CondDETR一样引进了边缘框细化和在实施过程中的初始参考点。</p>
-<h5 id="结合多尺度特征"><a href="#结合多尺度特征" class="headerlink" title="结合多尺度特征"></a>结合多尺度特征</h5><p>我们的系数特征采样使DETR以较小的计算花销使用多尺度特征变得可能。为了达到这个目的，本文使用backbone从被展平和嵌入之后的高分辨率特征提取特征以得到$\{z^l\}^{L-1}_{l=1} \in \R^{S^l \times D}$，从而进行局部特征采样。然而这些特征不被transformer encoder处理。虽然可以使用更复杂的技术，这些单尺度的被RoIAlign所采样的特征被简单的拼接，从而形成我们的多尺度的特征。这些特征可以被自然的利用cross-attention机制在decoder中被融合。</p>
-<p>$z^{ms}_l=[z^1_l],[z^2_l],…,[z^L_l],l=2…L_d$</p>
-<p>其中$z^{ms}_l \in \R^{N \times LK^2 \times D}$为多尺度特征，$z^l_L=RoIAlign(z^l,b_{l-1}),l-1…L-1$是。对应的位置嵌入$p^{ms}_l$用相似的方式得到。解码过程和原始的DETR是相同的。唯一的区别在于$z_l=z^{ms}_l$以及$p_l=p^{ms}_l$。</p>
-<h4 id="标签增强"><a href="#标签增强" class="headerlink" title="标签增强"></a>标签增强</h4><p>DETR展现出了标签分配的一对一的分配方式。尽管拥有避免重复删除过程的优点，但只有少数检测候选者在每次迭代中都被提供了一个积极的监督信号。这样会导致模型需要更大数量的数据或者更多论次的训练，从而获得足够的监督。</p>
-<p>为了缓解这个问题，本文提出了一种标签增强的策略为DETR提供更丰富的监督信号，即通过在二部图匹配的过程中重复positive labels。如下图所示：</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/kITnuhEstBzQy.png" alt="img"></p>
-<p>我们为每个前景样本$y_i$重复labels $R_i$次，并使label set $N$的总长度不变。</p>
-<p>$y=\{ y^1_1,y^2_1,…,y^{R_1}_1,…y^1_M,y^2_M,…,y^{R_M}_M,…,\emptyset,…,\emptyset    \}$</p>
-<p>label assignment的其余公式与DETR中相同。</p>
-<p>在实际操作的过程中，考虑以下两种重复策略：</p>
-<ul>
-<li>固定重复次数：所有positive的label都被重复相同的次数</li>
-<li>固定positive采样比例：positive的labels被重复采样，从而确保有$r$个positive样本在label set中。</li>
-</ul>
-<p>特别的$F=N\times r$是重复标签后的预期正样本数。 我们首先将每个正标签重复 $F//M$次，然后随机抽取 $F \% M $个正标签而不重复。 默认情况下，我们使用固定重复次数策略，因为它更容易实现并且生成的标签集是确定性的。</p>
-<h3 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h3><h4 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h4><p>本文重点关注DETR的数据效率。因此，我们的大多数实验都是在 Cityscapes 和下采样 COCO 2017在内的小型数据集上进行的。具体来说，Cityscapes 数据集包含2,975 张用于训练的图像和500 张用于评估的图像。对于下采样的 COCO 2017 数据集，训练图像随机下采样0.1、0.05、0.02 和0.01，而评估集保持不变。此外，我们还验证了我们的方法在具有118K 训练图像的全尺寸 COCO 2017 数据集上的有效性。</p>
-<h4 id="实施细节"><a href="#实施细节" class="headerlink" title="实施细节"></a>实施细节</h4><p>默认情况下，我们的特征采样实现为 RoIAlign，特征分辨率为4。包括三个不同的特征级别用于多尺度特征融合。我们的标签增强采用固定重复次数，并且使用阈值为0.7 的非极大值抑制(NMS)来去除重复。所有模型都训练了50 个 epoch，并且除非另有说明，否则学习率会在40 个 epoch 后衰减。在 ImageNet-1K 上预训练的 ResNet-50用作主干。为了保证足够的训练迭代次数，所有关于 Cityscapes 和下采样 COCO2017 数据集的实验都以8 的batch size进行训练。结果是使用不同的随机种子重复运行五次的平均值。我们的数据高效检测转换器仅对现有方法进行轻微修改。除非另有说明，否则我们遵循相应基线方法的原始实现细节。运行时间在 NVIDIA A100 GPU 上进行评估。</p>
-<h4 id="主要结果"><a href="#主要结果" class="headerlink" title="主要结果"></a>主要结果</h4><h5 id="基于Cityscapes"><a href="#基于Cityscapes" class="headerlink" title="基于Cityscapes"></a>基于Cityscapes</h5><p>在本节中，我们将我们的方法与现有的DETR进行比较。 如下表所示，大多数检测变压器都存在数据效率问题。 尽管如此，通过对 CondDETR 模型进行微小更改，我们的 DE-CondDETR 能够实现与 DeformDETR 相当的数据效率。 此外，通过标签增强提供的更丰富的监督，我们的 DELA-CondDETR 超过了 DeformDETR 2.2 AP。 此外，我们的方法可以与其他检测转换器相结合，以显着提高它们的数据效率，例如，我们训练了 50 个 epoch 的 DE-DETR 和 DELA-DETR 的性能明显优于训练了 500 个 epoch 的 DETR。另外，我们的方法依旧提高了DeformDETR的数据效率。见下</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812145944038.png" alt="image-20220812145944038"></p>
-<p>上表为DETR在Cityscapes上的比较，DE前缀表明使用了本文的data-efficient，LA表明使用了label增强。</p>
-<hr>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151829137.png" alt="image-20220812151829137"></p>
-<p>上表为DeformDETR使用了LA之后的效果对比。</p>
-<hr>
-<h5 id="基于下采样的COCO2017数据集"><a href="#基于下采样的COCO2017数据集" class="headerlink" title="基于下采样的COCO2017数据集"></a>基于下采样的COCO2017数据集</h5><p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812151508333.png" alt="image-20220812151508333"></p>
-<p>下采样的 COCO 2017 数据集分别包含 11,828 (10%)、5,914 (5%)、2,365 (2%) 和 1,182 (1%) 训练图像。 如上图 所示，我们的方法在很大程度上始终优于基线方法。 特别是，仅用 ∼1K 图像训练的 DELA-DETR 显着优于 DETR 基线，训练数据是训练数据的五倍。 同样，DELA-CondDETR 始终优于使用两倍数据量训练的 CondDETR 基线。</p>
-<hr>
-<h4 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h4><p>在本节中，我们进行消融实验以更好地理解我们方法的每个组成部分。 所有消融研究都是在 DELACondDETR 和 Cityscapes 数据集上实施的，而更多基于 DELADETR 的消融研究可以在我们的附录中找到。</p>
-<hr>
-<h5 id="每个模块的有效性"><a href="#每个模块的有效性" class="headerlink" title="每个模块的有效性"></a>每个模块的有效性</h5><p>我们首先消融了我们方法中每个模块的作用，如下表所示。使用局部特征采样和多尺度特征融合将模型的性能分别显着提高了 8.3 和 6.4 AP。 此外，标签增强进一步将性能提高了 2.7 AP。 此外，单独使用标签增强也带来了 2.6 AP 的性能增益。</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152636147.png" alt="image-20220812152636147"></p>
-<hr>
-<h5 id="RoIAlign-的特征分辨率"><a href="#RoIAlign-的特征分辨率" class="headerlink" title="RoIAlign 的特征分辨率"></a>RoIAlign 的特征分辨率</h5><p>通常，RoIAlign 中较大的样本分辨率可提供更丰富的信息，从而提高检测性能。 然而，采样更大的特征分辨率也更耗时，并且增加了解码过程的计算成本。 如下表所示，当分辨率从 1 增加到 4 时，模型性能显着提高了 5.6 AP。但是，当分辨率进一步增加到 7 时，改进很小，并且增加了 FLOPs 和延迟。 为此，我们将 RoIAlign 的特征分辨率默认设置为 4。</p>
-<h5 id="多尺度特征的数量"><a href="#多尺度特征的数量" class="headerlink" title="多尺度特征的数量"></a>多尺度特征的数量</h5><p>为了结合多尺度特征，我们还从主干中采样了 8 倍和 16 倍的下采样特征来构建3个不同级别的多尺度特征。 从上表可以看出，它显着提高了模型性能 6.4 AP。 然而，当我们进一步为多尺度融合添加 64 倍下采样特征时，性能下降了 0.5 AP。 默认情况下，我们使用 3 个特征级别进行多尺度特征融合。</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812152843982.png" alt="image-20220812152843982"></p>
-<hr>
-<h5 id="标签增强的策略"><a href="#标签增强的策略" class="headerlink" title="标签增强的策略"></a>标签增强的策略</h5><p>在本节中，我们消融了提出的两种标签增强策略，即固定重复时间和固定正样本比率。 如下左表 所示，使用不同的固定重复次数可以持续提高 DE-DETR 基线的性能，但性能增益会随着重复次数的增加而降低。 因此，默认采用固定重复时间 2。 此外，如下右表 所示，虽然使用不同的比率可以提高 AP，但在正负样本比率为 1:3 时性能最佳，有趣的是，这也是Faster RCNN中最常用的正负采样比率。</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812154348539.png" alt="image-20220812154348539"></p>
-<h4 id="泛化到特征丰富的数据集"><a href="#泛化到特征丰富的数据集" class="headerlink" title="泛化到特征丰富的数据集"></a>泛化到特征丰富的数据集</h4><p>虽然上述实验表明，我们的方法可以在只有有限的训练数据可用时提高模型性能，但不能保证我们的方法在训练数据充足的情况下仍然有效。 为此，我们用足够多的数据在 COCO 2017 上评估了我们的方法。 从下表 中可以看出，我们的方法不会降低 COCO 2017 上的模型性能。相反，它提供了改进效果。 具体来说，DELA-DETR 和 DELA-CondDETR 分别将其相应的基线提高了 8.3 和 2.8 AP。</p>
-<p><img src="/2022/08/22/Towards%20Data-Efficient%20Detection%20Transformer/image-20220812153538482.png" alt="image-20220812153538482"></p>
-<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>在本文中，我们确定了DETR的数据效率问题。 通过从 Sparse RCNN 到 DETR 的逐步模型转换，我们发现局部区域的稀疏特征采样是数据效率的关键。基于这些，我们通过在预测的bounding box的指导下通过简单地采样多尺度特征在对原始模型的修改最少的前提下来改进现有的检测转换器。 此外，我们提出了一种简单而有效的标签增强策略，以提供更丰富的监督，从而进一步缓解数据效率问题。 大量实验验证了我们方法的有效性。 随着Transformer在视觉任务中越来越流行，我们希望我们的工作能够激发大家探索Transformer在不同任务中的数据效率。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/Deformable%20DETR/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/08/22/Deformable%20DETR/" class="post-title-link" itemprop="url">Deformable DETR</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-08-22 20:56:45 / 修改时间：21:31:44" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:45+08:00">2022-08-22</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Deformable-DETR-：-deformable-transformers-for-End-to-End-object-detection"><a href="#Deformable-DETR-：-deformable-transformers-for-End-to-End-object-detection" class="headerlink" title="Deformable DETR ： deformable transformers for End-to-End object detection"></a>Deformable DETR ： deformable transformers for End-to-End object detection</h2><h3 id="DETR的问题"><a href="#DETR的问题" class="headerlink" title="DETR的问题"></a>DETR的问题</h3><p>是针对DETR进行改进的一篇文章，其指出DETR主要存在以下两点问题：</p>
-<ol>
-<li>DETR需要相较于现有的目标检测器更长的训练epoch来收敛。</li>
-<li>DETR在检测小物体时准确率较低。</li>
-</ol>
-<p>这是由于transformer结构所引入的问题，即是transformer组件处理特征图方面的不足：transformer结构其在初始化时分配给所有特征像素的注意力权重几乎是均等的，这就造成了模型需要长时间去学习关注真正有意义的位置。其次Transformer在计算注意力权重时，伴随着高计算量与空间复杂度。特别是在编码器部分，与特征像素点的数量成平方级关系，因此难以处理高分辨率的特征。</p>
-<p>deformable DETR结合deformable conv的空间稀疏采样的优势和transformer元素间建模的能力。通过添加稀疏的空间位置，避免了上述的问题，因此DETR不采用全局的注意力计算，而是只计算reference point周围一小部分点的注意力。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Deformable DETR是一种End-to-End的目标检测器，其在DETR和transformer的基础上做了改进，能够更快收敛，同时减少计算量提高精度。其核心部件为Multi-scale Deformable Attention Module（多尺度可变形注意力模块），其为一种处理图像特征图的有效的注意力机制。</p>
-<h3 id="Deformable-Attention-Module"><a href="#Deformable-Attention-Module" class="headerlink" title="Deformable Attention Module"></a>Deformable Attention Module</h3><p>针对于DETR存在的问题，提出Deformable Attention Module ，其不用遍历所有的空间位置，而是与可变形卷积相似，其只注意参考点周围的一小部分关键采样点，而不是特征图的整体。其通过为每个query分配少量固定的键，可以缓解难以收敛和特征空间分辨率所带来的问题。</p>
-<p>示意图如下所示：</p>
-<p><img src="/2022/08/22/Deformable%20DETR/image-20220810091027439.png" alt="image-20220810091027439"></p>
-<p>下面给出MultiheadAttention和DeformableAttention的计算公式</p>
-<script type="math/tex; mode=display">
- MultiHeadAttn(z_q , x) =\sum ^M_{m=1}W_m[\sum_{k∈Ω_k}A_{mqk}\cdot W_m^`x_k]
-\\
- DeformAttn(z_q , p_q , x) =\sum ^M_{m=1}W_m[\sum^K_{k=1}A_{mqk}\cdot W_m^`x(p_q+∆p_{mqk})]
-\\
- MSDeformAttn(z_q , p_q , \{x^l\}^L_{l=1}) =\sum ^M_{m=1}W_m[\sum^L_{l=1}\sum^K_{k=1}A_{mlqk}\cdot W_m^`x^l( \phi_l ( p̂ _q )+∆p_{mlqk})]</script><p>对DeformAttn，输入特征图尺寸为$C<em>H</em>W$，$z_q$为带有内容特征的第q个查询元素，为$p_q$为一个二维参考点，公式中参数如下解释：</p>
-<ul>
-<li>m 表示注意力头（head）。</li>
-<li>k 表示 sampled key（被采样的键）。K 表示 total sampled key number( $K \lt\lt HW$ )。</li>
-<li>$ \Delta p_{mqk} $表示第 m 个注意力头中第 k 个采样点的采样偏移量。</li>
-<li>$ A_{mqk} $表示第 m 个注意力头中第 k 个采样点的注意力权重 V。</li>
-<li><img src="/2022/08/22/Deformable%20DETR/4b4befc3e13742eea81d3b220c04133e.png" alt="img">，Xk表示第k个采样点，Um和Vm是可学习的参数。</li>
-<li>标量注意力权重 $ A_{mqk} $的取值范围为[ 0 , 1]，通过$ \sum^K_{k=1}A_{mqk}=1 $进行归一化。</li>
-<li><img src="/2022/08/22/Deformable%20DETR/fc909ee8a2414a778ba1f82d7120c36a.png" alt="img">是范围不受限制的2-d实数。</li>
-<li>由于$ p_q+\Delta p_{mqk} $是分数阶的，所以在计算$x(p_q+\Delta p_{mqk})$时，采用了《Deformableconvolutional networks (ICCV)》中的双线性插值。</li>
-<li>$\Delta p_{mqk}$和$A_{mqk}$都是通过在查询特征$z_q$上的线性投影获得的。</li>
-<li>在实现中，查询特征$z_q$被送入3MK通道的线性投影算子，其中前2MK通道编码采样偏移量为 ，其余MK通道被送入softmax算子以获得注意力权重 。</li>
-</ul>
-<p>可变形注意力模块是为了将卷积特征图作为 key 要素进行处理而设计的。令 $N_q$ 为 query 元素的个数，当 MK 比较小时，可变形注意力模块的复杂度为$O(2N_q C^2 + min(HW C^2 , N_q KC^2 ))$。当它应用于DETR编码器时，其中 $N_q = HW$，复杂度变为$O(HWC^2)$，与空间大小成线性复杂度。当它被用作DETR解码器中的交叉注意力模块时，其中 $N_q = N$ ( N为对象查询次数)，复杂度变为$O (NKC^2)$，这与空间大小HW无关。</p>
-<h3 id="Multi-scale-Deformable-Attention-Module"><a href="#Multi-scale-Deformable-Attention-Module" class="headerlink" title="Multi-scale Deformable Attention Module"></a>Multi-scale Deformable Attention Module</h3><p>仿照其余目标检测框架中的多尺度特征，提出Multi-scale Deformable Attention Module，将可变形注意力模块扩展为多尺度，其公式依旧如下所示：</p>
-<script type="math/tex; mode=display">
-MultiHeadAttn(z_q , x) =\sum ^M_{m=1}W_m[\sum_{k∈Ω_k}A_{mqk}\cdot W_m^`x_k]
-\\
-DeformAttn(z_q , p_q , x) =\sum ^M_{m=1}W_m[\sum^K_{k=1}A_{mqk}\cdot W_m^`x(p_q+∆p_{mqk})]
-\\
-MSDeformAttn(z_q , p̂ _q , \{x^l\}^L_{l=1}) =\sum ^M_{m=1}W_m[\sum^L_{l=1}\sum^K_{k=1}A_{mlqk}\cdot W_m^`x^l( \phi_l ( p̂ _q )+∆p_{mlqk})]</script><p>对MSDeformAttn，$\{x^l\}^L_{l=1}$为输入的多尺度特征图，其每层的输入特征图尺寸为$C<em>H_l</em>W_l$，$z_q$为带有内容特征的第q个查询元素，$p̂ _q ∈ [0, 1]^2$二维参考点，公式中参数如下解释：</p>
-<ul>
-<li>m 表示注意力头（head）。</li>
-<li>k 表示 sampled key（被采样的键）。K 表示 total sampled key number( K &lt;&lt; HW )。</li>
-<li>$\Delta p_{mlqk}$表示第 L 个特征层和第 m 个注意力头中第 k 个采样点的采样偏移量。</li>
-<li>$A_{mlqk}$表示第 L 个特征层和第 m 个注意力头中第 k 个采样点的注意力权重 V。</li>
-<li><img src="/2022/08/22/Deformable%20DETR/4b4befc3e13742eea81d3b220c04133e.png" alt="img">，Xk表示第k个采样点，Um和Vm是可学习的参数。</li>
-<li>标量注意力权重 $A_{mlqk}$的取值范围为[ 0 , 1]，通过$\sum^L_{l=1}\sum^K_{k=1}A_{mlqk}=1$进行归一化。</li>
-<li>$p̂ _q ∈ [0, 1]^2$是归一化坐标，我们用其清晰的表示尺度公式，其中$(0,0)$表示左上角的点,$(1,1)$表示右下角的点</li>
-<li>$\phi_l ( p̂ _q )$将归一化的坐标$p̂ _q $重新缩放至输入特征图的第$l$层上。</li>
-<li>多尺度可变形注意力与以前的单尺度版本非常相似，只是它从多尺度特征图中采样LK 点，而不是从单尺度特征图中采样 K 点。</li>
-</ul>
-<p>当选$L=1,K=1，且W_m^`∈R^{C_v\times C}$固定为单位矩阵的时候，上述公式退化为deformable convolution。</p>
-<h3 id="Deformable-Transformer-Encoder"><a href="#Deformable-Transformer-Encoder" class="headerlink" title="Deformable Transformer Encoder"></a>Deformable Transformer Encoder</h3><p>我们将DETR中处理特征图的Transformer注意力模块替换为提出的多尺度可变形注意力模块。编码器的输入和输出都是具有相同分辨率的多尺度特征图。</p>
-<p>在编码器中，通过ResNet (transformed by a 1 × 1 convolution) 中的从 $C_3$阶段到$C_5$阶段的输出特征图中提取多尺度特征图$\{x^l\}^{L-1}_{l=1}(L = 4)$，其中$C_l$分辨率是输入图的$\frac{1}{2^l}$ 。 在最后的$C_5$级上通过 3 × 3 步长为 2 的卷积得到的最低分辨率特征图$x^L$，记为$C_6$。所有多尺度特征图的通道数为 C = 256 。注意：FPN 中自顶向下的结构没有被使用，因为我们提出的多尺度可变形注意力机制本身可以在多尺度特征图之间交换信息。多尺度特征图的构造如下图所示。注：添加FPN不会提高性能，因为本文所设计的结构能在不同层级之间交换信息，和FPN的功能相同</p>
-<p><img src="/2022/08/22/Deformable%20DETR/image-20220810101839490.png" alt="image-20220810101839490"></p>
-<p>在Deformable Transformer Encoder的应用中，输出是与输入具有相同分辨率的多尺度特征图。key和query均为多尺度特征图中的像素。对于每个查询像素，参考点为其本身。为了识别每个查询像素位于哪个特征级别（即属于目标物体的概率），除了位置嵌入外，我们在特征表示中添加了一个尺度级别的嵌入，记为$e_l$。不同于固定编码的位置嵌入，尺度级嵌入$\{e_l\}^L_{l=1}$随机初始化并与网络联合训练。</p>
-<h3 id="Deformable-Transformer-Decoder"><a href="#Deformable-Transformer-Decoder" class="headerlink" title="Deformable Transformer Decoder"></a>Deformable Transformer Decoder</h3><p>解码器中存在交叉注意力和自注意力模块，两种类型的注意力模块的query elements都是object query。</p>
-<p>在交叉注意力模块中，object query从特征图中提取特征，其中的key元素是编码器输出的特征图。</p>
-<p>在自注意力模块中，object query是相互作用的，其中的key元素是object query。由于我们提出的可变形注意力模块是为了处理卷积特征图作为key元素而设计的，因此我们只将每个交叉注意力模块替换为多尺度可变形注意力模块，而自注意力模块保持不变。对于每个object query，参考点的二维归一化坐标$p̂ _q$ 通过可学习的线性投影和sigmoid函数从其对象查询嵌入中预测。</p>
-<p>由于multi-scale deformable attention module提取参考点周围的图像特征，我们让检测头预测边界框作为参考点的相对偏移量，以进一步降低优化难度。将参考点作为箱体中心的初始猜测。检测头预测参考点的相对偏移量。这样，学习到的解码器注意力将与预测的边界框具有较强的相关性，这也加速了训练收敛。</p>
-<p>通过将DETR中的Transformer注意力模块替换为可变形注意力模块，我们建立了一个高效、快速收敛的检测系统，称为可变形DETR 。</p>
-<h3 id="多种计算方式之间关系"><a href="#多种计算方式之间关系" class="headerlink" title="多种计算方式之间关系"></a>多种计算方式之间关系</h3><p><img src="/2022/08/22/Deformable%20DETR/1858467-20220401094649223-612897571.png" alt="img"></p>
-<h3 id="deformable-DETR结构示意图"><a href="#deformable-DETR结构示意图" class="headerlink" title="deformable DETR结构示意图"></a>deformable DETR结构示意图</h3><p><img src="/2022/08/22/Deformable%20DETR/1858467-20220401094708641-447017032.png" alt="img"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/22/VIT/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/08/22/VIT/" class="post-title-link" itemprop="url">VIT</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-08-22 20:56:31 / 修改时间：21:35:42" itemprop="dateCreated datePublished" datetime="2022-08-22T20:56:31+08:00">2022-08-22</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="VIT-An-image-is-worth-16-x-16-words-Transformer-for-image-recognition-at-scale"><a href="#VIT-An-image-is-worth-16-x-16-words-Transformer-for-image-recognition-at-scale" class="headerlink" title="(VIT) An image is worth 16 x 16 words: Transformer for image recognition at scale"></a>(VIT) An image is worth 16 x 16 words: Transformer for image recognition at scale</h2><h3 id="评价"><a href="#评价" class="headerlink" title="评价"></a>评价</h3><p>ViT是2020年Google团队提出的将Transformer应用在图像分类的模型，因其模型“简单”且效果好，可扩展性强，在数据量越大的前提下效果越好，从而成为了transformer在CV领域应用的里程碑著作。</p>
-<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>当拥有足够多的数据进行预训练的时候，ViT的表现就会超过CNN，突破transformer缺少归纳偏置（即先验知识，如：卷及神经网络所默认的平移不变性等）的限制，可以在下游任务中获得较好的迁移效果。但是当训练数据集不够大的时候，ViT的表现通常比同等大小的ResNets要差一些。这是因为CNN具有两种归纳偏置，一种是局部性（locality/two-dimensional neighborhood structure），即图片上相邻的区域具有相似的特征；一种是平移不变形（translation equivariance）（即$f(g(x))=g(f(x))$),其中g代表卷积操作，f代表平移操作。当CNN具有以上两种归纳偏置，就有了很多先验信息，需要相对少的数据就可以学习一个比较好的模型。</p>
-<h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p>ViT的整体结构如下图所示：</p>
-<p><img src="/2022/08/22/VIT/v2-5afd38bd10b279f3a572b13cda399233_720w.jpg" alt="img"></p>
-<p>整个ViT的运行流程如下所示：</p>
-<ul>
-<li><p>假设输入图片大小为224x224,每个patch对应的像素为16x16，则对于每张图片而言，其生成的patch数量为$（224/16）×（224/16）=196$，即生成的patch序列长度为196，每个patch的大小为$16<em>16</em>3$，每个patch的元素总量为$768$。</p>
-</li>
-<li><p>对于ViT而言，其整体的结构和流程都是模仿transformer和bert的所以其分为以下几个部分：</p>
-<ul>
-<li>Patch Embeding：上述所生成的每个patch通过投影层，投影成固定长度的向量，作为encoder的第一部分输入。其固定长度的向量的长度定义为768，所以输入的patch序列的维度为$196<em>768$，Patch Embedding的维度为$768</em>768$，最终得到的Patch Embedding的向量长度为$196*768$。</li>
-<li>Position Embedding：由于将图片分为多个patch之后，每个patch经过投影的过程中不引入位置编码信息，所以仿照bert引入position enbedding部分。其位置编码可以理解为是一个有N行（输入patch序列的长度），每行有768（embedding的维度）个元素的矩阵，其第i行就代表了第i个位置所对应的Position Embedding的值。将Patch Embedding与Position Embedding的值相加，由于维度都是$196*768$，所以加之后的维度相同</li>
-<li>$[cls]$:仿照bert中的$[cls]$，在196x768的基础上加一维，变成197x768，由于其具体的计算过程中是元素和元素之间两两计算，所以作者认为这样可以在计算过程中学到如何从其他元素上学到我们所需要的信息。并最终在经过Encoder部分的计算之后，取对应位置的输出进行分类。</li>
-</ul>
-</li>
-<li>Encoder：encoder部分由$Add/Norm+多头自注意力机制+Add/Norm+MLP$组成，其过程与transformer中的一致。其输入维度为$(196+1)*768$，经过Encoder之后输入维度与输入相同。所以支持多个Encoder块进行叠加。</li>
-<li>MLP Head：在MLP时，输入为197x768，并经过与bert相似的操作，将维度放大四倍再收缩回去，即变为$197<em>（768</em>4）$再缩小变为$197*768$。</li>
-<li>最终选取MLP的第0个位置处的元素（即为[cls]对应的位置处的元素）进行图片分类</li>
-</ul>
-<p>最终的计算步骤如下图所示：</p>
-<p><img src="/2022/08/22/VIT/v2-ebf697b1994598019a6a59855dc0dbed_720w.png" alt="img"></p>
-<h3 id="讨论"><a href="#讨论" class="headerlink" title="讨论"></a>讨论</h3><h4 id="Position-Embedding"><a href="#Position-Embedding" class="headerlink" title="Position Embedding"></a>Position Embedding</h4><p>作者研究对比了多种位置编码方式：</p>
-<ul>
-<li>1-D的位置编码</li>
-<li>2-D的位置编码</li>
-<li>相对位置编码</li>
-</ul>
-<p>作者实验结论为：不管使用哪种位置编码方式，模型的精度都很接近，甚至不适用位置编码，模型的性能损失也没有特别大。原因可能是ViT是作用在image patch上的，而不是image pixel，对网络来说这些patch之间的相对位置信息很容易理解，所以使用什么方式的位置编码影像都不大。</p>
-<p><img src="/2022/08/22/VIT/v2-99f02198921e7aed8162cd7af8a29805_720w.jpg" alt="img"></p>
-<h4 id="image-presentation"><a href="#image-presentation" class="headerlink" title="image presentation"></a>image presentation</h4><p>关于使用[cls]进行学习和直接对输出的结果通过average pooling进行学习的方法，通过实验表明两者区别不大。</p>
-<p><img src="/2022/08/22/VIT/v2-4a8b39b1d2dd43d1e9b16edbc38b1660_720w.jpg" alt="img"></p>
-<p>文章主要为了和bert类似，所以引入[cls]进行学习</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2413,7 +2317,7 @@ MSDeformAttn(z_q , p̂ _q , \{x^l\}^L_{l=1}) =\sum ^M_{m=1}W_m[\sum^L_{l=1}\sum^
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -2504,61 +2408,6 @@ MSDeformAttn(z_q , p̂ _q , \{x^l\}^L_{l=1}) =\sum ^M_{m=1}W_m[\sum^L_{l=1}\sum^
   
 
   
-      
-
-<script>
-  if (typeof MathJax === 'undefined') {
-    window.MathJax = {
-      loader: {
-          load: ['[tex]/mhchem'],
-        source: {
-          '[tex]/amsCd': '[tex]/amscd',
-          '[tex]/AMScd': '[tex]/amscd'
-        }
-      },
-      tex: {
-        inlineMath: {'[+]': [['$', '$']]},
-          packages: {'[+]': ['mhchem']},
-        tags: 'ams'
-      },
-      options: {
-        renderActions: {
-          findScript: [10, doc => {
-            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
-              const display = !!node.type.match(/; *mode=display/);
-              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
-              const text = document.createTextNode('');
-              node.parentNode.replaceChild(text, node);
-              math.start = {node: text, delim: '', n: 0};
-              math.end = {node: text, delim: '', n: 0};
-              doc.math.push(math);
-            });
-          }, '', false],
-          insertedScript: [200, () => {
-            document.querySelectorAll('mjx-container').forEach(node => {
-              let target = node.parentNode;
-              if (target.nodeName.toLowerCase() === 'li') {
-                target.parentNode.classList.add('has-jax');
-              }
-            });
-          }, '', false]
-        }
-      }
-    };
-    (function () {
-      var script = document.createElement('script');
-      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      script.defer = true;
-      document.head.appendChild(script);
-    })();
-  } else {
-    MathJax.startup.document.state(0);
-    MathJax.texReset();
-    MathJax.typeset();
-  }
-</script>
-
-    
 
   
 

@@ -148,6 +148,391 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">pytorch相关</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-28 10:54:34" itemprop="dateCreated datePublished" datetime="2022-03-28T10:54:34+08:00">2022-03-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-08-22 21:34:18" itemprop="dateModified" datetime="2022-08-22T21:34:18+08:00">2022-08-22</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="在pycharm中调用pytorch函数没有自动补全"><a href="#在pycharm中调用pytorch函数没有自动补全" class="headerlink" title="在pycharm中调用pytorch函数没有自动补全"></a>在pycharm中调用pytorch函数没有自动补全</h2><h3 id="问题原因："><a href="#问题原因：" class="headerlink" title="问题原因："></a>问题原因：</h3><p>pytorch的代码绝大部分由c++进行实现，不是原生的python代码，而pycharm的代码提示时通过<code>.pyi</code>类型的文件进行实现的。关于.pyi文件，在<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0484/">PEP484</a>中写到</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Stub files are files containing type hints that are only for use by the type checker, not at runtime. There are several use cases for stub files:</span><br><span class="line"></span><br><span class="line">Extension modules</span><br><span class="line">Third-party modules whose authors have not yet added type hints</span><br><span class="line">Standard library modules for which type hints have not yet been written</span><br><span class="line">Modules that must be compatible with Python 2 and 3</span><br><span class="line">Modules that use annotations for other purposes</span><br></pre></td></tr></table></figure>
+<p>即.pyi文件作为stub files，帮助添加type hint，从而帮助pycharm实现自动补全。</p>
+<h3 id="解决办法："><a href="#解决办法：" class="headerlink" title="解决办法："></a>解决办法：</h3><p>故可以通过手动添加_int.pyi的方式实现pycharm对pytorch的自动补全的实现。并且这样的.pyi文件的功能只有类型检查，对其余功能没有影响。写好的.pyi文件见以下链接：<a target="_blank" rel="noopener" href="https://gist.github.com/t-vi/0d0ae013072f96f50fa11fbc2287e33b">_int_.pyi</a></p>
+<p>将该文件clone，并更名为__init__.pyi，复制到</p>
+<p><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/image-20220324093751177.png" alt="image-20220324093751177"></p>
+<p><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/image-20220324093801169.png" alt="image-20220324093801169"></p>
+<p><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/image-20220324093807805.png" alt="image-20220324093807805"></p>
+<p>便可以实现pycharm对pytorch的自动补全功能。</p>
+<h2 id="pytorch的自动求导相关"><a href="#pytorch的自动求导相关" class="headerlink" title="pytorch的自动求导相关"></a>pytorch的自动求导相关</h2><p>pytorch的自动求导是建立再pytorch的tensor（张量）之上的，张量可以简单的理解为pytorch的一个n维数组，通过设置tensor的<code>.requires_grad=True</code>来使其支持求导。backwards求梯度的核心为dynamic computation graph(DCG)——即动态计算图。</p>
+<p>以如下计算图为例，<a target="_blank" rel="noopener" href="https://blog.csdn.net/f156207495/article/details/88727860">参考链接</a><br><img src="/2022/03/28/pytorch%E7%9B%B8%E5%85%B3/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2YxNTYyMDc0OTU=,size_16,color_FFFFFF,t_70.png" alt="在这里插入图片描述"><br>对于其中的x与y和z：使用z.backgrad()进行z的雅可比行列式的计算，并通过x.grad和 y.grad进行x和y偏导的获取。由x和y这两个叶子节点构建z的过程中，z记住了x和y构建的过程，z.backgrad()计算的时候根据记住的z和x、y的关系实现了x、y对z的偏导的求取。</p>
+<ul>
+<li>data: 变量中存储的值，如x中存储着1，y中存储着2，z中存储着3</li>
+<li>requires_grad：该变量有两个值，True 或者 False，如果为True，则加入到反向传播图中参与计算。</li>
+<li>grad：该属性存储着相关的梯度值。当requires_grad为False时，该属性为None。即使requires_grad为True，也必须在调用其他节点的backward()之后，该变量的grad才会保存相关的梯度值。否则为None</li>
+<li>grad_fn：表示用于计算梯度的函数，之所以叫做动态计算图，是指在grad_fn动态的保存了对叶子节点的各种操作，在使用backward之后通过grad_fn之中的操作对进行求导。</li>
+<li>is_leaf：为True或者False，表示该节点是否为叶子节点。</li>
+</ul>
+<p>当调用backward函数时，只有requires_grad为true以及is_leaf为true的节点才会被计算梯度，即grad属性才会被赋予值。</p>
+<p>实际上，<code>.requires_grad=True</code>将该节点设置为了叶子节点，只有叶子节点才可以积累，中间节点并不会计算梯度，如果需要计算的话，使用<code>x.retain_gard()</code>进行需要梯度计算的设置。</p>
+<p>对于单个张量的情况下，可以直接使用z.backward()进行计算，对于多个张量，需要使用z.backward(torch.ones_like(z))传入一个外部梯度，从而进行计算，实际上，z.backward()也会自动传入torch.tensor(1)。传入的参数会与z的雅可比行列式进行相乘，从而算出对应的结果。</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/102942725">扩展autograd</a>部分见链接。</p>
+<h2 id="pytorch中CNN网络结构的编写相关"><a href="#pytorch中CNN网络结构的编写相关" class="headerlink" title="pytorch中CNN网络结构的编写相关"></a>pytorch中CNN网络结构的编写相关</h2><p>pytorch编写CNN深度学习模型，一般而言包括以下几个部分：</p>
+<ul>
+<li>模型定义</li>
+<li>数据处理和加载</li>
+<li>训练模型（Train and Validate）</li>
+<li>测试模型</li>
+<li>训练过程可视化（可选）</li>
+</ul>
+<h3 id="模型定义"><a href="#模型定义" class="headerlink" title="模型定义"></a>模型定义</h3><p>pytorch的模型定义部分的标准格式如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Classifier</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(Classifier, self).__init__()</span><br><span class="line">        <span class="comment"># torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)</span></span><br><span class="line">        <span class="comment"># torch.nn.MaxPool2d(kernel_size, stride, padding)</span></span><br><span class="line">        <span class="comment"># input 維度 [3, 128, 128]</span></span><br><span class="line"></span><br><span class="line">        self.cnn = nn.Sequential(</span><br><span class="line">            nn.Conv2d(<span class="number">3</span>, <span class="number">64</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [64, 128, 128]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">64</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [64, 64, 64]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [128, 64, 64]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">128</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [128, 32, 32]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">128</span>, <span class="number">256</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [256, 32, 32]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">256</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [256, 16, 16]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">256</span>, <span class="number">512</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [512, 16, 16]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">512</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [512, 8, 8]</span></span><br><span class="line"></span><br><span class="line">            nn.Conv2d(<span class="number">512</span>, <span class="number">512</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>),  <span class="comment"># [512, 8, 8]</span></span><br><span class="line">            nn.BatchNorm2d(<span class="number">512</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.MaxPool2d(<span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>),  <span class="comment"># [512, 4, 4]</span></span><br><span class="line">        )</span><br><span class="line">        self.fc = nn.Sequential(</span><br><span class="line">            nn.Linear(<span class="number">512</span> * <span class="number">4</span> * <span class="number">4</span>, <span class="number">1024</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.Linear(<span class="number">1024</span>, <span class="number">512</span>),</span><br><span class="line">            nn.ReLU(),</span><br><span class="line">            nn.Linear(<span class="number">512</span>, <span class="number">11</span>)</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        out = self.cnn(x)</span><br><span class="line">        out = out.view(out.size()[<span class="number">0</span>], -<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">return</span> self.fc(out)</span><br></pre></td></tr></table></figure>
+<p>这个代码是李宏毅老师2020深度学习课程的hw3的范例代码中截取的。</p>
+<p>代码中，有以下需要注意的点：</p>
+<ul>
+<li>该模型必须继承<code>nn.Module</code>，并且必须执行父类的构造函数，即<code>super(Classifier, self).__init__()</code>，必须这样做的原因：一个网络实例化之后的本质是维护<code>nn.Module</code>中的八个字典，即：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">_parameters</span><br><span class="line">_buffers</span><br><span class="line">_backward_hooks</span><br><span class="line">_forward_hooks</span><br><span class="line">_forward_pre_hooks</span><br><span class="line">_state_dict_hooks</span><br><span class="line">_load_state_dict_pre_hooks</span><br><span class="line">_modules</span><br></pre></td></tr></table></figure>
+<p>这八个字典用于网络的前向、反向以及正反序列化中。因此当继承<code>nn.Module</code>之后，必须执行父类的构造函数从而保证上述的字典被创造出来，从而使后续的卷积、池化等操作能够正常的被记录。该部分详情可见<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/53927068">链接</a>。</p>
+<ul>
+<li>__init__在执行父类的构造函数之后是该网络的部分网络结构的构造描述部分。在网络结构的构造部分常用的层有卷积层、批标准化层、激活函数、池化层、全连接层。网络模型的构造方法常见的有以下几种：<a target="_blank" rel="noopener" href="https://www.jb51.net/article/138245.htm">pytorch构造网络模型的方法</a></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">	在上述代码中，输入维度为[<span class="number">3</span>, <span class="number">128</span>, <span class="number">128</span>] 即RGB三色图像，长宽各<span class="number">128</span>。</span><br><span class="line">nn.Conv2d(in_channels, out_channels, kernel_size, stride=<span class="number">1</span>, padding=<span class="number">0</span>)</span><br><span class="line">	图片的channels是指图片的维数，即RGB图像为三维，黑白图像为一维。一般的channels是指每个卷积层中卷积核的数量。而上一次层的out_channels即为下一层的in_channels。out_channels数目即为卷积核的数目，每个卷积核提取之后的特征数目的确定由in_channels、kernel_size、stride、padding共同决定，具体公式见下面链接：步长、填充、卷积核大小与输入输出大小的关系。conv2d完成卷积操作，功能是特征提取。</span><br><span class="line">nn.BatchNorm2d(num_features, eps=<span class="number">1e-05</span>, momentum=<span class="number">0.1</span>, affine=<span class="literal">True</span>, track_running_stats=<span class="literal">True</span>)</span><br><span class="line">	其中的num_features一般设置为特征数，即Conv2d中的输出通道数。BN完成批标准化操作，功能是将每个特征对结果的影响因素设置到相同水平。可以加快收敛速度。</span><br><span class="line">nn.ReLU() </span><br><span class="line">	激活函数对输入信息进行非线性变换，使整个系统模拟所有的函数成为可能。</span><br><span class="line">nn.MaxPool2d(kernel_size, stride, padding)</span><br><span class="line">	最大池化的作用理论依据为下采样之后的图像不影响这个图像的辨识和分类，输出的特征维数与con2d的计算规则相同，并且减少位置敏感性。</span><br><span class="line">nn.Linear(in_features,out_features)</span><br><span class="line">	该函数用于网络中的全连接层，in_features指输入的二维张量的大小，out_features指输出的二维张量的大小，即全连接层的神经元个数。全连接层的计算量巨大，为上一层的featuremap的通道数乘以高乘以宽再乘以out_features。</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_34243930/article/details/107231539">Conv2d参考链接</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_37665306/article/details/103939069">步长、填充、卷积核大小与输入输出大小的关系</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_39777550/article/details/108038677">BatchNorm2d参考链接</a>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/g11d111/article/details/82665265">MaxPool2d参考链接</a> </p>
+<ul>
+<li><p>forward部分是实际上的网络结构，其完成网络的正向传播的部分。在网络的一次训练中，学习需要计算梯度从而进行一次参数的更新，一般首先使用一次前向传播加一次反向传播求出网络中所有可学习参数的偏导。在使用forward的时候，不应该直接调用forward方法，应该使用<code>model(input)</code>的方法进行对model的__call__方法的调用，由__call__ 对model的forward方法进行调用。这样调用，而不使用model2.forward(self,x)的原因是前者实现了额外的功能，即：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>，先执行完所有的_forward_pre_hooks里的hooks</span><br><span class="line"><span class="number">2</span>, 再调用CivilNet的forward函数</span><br><span class="line"><span class="number">3</span>, 再执行完所有的_forward_hooks中的hooks</span><br><span class="line"><span class="number">4</span>, 再执行完所有的_backward_hooks中的hooks</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/53927068">forward相关</a></p>
+</li>
+</ul>
+<h3 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h3><p>pytorch中的优化器简而言之可以理解为在计算梯度之后的更新参数的策略。常用的优化器设置有：</p>
+<p>在代码中集成为torch.optim类，使用下列代码进行展示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="string">&quot;\n&quot;</span>.join([o <span class="keyword">for</span> o <span class="keyword">in</span> <span class="built_in">dir</span>(torch.optim) <span class="keyword">if</span> <span class="string">&quot;_&quot;</span> <span class="keyword">not</span> <span class="keyword">in</span> o]))</span><br></pre></td></tr></table></figure>
+<p>结果为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ASGD</span><br><span class="line">Adadelta</span><br><span class="line">Adagrad</span><br><span class="line">Adam</span><br><span class="line">AdamW</span><br><span class="line">Adamax</span><br><span class="line">LBFGS</span><br><span class="line">Optimizer</span><br><span class="line">RMSprop</span><br><span class="line">Rprop</span><br><span class="line">SGD</span><br><span class="line">SparseAdam</span><br></pre></td></tr></table></figure>
+<p>上述优化策略的具体阐述见<a target="_blank" rel="noopener" href="https://blog.csdn.net/CharmsLUO/article/details/109853517">链接</a>，optimizer的构建及使用如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">//选一个你心仪的优化器，并设置其所需要的参数</span><br><span class="line">optimizer = torch.optim.SGD(model.parameters(), lr = <span class="number">0.01</span>, momentum=<span class="number">0.9</span>)</span><br><span class="line">//代指每次训练的时候</span><br><span class="line"><span class="keyword">for</span> epoch......</span><br><span class="line">	<span class="keyword">for</span> data....</span><br><span class="line">    //每次计算之前应该使用optimizer将model的梯度清理，从而舍弃上一次BP计算得到的梯度，为新的一次前向+反向做好准备。</span><br><span class="line">	optimizer.zero_grad()</span><br><span class="line">	//训练</span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">    //在backward之后使用.step()完成参数的更新。</span><br><span class="line">   	optimizer.step()</span><br></pre></td></tr></table></figure>
+<p>实际代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(num_epoch):</span><br><span class="line">    model.train()  <span class="comment"># ensure model in train model ( Dropout etc...)</span></span><br><span class="line">    <span class="keyword">for</span> i, data <span class="keyword">in</span> <span class="built_in">enumerate</span>(train_loader):</span><br><span class="line">        optimizer.zero_grad()  <span class="comment"># use optimizer to set model gradient 0</span></span><br><span class="line">        train_pred = model(data[<span class="number">0</span>].cuda())  </span><br><span class="line">        batch_loss = loss(train_pred, data[<span class="number">1</span>].cuda())  <span class="comment"># 计算 loss （注意 prediction 跟 label 必须同时 CPU 或是 GPU 上）</span></span><br><span class="line">        batch_loss.backward()  <span class="comment"># 利用 back propagation 算出每个参数的 gradient</span></span><br><span class="line">        optimizer.step()  <span class="comment"># 以 optimizer 用 gradient 更新参数值</span></span><br></pre></td></tr></table></figure>
+<p>使用如下代码进行每层变换之后的feature map 的 size大小查看：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> layer <span class="keyword">in</span> net:</span><br><span class="line">    <span class="built_in">input</span>=layer(<span class="built_in">input</span>)</span><br><span class="line">    <span class="built_in">print</span>(layer.__class__.__name__, <span class="string">&#x27;output shape:\t&#x27;</span>, <span class="built_in">input</span>.shape)</span><br><span class="line">或者</span><br><span class="line"><span class="keyword">for</span> name,layer <span class="keyword">in</span> model._modules.items():</span><br><span class="line">    <span class="built_in">input</span>=layer(<span class="built_in">input</span>)</span><br><span class="line">    <span class="built_in">print</span>(layer.__class__.__name__, <span class="string">&#x27;output shape:\t&#x27;</span>, <span class="built_in">input</span>.shape)</span><br></pre></td></tr></table></figure>
+<h3 id="数据处理和加载"><a href="#数据处理和加载" class="headerlink" title="数据处理和加载"></a>数据处理和加载</h3><p>数据的处理和加载通过写自己的dataset从而进行实现</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, img, y=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.img = img</span><br><span class="line">        self.y = y</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.img)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.img[index]</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br><span class="line"></span><br><span class="line">train_set = ImgDataset(train_data_img, train_data[<span class="string">&quot;label&quot;</span>])</span><br><span class="line">train_loader = DataLoader(train_set, batch_size=<span class="number">64</span>)</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">深度学习网络相关</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-28 10:50:14" itemprop="dateCreated datePublished" datetime="2022-03-28T10:50:14+08:00">2022-03-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-08-22 21:35:23" itemprop="dateModified" datetime="2022-08-22T21:35:23+08:00">2022-08-22</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="深度学习相关整理"><a href="#深度学习相关整理" class="headerlink" title="深度学习相关整理"></a>深度学习相关整理</h1><h2 id="DNN"><a href="#DNN" class="headerlink" title="DNN"></a>DNN</h2><p>DNN（Deep Neural Networks），即深度神经网络，是CNN、RNN等网络的基础。DNN的结构如下图所示：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-3d922852b85d4361cb71ca649af5707f_1440w.jpg" alt="img"></p>
+<p>即有多个隐藏层的网络，也可称之为多层感知机。</p>
+<p>在DNN中，层与层之间是全连接的，第一层为输入层，最后一层为输出层，中间的为隐藏层。</p>
+<p>DNN网络的计算过程可以看作为一系列的矩阵运算，即借用李宏毅老师的ppt中的图：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/chapter13-10.png" alt="img"></p>
+<p>假设输入为向量$X$，layer之间的传递关系为线性的，用$W^i$和$b^i$表示，其中w为权重，b为偏差，即整个神经网络的运算可以看做一系列的矩阵的运算，假设激活函数用$\sigma$来表示，即可以表示为：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/chapter13-11.png" alt="img"></p>
+<p>DNN网络的本质可以看作，用隐藏层来进行特征提取，从而替代人为的体征提取，这样在最后一个隐藏层的输出所输出的便为机器自己学习到的一组特征。学习的过程即为找到最好特征的过程，即定义一个Loss function来评估模型的好坏，一般使用如交叉熵（cross entropy）对结果$y$和预期结果$\hat{y}$进行计算，并使其最小。计算的过程即为减少Loss function的过程，即为找到最佳特征的过程。一般计算的过程即为求微分的过程，</p>
+<h2 id="反向传播"><a href="#反向传播" class="headerlink" title="反向传播"></a>反向传播</h2><p>一般而言计算的过程即为求Loss function最小的过程，即为更改权重，偏置等参数求到Loss function的全局最低点。在这个计算过程中我们使用的方法为梯度下降法，在梯度下降法的过程中需要对各个参数的偏微分进行运算，然后进行各个参数的更新，以进行下一次Loss function 的计算和更新，而反向传播算法是一种比较有效率的计算方法。</p>
+<h3 id="为什么反向传播会比较有效率"><a href="#为什么反向传播会比较有效率" class="headerlink" title="为什么反向传播会比较有效率"></a>为什么反向传播会比较有效率</h3><p>这一部分参考csdn，链接如下：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_24568487/article/details/80782867">反向传播为什么更有效率</a></p>
+<p>简单的说，可以理解为如果一个模型有100000个参数，当正向传播的时候需要对每一个参数计算偏导，即需要计算100000次，而反向传播可以先计算最后一层的隐藏层对输出层的偏导，再计算倒数第二个隐藏层对倒数第一个隐藏层的偏导，从而在一次反向传播的过程中将所有的参数的偏导都计算出来。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/71.png" alt="71"></p>
+<p>即如图所示，对b1的偏导数由链式法则可以推出是由下面所有层的偏导和这一层的偏导数所决定的。</p>
+<h3 id="反向传播的计算"><a href="#反向传播的计算" class="headerlink" title="反向传播的计算"></a>反向传播的计算</h3><p>这一部分参考李宏毅老师的课件及笔记，链接如下：<a target="_blank" rel="noopener" href="https://datawhalechina.github.io/leeml-notes/#/chapter14/chapter14?id=%e5%8f%8d%e5%90%91%e4%bc%a0%e6%92%ad">反向传播</a></p>
+<p>实际上大部分深度学习的网络使用的最基础的降低loss function的方法都是梯度下降法，而反向传播算法是一种通用的提高计算速度的计算方法，所以反向传播十分重要。</p>
+<h2 id="CNN"><a href="#CNN" class="headerlink" title="CNN"></a>CNN</h2><p>当使用DNN处理图像的时候，假设图像为100x100x3时，假设有1000个neuron，则有100x100x3x1000个参数，CNN针对图像的一些特点，提出一些假设，简化了DNN的架构。</p>
+<p>CNN的前提假设：</p>
+<ul>
+<li><p>Some patterns are much smaller than the whole image. 即只要看一部分的图像就可以确定这件事情，大部分特征不需要看全图。</p>
+</li>
+<li><p>The same patterns appear in different regions .同一个特征出现在图片的不同地方可以使用同一组参数进行侦测，无需重新设计。</p>
+</li>
+<li><p>Subsampling the pixels will not change the object.对图像做下采样之后依旧不影响对图像的辨识。</p>
+</li>
+</ul>
+<p>基于以上三个假设，CNN的整体架构为：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/CNN.png" alt="70"></p>
+<p>其中convolution即为假设一、二的具象化，max pooling为假设三的具象化，通过convolution和maxpooling即完成了一次特征提取的过程，得到一个较小的image。</p>
+<p>深度网络比人工特征提取+SVM效果好的原因：</p>
+<ul>
+<li>深度网络进行特征提取相较于人工特征提取，更加完善，不具有经验局限性。</li>
+<li>深度网络+softmax进行分类在训练的时候是一起训练的，而人工特征提取和SVM是分开进行的。</li>
+</ul>
+<h3 id="LeNet"><a href="#LeNet" class="headerlink" title="LeNet"></a>LeNet</h3><p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-e5539ed222a20cdb9c7ebfca5c640a5d_1440w.jpg" alt="img"></p>
+<p>第一次定义CNN网络结构，由两个卷积层，两个池化层，两个全连接层组成。卷积核都是5×5，stride=1，池化层使用maxpooling。为了构造高性能的卷积神经网络，我们通常对卷积层进行排列，逐渐降低其表示的空间分辨率，同时增加通道数。</p>
+<ul>
+<li>定义了卷积神经网络（Convolutional Neural Network, CNN）的基本框架：卷积层 + 池化层（Pooling Layer） + 全连接层</li>
+<li>定义了卷积层（Convolution Layer），与全连接层相比，卷积层的不同之处有两点：局部连接（引进“感受野”这一概念）、权值共享（减少参数数量）</li>
+<li>利用池化层进行下采样（Down sampooling），从而减少计算量</li>
+<li>用 Tanh 作为非线性激活函数（现在看到的都是改进过的 LeNet 了，用 ReLU 代替 Tanh。相较于 Sigmoid，Tanh 以原点对称（zero-centered），收敛速度会快。关于其解释，请看：<a href="https://link.zhihu.com/?target=https%3A//liam.page/2018/04/17/zero-centered-active-function/">谈谈激活函数以零为中心的问题</a>）</li>
+</ul>
+<h3 id="AlexNet"><a href="#AlexNet" class="headerlink" title="AlexNet"></a>AlexNet</h3><p>可以视为更深更大的LeNet，主要改进：丢弃法，ReLu，MaxPooling：</p>
+<ul>
+<li><p>激活函数从sigmoid变为ReLu（减缓梯度消失）</p>
+</li>
+<li><p>隐藏全连接层后添加了丢弃曾</p>
+</li>
+<li><p>使用了数据增强</p>
+</li>
+</ul>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-fa3b7277f36b20f7ca623ad12fcdcfbe_720w.jpg" alt="img"></p>
+<p>模型共8层，包括5个卷积层和3个全连接层，最后一层使用softmax做分类输出。</p>
+<ul>
+<li>采用双 GPU 网络结构，从而可以设计出更“大”、更“深”的网络（相较于当时的算力来说）</li>
+<li>采用 ReLU 代替 Tanh，稍微解决梯度消失问题（Gradient Vanishing Problem），加快网络收敛速度。（关于常见激活函数的比较，可以看这篇：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32610035">常用激活函数的比较 - 徐小贱民的文章 - 知乎</a>）</li>
+<li>提出局部相应归一化（LRN, Local Response Normalization），据作者所言，该操作能减少指标 Top-1/Top-5 Error Rate 1.4%/1.2%。（我个人不喜欢 LRN，因为我觉得它的超参数太多了，不具备很好的泛化能力。关于 Normalization 的发展历程可以看这篇：<a href="https://link.zhihu.com/?target=https%3A//blog.csdn.net/Code_Mart/article/details/92715180">[笔记] 神经网络中 Normalization 的发展历程</a>）</li>
+<li>令 Pooling 操作中的 stride 小于池化核的大小，从而使相邻的池化区域存在重叠部分，这一操作称为 Overlapping Pooling。据作者所言，这一操作能减少指标 Top-1/Top-5 Error Rate 0.4%/0.3%，并且减少过拟合现象。</li>
+<li>对训练数据进行随机裁剪（Random Crop），将训练图像由 256 × 256 裁剪为 224 × 224，并做随机的镜像翻转（Horizontal Reflection）。并在测试时，从图像的四个角以及中心进行裁剪，并进行镜像翻转，这样可以得到 10 个 Patch，将这些 Patch 的结果进行平均，从而得到最终预测结果。（之前在一个人脸识别比赛中，我师兄用这样的操作直接提高了４~5个点，算是一种简单的集成操作吧）</li>
+<li>对训练图像做 PCA（主成分分析），利用服从 (0,0.1) 的高斯分布的随机变量对主成分进行扰动。作者指出，这一操作能减少指标 Top-1 Error Rate 1%。</li>
+<li>利用 Dropout 避免网络过拟合。（我觉得这也算是集成操作的一种，因为随着模型的复杂度的提高，弱分类器也会越来越大，纯粹由弱分类器进行 Ensemble 应该不实际。最近谷歌对 Dropout 的专利貌似申请下来了，据说相关文档详细到可以作为 Dropout 的使用指南。）</li>
+</ul>
+<h3 id="VGG使用块的网络"><a href="#VGG使用块的网络" class="headerlink" title="VGG使用块的网络"></a>VGG使用块的网络</h3><p>针对于AlexNet比LeNet虽然复杂，效果好，但没有一个通用的模板来知道后续的研究人员设计新的网络，提出VGG即使用块的网络。</p>
+<p>使用（卷积核为3x3，填充为1的卷积层、激活函数）的叠加，加上2x2，步幅为2的池化层作为一个VGG块。超参数为n层m通道中的n和m。</p>
+<p>tips：为什么不使用5x5的卷积层，原因为：经过实验，发现在相同的计算量的前提下，3x3卷积核的效果比5x5卷积核的效果好。</p>
+<p>VGG使用可重复使用的VGG块来构建深度卷积神经网络，不同的卷积块个数和超参数可以得到不同复杂度的变种。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-27a13a7163bfe9bd6a10f5a086f01182_1440w.jpg" alt="img"></p>
+<h3 id="NIN-网络中的网络"><a href="#NIN-网络中的网络" class="headerlink" title="NIN 网络中的网络"></a>NIN 网络中的网络</h3><p>针对于VGG等较深的网络中第一个全连接层的计算量大，参数多的情况，提出NIN。</p>
+<p>NIN块：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220406221653574.png" alt="image-20220406221653574"></p>
+<p>其中1x1的卷积层的步幅为1，无填充，输入输出大小相同，可以看作全连接层，起到全连接层的作用。两个1x1的卷积层对每个像素都增加的非线性性。</p>
+<p>NIN架构：</p>
+<p>无全连接层，交替使用NIN块和步幅为2的最大池化层，从而逐步减小高宽和增大通道数，最后使用全局平均池化层得到输出，输出通道数为类别数。其不容易过拟合，参数数量更少。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220406222021914.png" alt="image-20220406222021914"></p>
+<p>用1*1卷积层代替全连接层的好处：</p>
+<ul>
+<li>不改变图像空间结构<br>全连接层会破坏图像的空间结构，而1*1卷积层不会破坏图像的空间结构。</li>
+<li>输入可以是任意尺寸<br>全连接层的输入尺寸是固定的，因为全连接层的参数个数取决于图像大小。而卷积层的输入尺寸是任意的，因为卷积核的参数个数与图像大小无关。</li>
+</ul>
+<h3 id="GoogLeNet-含并行连结的网络"><a href="#GoogLeNet-含并行连结的网络" class="headerlink" title="GoogLeNet 含并行连结的网络"></a>GoogLeNet 含并行连结的网络</h3><p> NiN严重影响了GoogLeNet的设计，GoogLeNet的核心观点为，不同大小的卷积核的组合是有利的，其最基本的卷积块为Inception块，其分为四个路径，由不同的卷积核在四个不同层面上抽取信息，最后在输出通道维进行合并。作者指出：提高模型表达能力的最直接的办法就是增加模型的“大小”，而这又会导致两个问题的产生：</p>
+<ul>
+<li><p><strong>模型越大，其网络参数也就越大，就越容易产生过拟合现象，所以就需要更大的数据集，然而大型数据集的构建成本是很高昂的</strong></p>
+</li>
+<li><p><strong>模型越大，对于计算资源的需求就越大，这在现实任务中是难以接受的</strong>。</p>
+<p>作者认为解决这两个问题的基本方法是<strong>将全连接层，甚至是卷积层改为稀疏的网络结构</strong>。</p>
+</li>
+</ul>
+<p>Inception块的架构如下：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407095249641.png" alt="image-20220407095249641"></p>
+<p> GoogLeNet的网络架构如下：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407095639989.png" alt="image-20220407095639989"></p>
+<p>GoogLeNet的通道数为GoogLeNet的超参数。Inception块和单独的3x3或5x5卷积层比，Inception块拥有更少的参数个数和计算复杂度。其使用了九个inception块，是第一个达到上百层的网络。</p>
+<p>inception后续有很多变种，如v2 v3 等等，其主要的改变在于对inception块中卷积核的改变，并在v4中结合resnet的精神，引入残差进行计算。<br>Inception-v2<br>在v1的基础上加入batch normalization技术，在tensorflow中，使用BN在激活函数之前效果更好；将5×5卷积替换成两个连续的3×3卷积，使网络更深，参数更少<br>Inception-v3<br>核心思想是将卷积核分解成更小的卷积，如将7×7分解成1×7和7×1两个卷积核，使网络参数减少，深度加深<br>Inception-v4<br>引入了ResNet，使训练加速，性能提升。但是当滤波器的数目过大（&gt;1000）时，训练很不稳定，可以加入activate scaling因子来缓解</p>
+<h3 id="ResNet-残差网络"><a href="#ResNet-残差网络" class="headerlink" title="ResNet 残差网络"></a>ResNet 残差网络</h3><p>残差网络对随后的深层神经网络设计产生了深远的影响，其使得深层的网络更加容易训练。</p>
+<p>思想：使模型函数嵌套，即确保加了一层之后模型所覆盖的解释范围是大于之前的，而不是有所偏离。每个附加层都应该更容易的包含其原始函数作为其组成部分即可如下所示：</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407143555719.png" alt="image-20220407143555719"></p>
+<p>残差块</p>
+<p>如图所示，即将原始输入作为输出的一部分直接传输使得原本所要拟合的函数 H（x） ，改为 F（x） ，其中，H（x）=F（x）+x。</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/v2-8cca8110539fbdea2a891bc990f6ac31_720w.jpg" alt="img"></p>
+<p>为什么resnet能避免梯度消失：将乘法变为加法</p>
+<p><img src="/2022/03/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%BD%91%E7%BB%9C%E7%9B%B8%E5%85%B3/image-20220407150021196.png" alt="image-20220407150021196"></p>
+<h2 id="数据增强相关"><a href="#数据增强相关" class="headerlink" title="数据增强相关"></a>数据增强相关</h2><p>在已有的数据集上增加数据，如增加背景噪声，改变图片的颜色和形状等方式，使得数据集具有更多的多样性，从而使模型的泛化性能更好。训练的时候每次从数据集中读取图片后进行在线的随机的生成，可以看作正则项。</p>
+<p>经常可以数据增强的项：旋转、切割、颜色。在实际使用中，torchvision.transforms中包含常用的变换。一般使用torchvision.transforms.Compose[]进行多种图像增广方法的结合，样例代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">train_transform = transforms.Compose([</span><br><span class="line">    transforms.ToPILImage(),</span><br><span class="line">    transforms.RandomHorizontalFlip(),  </span><br><span class="line">    transforms.RandomRotation(<span class="number">15</span>),  </span><br><span class="line">    transforms.ToTensor(),  </span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+<p>在实际训练的时候，一般在自定义dataset的__getitem__的时候，将transform赋值给data，样例代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ImgDataset</span>(<span class="params">Dataset</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, x, y=<span class="literal">None</span>, transform=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.x = x</span><br><span class="line">        <span class="comment"># label is required to be a LongTensor</span></span><br><span class="line">        self.y = y</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            self.y = torch.LongTensor(y)</span><br><span class="line">        self.transform = transform</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__len__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">len</span>(self.x)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        X = self.x[index]</span><br><span class="line">        <span class="keyword">if</span> self.transform <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            X = self.transform(X)</span><br><span class="line">        <span class="keyword">if</span> self.y <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            Y = self.y[index]</span><br><span class="line">            <span class="keyword">return</span> X, Y</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> X</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" class="post-title-link" itemprop="url">基于github+Hexo创建个人博客</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-03 10:59:39" itemprop="dateCreated datePublished" datetime="2022-03-03T10:59:39+08:00">2022-03-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-08-22 21:35:29" itemprop="dateModified" datetime="2022-08-22T21:35:29+08:00">2022-08-22</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>由于本身自己本科电子信息，对于网络方面，计算机方面的知识比较匮乏。故结合自身在写个人博客方面的经验写一个对0基础人群的博客构建文章。</p>
+<h3 id="建立博客"><a href="#建立博客" class="headerlink" title="建立博客"></a>建立博客</h3><p>站在前人的肩膀上，基于hexo和github创建个人博客主页的方法及流程可参见以下：</p>
+<ol>
+<li>[<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103268406">个人博客第1篇——注册GitHub</a>]</li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103325381">个人博客第2篇——Git 2.25.0详细安装步骤</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103391101">个人博客第3篇——绑定GitHub并提交文件</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103860494">个人博客第四篇——购买域名</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/105715224">个人博客第5篇——安装node.js和Hexo</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/103813944">个人博客第6篇——解析域名</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/105584373">个人博客第7篇——设置next主题</a></li>
+</ol>
+<p>其中，如果是单纯只是为了创建一个自己的博客，只为自己看，可以不用购买域名以及解析域名。</p>
+<h3 id="博客书写相关问题"><a href="#博客书写相关问题" class="headerlink" title="博客书写相关问题"></a>博客书写相关问题</h3><h4 id="博客语法"><a href="#博客语法" class="headerlink" title="博客语法"></a>博客语法</h4><p>推荐使用markdown进行博客的书写，windows端推荐使用typora，相关下载以及使用相关问题请自行搜索。markdown语法入门可在bilibili或菜鸟教程进行搜索。</p>
+<h4 id="博客书写以及第一篇文档上传"><a href="#博客书写以及第一篇文档上传" class="headerlink" title="博客书写以及第一篇文档上传"></a>博客书写以及第一篇文档上传</h4><p>打开git 进入博客文件夹，即如图</p>
+<p><img src="/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/image-20220303115809992.png" alt="image-20220303115809992"></p>
+<p>输入 hexo new “文章标题”                    这会生成在blog文件夹下的source/_posts文件夹下创建 文章标题.md</p>
+<p>在文章结束之后，</p>
+<p>hexo g                生成</p>
+<p>hexo d                部署</p>
+<p>即可在博客看到改变</p>
+<h4 id="上传博客图像显示失败"><a href="#上传博客图像显示失败" class="headerlink" title="上传博客图像显示失败"></a>上传博客图像显示失败</h4><p>遇到这个情况，首先在typora里面偏好设置设置如下：</p>
+<p><img src="/2022/03/03/%E5%9F%BA%E4%BA%8Egithub-Hexo%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/image-20220303115545521.png" alt="image-20220303115545521"></p>
+<p>即化为相对地址，并自动将.md文档中的图片进行复制。</p>
+<p>然后参照 <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/ea78bdd0551f/">https://www.jianshu.com/p/ea78bdd0551f/</a> 所示，进行更改。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/03/Hilbert%E7%9A%84c-%E5%AE%9E%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -411,7 +796,7 @@ int main()
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
