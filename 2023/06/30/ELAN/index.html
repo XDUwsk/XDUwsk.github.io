@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="（ELAN）Designing Network Design Strategies Through Gradient Path Analysis文章作者的想法为，发现当今主流的网络设计策略大多是基于前馈路径，即基于数据路径设计网络架构。在本文中，我们希望通过提高网络学习能力来增强训练模型的表达能力。由于驱动网络参数学习的机制是反向传播算法，我们设计了基于反向传播路径的网络设计策略。提出了层级、阶段">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ELAN">
+<meta property="og:url" content="http://example.com/2023/06/30/ELAN/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="（ELAN）Designing Network Design Strategies Through Gradient Path Analysis文章作者的想法为，发现当今主流的网络设计策略大多是基于前馈路径，即基于数据路径设计网络架构。在本文中，我们希望通过提高网络学习能力来增强训练模型的表达能力。由于驱动网络参数学习的机制是反向传播算法，我们设计了基于反向传播路径的网络设计策略。提出了层级、阶段">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/06/30/ELAN/3d05a481006d4031bc834323bbad4180.png">
+<meta property="og:image" content="http://example.com/2023/06/30/ELAN/628ff466598746f4ac251d9abbe94326.png">
+<meta property="article:published_time" content="2023-06-30T08:11:09.000Z">
+<meta property="article:modified_time" content="2023-06-30T08:12:28.813Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/06/30/ELAN/3d05a481006d4031bc834323bbad4180.png">
+
+<link rel="canonical" href="http://example.com/2023/06/30/ELAN/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ELAN | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/ELAN/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ELAN
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:11:09 / 修改时间：16:12:28" itemprop="dateCreated datePublished" datetime="2023-06-30T16:11:09+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="（ELAN）Designing-Network-Design-Strategies-Through-Gradient-Path-Analysis"><a href="#（ELAN）Designing-Network-Design-Strategies-Through-Gradient-Path-Analysis" class="headerlink" title="（ELAN）Designing Network Design Strategies Through Gradient Path Analysis"></a>（ELAN）Designing Network Design Strategies Through Gradient Path Analysis</h1><p>文章作者的想法为，发现当今主流的网络设计策略大多是基于前馈路径，即基于数据路径设计网络架构。在本文中，我们希望通过提高网络学习能力来增强训练模型的表达能力。由于驱动网络参数学习的机制是反向传播算法，我们设计了基于反向传播路径的网络设计策略。提出了层级、阶段级和网络级的梯度路径设计策略。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>很多研究都是从相同的角度出发的，也就是从浅层抽取 low-level 特征，从深层抽取 high-level 特征，然后将这些特征结合起来，即是 data path（前向传播）的角度</p>
+<p><strong>本文作者的思考：</strong></p>
+<p><img src="/2023/06/30/ELAN/3d05a481006d4031bc834323bbad4180.png" alt="在这里插入图片描述">如图所示，作者在 objective 和 loss 的角度分析了浅层和深层模型，作者发现通过调整 objective 和 loss layer 的配置，就可以控制每层学习到的特征（无论浅层还是深层)。<br>也就是说，网络学习到什么类型的特征取决于训练人员用什么信息投喂，而不是如何组合这些层，基于此，作者重新设计的网络结构</p>
+<p><strong>本文作者的出发点：</strong></p>
+<p>由于目前的参数更新方法都是反向传播规则，即目标函数会根据梯度来更新权重参数，所以本文是基于梯度传播路径来设计网络结构<br>本文的做法：为 layer-level、stage-level、network-level 设计了梯度路径：</p>
+<p><code>Layer-level design：</code>设计了梯度分流策略，并通过调整 layers 的数量和计算残差连接的 channel ratio，设计了 Partial Residual Network（PRN）（PRN 和本文是相同的作者团队）<br><code>Stage-level design：</code>将硬件的特性引入网络结构中来加速网络的推理过程。作者通过最大化梯度结合和最小化硬件消耗的两个方式，设计了 Cross Stage Network（CSPNet）[33] （CSPNet 和本文是相同的作者团队）<br><code>Network-level design：</code>作者考虑了梯度传播的效率来平衡网络的学习能力，以网络的梯度反传路径长度作为总基础，设计了 Efficient Layer Aggregation Network（ELAN）</p>
+<h2 id="ELAN"><a href="#ELAN" class="headerlink" title="ELAN"></a>ELAN</h2><p>ELAN 的主要目标是为了解决 deep model scaling 时难以收敛的问题</p>
+<p>ELAN 是由 VoVNet 和 CSPNet 结合而来的，且其整个网络的梯度长度的优化是基于 Stack in computational block 结构的</p>
+<p><code>Stack in computational block：</code></p>
+<p>在做模型缩放时，如果网络达到了一定的深度，再叠加深度时，网络的效果可能会不升反降</p>
+<p>举个例子：</p>
+<ul>
+<li>scaled-YOLOv4，P7 model 使用很多操作和参数，但只获得了很小的性能提升</li>
+<li>ResNet-152 约是 ResNet-50 参数量的 3 倍，但在 ImageNet 只带了了 1% 的 acc 提升，当 ResNet 堆叠到大约 200 层时，性能比 ResNet-152 更差</li>
+<li>VoVNet 堆叠到 99 层时，其 acc 比 VoVNet-39 还低</li>
+</ul>
+<p>分析：</p>
+<ul>
+<li>从梯度路径的设计来看，作者认为随着堆叠层数的增加， VoVNet 比 ResNet 的性能下降更多的原因在于，VoVNet 是基于 OSA module 堆叠而来，而每个 OSA module 都包括一个 transition layer，所以每堆叠一个 OSA module，每个层的梯度路径都会增加 1</li>
+<li>而 ResNet 是基于 residual layers 堆叠而来的，每堆叠一个 residual layer，只会增加梯度最长路径</li>
+</ul>
+<p>为了进一步分析，作者基于 YOLOR-CSP 进行了一些实验，并且发现：</p>
+<ul>
+<li>当堆叠层数达到 80+ 时， CSP 早融合的方式比 normal CSP 效果更好，每个 stage 的最短梯度路径会减 1</li>
+<li>当网络继续变深和变宽，CSP 晚融合的方式得到了更好的效果，每个 layer 的最短梯度路径会减 1</li>
+</ul>
+<p>Stack in computational block 如图 6 所示：</p>
+<ul>
+<li>出发点 1：为了避免使用更多 transition layer</li>
+<li>出发点 2：让整个网络的最短梯度路径变得更长一些</li>
+</ul>
+<p>E-LAN 结构如图 6c 所示：主要为了避免过多的使用 transition layer（会提升梯度最短路径，影响网络加深）</p>
+<p><img src="/2023/06/30/ELAN/628ff466598746f4ac251d9abbe94326.png" alt="在这里插入图片描述"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/06/30/CSPNet/" rel="prev" title="CSPNet">
+      <i class="fa fa-chevron-left"></i> CSPNet
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%EF%BC%88ELAN%EF%BC%89Designing-Network-Design-Strategies-Through-Gradient-Path-Analysis"><span class="nav-number">1.</span> <span class="nav-text">（ELAN）Designing Network Design Strategies Through Gradient Path Analysis</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ELAN"><span class="nav-number">1.2.</span> <span class="nav-text">ELAN</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

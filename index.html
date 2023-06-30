@@ -148,6 +148,608 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/ELAN/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/30/ELAN/" class="post-title-link" itemprop="url">ELAN</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:11:09 / 修改时间：16:12:28" itemprop="dateCreated datePublished" datetime="2023-06-30T16:11:09+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="（ELAN）Designing-Network-Design-Strategies-Through-Gradient-Path-Analysis"><a href="#（ELAN）Designing-Network-Design-Strategies-Through-Gradient-Path-Analysis" class="headerlink" title="（ELAN）Designing Network Design Strategies Through Gradient Path Analysis"></a>（ELAN）Designing Network Design Strategies Through Gradient Path Analysis</h1><p>文章作者的想法为，发现当今主流的网络设计策略大多是基于前馈路径，即基于数据路径设计网络架构。在本文中，我们希望通过提高网络学习能力来增强训练模型的表达能力。由于驱动网络参数学习的机制是反向传播算法，我们设计了基于反向传播路径的网络设计策略。提出了层级、阶段级和网络级的梯度路径设计策略。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>很多研究都是从相同的角度出发的，也就是从浅层抽取 low-level 特征，从深层抽取 high-level 特征，然后将这些特征结合起来，即是 data path（前向传播）的角度</p>
+<p><strong>本文作者的思考：</strong></p>
+<p><img src="/2023/06/30/ELAN/3d05a481006d4031bc834323bbad4180.png" alt="在这里插入图片描述">如图所示，作者在 objective 和 loss 的角度分析了浅层和深层模型，作者发现通过调整 objective 和 loss layer 的配置，就可以控制每层学习到的特征（无论浅层还是深层)。<br>也就是说，网络学习到什么类型的特征取决于训练人员用什么信息投喂，而不是如何组合这些层，基于此，作者重新设计的网络结构</p>
+<p><strong>本文作者的出发点：</strong></p>
+<p>由于目前的参数更新方法都是反向传播规则，即目标函数会根据梯度来更新权重参数，所以本文是基于梯度传播路径来设计网络结构<br>本文的做法：为 layer-level、stage-level、network-level 设计了梯度路径：</p>
+<p><code>Layer-level design：</code>设计了梯度分流策略，并通过调整 layers 的数量和计算残差连接的 channel ratio，设计了 Partial Residual Network（PRN）（PRN 和本文是相同的作者团队）<br><code>Stage-level design：</code>将硬件的特性引入网络结构中来加速网络的推理过程。作者通过最大化梯度结合和最小化硬件消耗的两个方式，设计了 Cross Stage Network（CSPNet）[33] （CSPNet 和本文是相同的作者团队）<br><code>Network-level design：</code>作者考虑了梯度传播的效率来平衡网络的学习能力，以网络的梯度反传路径长度作为总基础，设计了 Efficient Layer Aggregation Network（ELAN）</p>
+<h2 id="ELAN"><a href="#ELAN" class="headerlink" title="ELAN"></a>ELAN</h2><p>ELAN 的主要目标是为了解决 deep model scaling 时难以收敛的问题</p>
+<p>ELAN 是由 VoVNet 和 CSPNet 结合而来的，且其整个网络的梯度长度的优化是基于 Stack in computational block 结构的</p>
+<p><code>Stack in computational block：</code></p>
+<p>在做模型缩放时，如果网络达到了一定的深度，再叠加深度时，网络的效果可能会不升反降</p>
+<p>举个例子：</p>
+<ul>
+<li>scaled-YOLOv4，P7 model 使用很多操作和参数，但只获得了很小的性能提升</li>
+<li>ResNet-152 约是 ResNet-50 参数量的 3 倍，但在 ImageNet 只带了了 1% 的 acc 提升，当 ResNet 堆叠到大约 200 层时，性能比 ResNet-152 更差</li>
+<li>VoVNet 堆叠到 99 层时，其 acc 比 VoVNet-39 还低</li>
+</ul>
+<p>分析：</p>
+<ul>
+<li>从梯度路径的设计来看，作者认为随着堆叠层数的增加， VoVNet 比 ResNet 的性能下降更多的原因在于，VoVNet 是基于 OSA module 堆叠而来，而每个 OSA module 都包括一个 transition layer，所以每堆叠一个 OSA module，每个层的梯度路径都会增加 1</li>
+<li>而 ResNet 是基于 residual layers 堆叠而来的，每堆叠一个 residual layer，只会增加梯度最长路径</li>
+</ul>
+<p>为了进一步分析，作者基于 YOLOR-CSP 进行了一些实验，并且发现：</p>
+<ul>
+<li>当堆叠层数达到 80+ 时， CSP 早融合的方式比 normal CSP 效果更好，每个 stage 的最短梯度路径会减 1</li>
+<li>当网络继续变深和变宽，CSP 晚融合的方式得到了更好的效果，每个 layer 的最短梯度路径会减 1</li>
+</ul>
+<p>Stack in computational block 如图 6 所示：</p>
+<ul>
+<li>出发点 1：为了避免使用更多 transition layer</li>
+<li>出发点 2：让整个网络的最短梯度路径变得更长一些</li>
+</ul>
+<p>E-LAN 结构如图 6c 所示：主要为了避免过多的使用 transition layer（会提升梯度最短路径，影响网络加深）</p>
+<p><img src="/2023/06/30/ELAN/628ff466598746f4ac251d9abbe94326.png" alt="在这里插入图片描述"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/CSPNet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/30/CSPNet/" class="post-title-link" itemprop="url">CSPNet</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:10:57 / 修改时间：16:12:49" itemprop="dateCreated datePublished" datetime="2023-06-30T16:10:57+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="CSPNET-A-NEW-BACKBONE-THAT-CAN-ENHANCE-LEARNING-CAPABILITY-OF-CNN"><a href="#CSPNET-A-NEW-BACKBONE-THAT-CAN-ENHANCE-LEARNING-CAPABILITY-OF-CNN" class="headerlink" title="CSPNET: A NEW BACKBONE THAT CAN ENHANCE LEARNING CAPABILITY OF CNN"></a>CSPNET: A NEW BACKBONE THAT CAN ENHANCE LEARNING CAPABILITY OF CNN</h1><h2 id="CSPNet-简介"><a href="#CSPNet-简介" class="headerlink" title="CSPNet 简介"></a>CSPNet 简介</h2><p>在本文中，作者提出了跨阶段局部网络(CSPNet)，用来缓解以往工作需要从网络架构角度进行大量推理计算的问题，作者把这个问题归结为网络优化中的<strong>重复梯度信息</strong>。</p>
+<p>作者的主要想法是通过分割梯度流，使梯度流通过不同的网络路径传播。通过切换拼接和转换，传播的梯度信息可以具有较大的相关性差异。此外，CSPNet可以大大减少计算量，并提高推理速度和准确性。除此之外，CSPNet 易于实现，并且足够通用，可以与 ResNet、ResNeXt 和 DenseNet 的体系结构相融合。</p>
+<p>本文主要解决了以下的三个问题：</p>
+<ul>
+<li><strong>加强CNN的学习能力：</strong>现有的CNN网络存在经过轻量化之后的准确率大大下降的问题，现有的网络使用CSPNet的思想之后，计算量将减少10％至20％，准确率更高。</li>
+<li><strong>消除计算瓶颈：</strong>认为过高的bottleneck会导致花费更多的时间进行推理，或部份算术单元会被闲置。所以将CNN的计算量均匀的分布在每一层，从而有效的提升每个计算单元的利用率。</li>
+<li><strong>降低内存成本：</strong>在特征金字塔生成过程中采用了跨通道池化的方式进行特征映射。</li>
+</ul>
+<h2 id="CSPNet思想"><a href="#CSPNet思想" class="headerlink" title="CSPNet思想"></a>CSPNet思想</h2><pre><code>    在原本DenseNet中，前面层的feature map全部传入后面层作为输入，在CSPNet中，将前面层的feature map在通道上一分为二，一部分输入到后面层，一部分直接通过short-cut的方式连接到transition层，这样可以缓解一部分的梯度信息重复计算问题，从而减少模型的计算量和显存占用。
+</code></pre><h2 id="CSPNet网络创新点"><a href="#CSPNet网络创新点" class="headerlink" title="CSPNet网络创新点"></a>CSPNet网络创新点</h2><h3 id="整体结构"><a href="#整体结构" class="headerlink" title="整体结构"></a>整体结构</h3><p><img src="/2023/06/30/CSPNet/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA56iL5aSn5rW3,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
+<p>传统的DenseNet中，第i层的输入与第i层的输出做concat，作为第i+1层的输入，这就要求输入和输出的分辨率保持不变，就是不做下采样操作，下采样操作在transition层进行。</p>
+<p>在CSPDenseNet中，将输入特征数据在通道维度上划分为<img src="/2023/06/30/CSPNet/281b211c0a544314af53007639dc64e8.png" alt="img">， <img src="/2023/06/30/CSPNet/f3ba8572acaf4dab9e857b6403f518ef.png" alt="img">输入到DenseNet中，<img src="/2023/06/30/CSPNet/103a8eac372346009eeffe0dcad93118.png" alt="img">直接在transition层与DenseBlock的输出在通道维度上做concat。在CSPDenseNet的transition层，先将Dense Block的输出结果<img src="/2023/06/30/CSPNet/2d7ec7a7f418470698bc5a1f820be714.png" alt="img">经过一个conv卷积操作，然后和<img src="/2023/06/30/CSPNet/6fcccbe8978840aea95bca7d05e6306b.png" alt="img">进行concat得到<img src="/2023/06/30/CSPNet/419c23c79b0945b294cf22b5c14741b8.png" alt="img">，输入到另一个conv卷积操作得到<img src="/2023/06/30/CSPNet/150b965a21f743e8a22a9068a2ca9c15.png" alt="img">。</p>
+<p>上述图（b）中CSPDenseNet的前向推理过程如下：</p>
+<p><img src="/2023/06/30/CSPNet/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA56iL5aSn5rW3,size_13,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
+<p>参数更新过程如下：</p>
+<p><img src="/2023/06/30/CSPNet/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA56iL5aSn5rW3,size_14,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
+<p>经过上述改进之后，CSPDenseNet将原来DenseNet中对于全部feature map的重复梯度计算降低了一半，因为另一半x0’ 的feature map不在经过Dense Block，直接送入了transition层。所以这种网络结构叫做Cross Stage Partial DenseNet，就是跨Stage的部分的DenseNet。</p>
+<h3 id="Partial-Dense-Block"><a href="#Partial-Dense-Block" class="headerlink" title="Partial Dense Block"></a>Partial Dense Block</h3><p>Partial Dense Block的设计目的为</p>
+<ul>
+<li><strong>增加梯度路径:</strong>通过拆分合并策略，可以使梯度路径的数量增加一倍。由于跨阶段策略，可以减轻使用显式特征映射复制进行连接所带来的缺点</li>
+<li><strong>每层的平衡计算:</strong>通常，DenseNet的基础层通道数远大于增长率。由于局部密集块中涉及密集层操作的基础层通道仅占原始数量的一半，因此可以有效解决近一半的计算瓶颈</li>
+<li><strong>减少内存流量:</strong>假设DenseNet中一个密集块的基本特征图大小为w × h × c，增长率为d，总共有m个密集层。则该密集块的CIO为$(c × m) + ((m^2 + m) × d)=2$，部分密集块的CIO为$(c × m) + (m^2 + m) × d)=2$。虽然m和d通常远小于c，但部分密集块最多可以节省网络内存流量的一半。</li>
+</ul>
+<h3 id="Partial-Transition-Layer"><a href="#Partial-Transition-Layer" class="headerlink" title="Partial Transition Layer"></a>Partial Transition Layer</h3><p>Partial Transition Layer的设计目的为使梯度组合的差异最大化。Partial Transition Layer是一种层次化的特征融合机制，它利用梯度流的聚合策略来防止不同的层学习重复的梯度信息。在这里，作者设计了两个CSPDenseNet变体来展示这种梯度流截断是如何影响网络的学习能力的。</p>
+<p><img src="/2023/06/30/CSPNet/20201210234304222.png" alt="在这里插入图片描述"></p>
+<p>上图中的 (c) 和 (d) 展示了两种不同的融合策略：</p>
+<p><strong>Fusion First：</strong>是将两部分生成的feature map进行拼接，然后进入过渡层。如果采用这种策略，将会损失大量的梯度信息。<br><strong>Fusion Last：</strong>对于fusion last策略，来自稠密块的输出将经过过渡层，然后与来自Part1的feature map进行连接。如果采用这种策略，由于梯度流被截断，梯度信息将不会被重用。<br>如果我们使用上图所示的四种架构来进行图像分类，其结果如下图所示：</p>
+<p><img src="/2023/06/30/CSPNet/20201210235050303.png" alt="在这里插入图片描述"></p>
+<p>从上图可以看出，如果采用Fusion Last策略进行图像分类，计算成本明显下降，但Top-1的准确率仅下降0.1%。另一方面，CSP (fusion first)策略确实有助于显著降低计算成本，但Top-1的准确率显著下降1.5%。</p>
+<p><strong>通过使用跨阶段的分割和合并策略，我们能够有效地减少信息集成过程中重复的可能性。如果能够有效地减少重复的梯度信息，那么网络的学习能力将会得到很大的提高。</strong></p>
+<p>我们可以得到如下结论：</p>
+<ul>
+<li>使用Fusion First有助于降低计算代价，但是准确率有显著下降。</li>
+<li>使用Fusion Last也是极大降低了计算代价，top-1 accuracy仅仅下降了0.1个百分点。</li>
+<li>同时使用Fusion First和Fusion Last相结合的CSP所采用的融合方式可以在降低计算代价的同时，提升准确率。</li>
+</ul>
+<h2 id="应用CSPNet的思想至其他网络："><a href="#应用CSPNet的思想至其他网络：" class="headerlink" title="应用CSPNet的思想至其他网络："></a>应用CSPNet的思想至其他网络：</h2><p><img src="/2023/06/30/CSPNet/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA56iL5aSn5rW3,size_20,color_FFFFFF,t_70,g_se,x_16-168726774348025.png" alt="img"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/RegVGG/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/30/RegVGG/" class="post-title-link" itemprop="url">RegVGG</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:10:43 / 修改时间：16:13:03" itemprop="dateCreated datePublished" datetime="2023-06-30T16:10:43+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="RepVGG-Making-VGG-style-ConvNets-Great-Again"><a href="#RepVGG-Making-VGG-style-ConvNets-Great-Again" class="headerlink" title="RepVGG: Making VGG-style ConvNets Great Again"></a>RepVGG: Making VGG-style ConvNets Great Again</h2><p>主要贡献：提出了一种简单但功能强大的卷积神经网络结构，其网络结构，在推理时只具有3x3卷积和ReLU，在训练时具有多分支拓扑结构，通过结构重参数化技术实现训练时间和推理时间的解耦，并命名为RepVGG。</p>
+<h3 id="对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下："><a href="#对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：" class="headerlink" title="对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下："></a>对于较为复杂的网络（ResNet的残差块以及Inception的分支连接），其精度往往较好，但其本身存在的问题如下：</h3><ul>
+<li>会降低模型的推理速度并且减少内存利用率</li>
+<li>有些节点及算子会增加内存消耗并且对别的设备不友好。</li>
+</ul>
+<p>论文中提到，大部分学者提到FLOPs（浮点运算的数量）会影响推理速度，但是论文中作者做了实验发现FLOPs对模型的速度并不是强相关。</p>
+<p>作者提出的RepVGG，其具有以下优点：</p>
+<ul>
+<li>该模型具有类似VGG的拓扑结构，没有任何分支，这意味着每一层都将其唯一前一层的输出作为输入，并将输出馈送到其唯一的后一层。</li>
+<li>该模型的主体部分仅使用3 × 3的conv和ReLU。</li>
+<li>模型的具体架构(包括具体的深度和层宽度)的实例化没有模型结构的自动搜索，手工细化，复合缩放，也没有其他代价较大的设计。</li>
+</ul>
+<h3 id="作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。"><a href="#作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。" class="headerlink" title="作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。"></a>作者认为，多分支架构可以看作为许多较浅模型的隐式集成，并且具有较好的性能水平。</h3><p>针对多分支架构的优点集中于训练上，而不希望用于推理上，故提出重参数化的方法来解耦训练时的多分支结构和推理时的简单架构，即意味着通过转换其参数将架构从一个转换到另一个。</p>
+<p><img src="/2023/06/30/RegVGG/4H7{5]]_TNU%XI%5PPH9KA9.png" alt="img"></p>
+<p>如上图中(b)和(c)所示，即为转换之后的RepVGG和转换之前的RepVGG。其将分支看作退化的1x1卷积，进一步看作退化的3x3卷积。从而可以从(b)中的模型架构转变为(c)中的模型架构，可以用3x3卷积、BN、1x1卷积等模块进行原模型的等效替换。从而提升计算速度。</p>
+<h3 id="本文的核心贡献点如下："><a href="#本文的核心贡献点如下：" class="headerlink" title="本文的核心贡献点如下："></a>本文的核心贡献点如下：</h3><ul>
+<li>我们提出了RepVGG，这是一种简单的架构，与最先进的技术相比，具有良好的速度-精度权衡。</li>
+<li>我们建议使用结构重参数化将训练时间的多分支拓扑与推理时间的平面结构解耦。</li>
+<li>我们展示了RepVGG在图像分类和语义分割方面的有效性，以及实现的效率和易用性。</li>
+</ul>
+<h3 id="如何实现结构重参数化："><a href="#如何实现结构重参数化：" class="headerlink" title="如何实现结构重参数化："></a>如何实现结构重参数化：</h3><p>在上述提到，RepVGG在训练时每一层都有三个分支，分别是identify，1x1，3x3，模型训练时，输出$ y=x+g(x)+f(x) $，每一层就需要3个参数块，对于n层网络，就需要$3*n$个参数块。所以我们需要重参数化，会使得推理时模型参数量小。</p>
+<p><img src="/2023/06/30/RegVGG/aa1ad31949b54e76b0a282fab915478f.png" alt="img"></p>
+<p>上图中的过程即为将训练好的多分支模型转换为单分支模型，从而达到推理时的高性能</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">对于重参数化的实现主要存在两个问题：</span><br><span class="line">第一个问题，在每个卷积后都接上一个BN，怎么将卷积和BN融合。</span><br><span class="line">第二个问题，存在不同大小的卷积，怎么将几个不同大小的卷积融合在一起。</span><br></pre></td></tr></table></figure>
+<p>对于第一个问题，在每个卷积后都接上一个BN，怎么将卷积和BN融合。</p>
+<p><img src="/2023/06/30/RegVGG/v2-84cdab58644fcbcafb3c690c1669b879_1440w.webp" alt="v2-84cdab58644fcbcafb3c690c1669b879_1440w"></p>
+<p>这其实就是一个卷积层，只不过权重考虑了BN的参数 我们令：</p>
+<p><img src="/2023/06/30/RegVGG/v2-b438e3a2ee316a6054a4e4c45443fef3_1440w.webp" alt="img"></p>
+<p>最终的融合结果即为：</p>
+<p><img src="/2023/06/30/RegVGG/v2-cd0d2de067e4850fe4fafce70f58acf1_1440w.webp" alt="img"></p>
+<h3 id="2-2-2-conv-3x3和conv-1x1合并"><a href="#2-2-2-conv-3x3和conv-1x1合并" class="headerlink" title="2.2.2. conv_3x3和conv_1x1合并"></a>2.2.2. conv_3x3和conv_1x1合并</h3><p> 这里为了详细说明下，假设输入特征图特征图尺寸为(1, 2, 3, 3)，输出特征图尺寸与输入特征图尺寸相同，且stride=1，下面展示是conv_3x3的卷积过程：</p>
+<p><img src="/2023/06/30/RegVGG/v2-89854f076457c9c03b733a389db96993_1440w.webp" alt="img"></p>
+<p> conv_3x3卷积过程大家都很熟悉，看上图一目了然，首先将特征图进行pad=kernel_size//2，然后从左上角开始(上图中红色位置)做卷积运算，最终得到右边output输出。下面是conv_1x1卷积过程：</p>
+<p><img src="/2023/06/30/RegVGG/v2-88962d2f0fc8f1371d0d521c04c2a57d_1440w.webp" alt="img"></p>
+<p> 同理，conv_1x1跟conv_3x3卷积过程一样，从上图中左边input中红色位置开始进行卷积，得到右边的输出，观察conv_1x1和conv_3x3的卷积过程，可以发现他们都是从input中红色起点位置开始，走过相同的路径，因此，将conv_3x3和conv_1x1进行融合，只需要将conv_1x1卷积核padding成conv_3x3的形式，然后于conv_3x3相加，再与特征图做卷积(这里依据卷积的可加性原理)即可，也就是conv_1x1的卷积过程变成如下形式：</p>
+<p><img src="/2023/06/30/RegVGG/v2-b7409c315f10a158331bf90fcf32efd6_1440w.webp" alt="img"></p>
+<h3 id="2-2-3-identity-等效为特殊权重的卷积层"><a href="#2-2-3-identity-等效为特殊权重的卷积层" class="headerlink" title="2.2.3. identity 等效为特殊权重的卷积层"></a>2.2.3. identity 等效为特殊权重的卷积层</h3><p> identity层就是输入直接等于输出，也即input中每个通道每个元素直接输出到output中对应的通道，用一个什么样的卷积层来等效这个操作呢，我们知道，卷积操作必须涉及要将每个通道加起来然后输出的，然后又要保证input中的每个通道每个元素等于output中，从这一点，我们可以从PWconv想到，只要令当前通道的卷积核参数为1，其余的卷积核参数为0，就可以做到；从DWconv中可以想到，用conv_1x1卷积且卷积核权重为1，就能保证每次卷积不改变输入，因此，identity可以等效成如下的conv_1x1的卷积形式：</p>
+<p><img src="/2023/06/30/RegVGG/v2-b05e6fa96bd642c1da2d36d39a543d7a_1440w.webp" alt="img"></p>
+<p>从上面的分析，我们进一步可以将indentity -&gt; conv_1x1 -&gt; conv_3x3的形式，如下所示：</p>
+<p><img src="/2023/06/30/RegVGG/v2-bc97e575d5007645901830109828a36f_1440w.webp" alt="img"></p>
+<p> 上述过程就是对应论文中所属的下述从step1到step2的变换过程，涉及conv于BN层融合，conv_1x1与identity转化为等价的conv_3x3的形式：</p>
+<p><img src="/2023/06/30/RegVGG/v2-f5ce0b89a10aa36223275dccd6327cbe_1440w.webp" alt="img"></p>
+<p> 结构重参数化的最后一步也就是上图中step2 -&gt; step3， 这一步就是利用卷积可加性原理，将三个分支的卷积层和bias对应相加组成最终一个conv<em>3x3的形式即可。</em><br>这里，大家可能既然把BN，identity，conv_1x1和conv_3x3都融合在一起了，为什么不干脆把ReLU也融合进去呢？其实也是可以将ReLU层进行融合的，<strong>但是需要进行量化</strong>，<strong>conv输出tensor的值域直接使用relu输出的值阈（同时对应计算Ｓ和Z），就可以完成conv和relu合并。无量化动作的优化是无法完成conv+relu的合并*</strong>。这里的知识请大家参考论文：<em><br><em>*<a href="https://link.zhihu.com/?target=https%3A//arxiv.org/abs/1712.05877">Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference</a>。</em></em></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/VovNet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/30/VovNet/" class="post-title-link" itemprop="url">VovNet</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:10:29 / 修改时间：16:13:21" itemprop="dateCreated datePublished" datetime="2023-06-30T16:10:29+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="VoVNet-An-Energy-and-GPU-Computation-Efficient-Backbone-Network-for-Real-Time-Object-Detection"><a href="#VoVNet-An-Energy-and-GPU-Computation-Efficient-Backbone-Network-for-Real-Time-Object-Detection" class="headerlink" title="VoVNet:An Energy and GPU-Computation Efficient Backbone Network for Real-Time Object Detection"></a>VoVNet:An Energy and GPU-Computation Efficient Backbone Network for Real-Time Object Detection</h1><h2 id="大体介绍及缘由"><a href="#大体介绍及缘由" class="headerlink" title="大体介绍及缘由"></a>大体介绍及缘由</h2><p>因为 <code>DenseNet</code> 通过用密集连接，来聚合具有不同感受野大小的中间特征，因此它在对象检测任务上表现出良好的性能。虽然特征重用（<code>feature reuse</code>）的使用，让 <code>DenseNet</code> 以少量模型参数和 <code>FLOPs</code>，也能输出有力的特征，但是使用 <code>DenseNet</code> 作为 <code>backbone</code> 的目标检测器却表现出了运行速度慢和效率低下的弊端。作者认为是密集连接(<code>dense connection</code>)带来的输入通道线性增长，从而导高内存访问成本和能耗。</p>
+<p>为了提高 <code>DenseNet</code> 的效率，作者提出一个新的更高效的网络 <code>VoVet</code>，由 <code>OSA</code>（<code>One-Shot Aggregation</code>，一次聚合）组成。<code>OSA</code> <strong>仅在模块的最后一层聚合前面所有层的特征</strong>，这种结构不仅继承了 <code>DenseNet</code> 的多感受野表示多种特征的优点，也解决了密集连接效率低下的问题。基于 <code>VoVNet</code> 的检测器不仅速度比 <code>DenseNet</code> 快 2 倍，能耗也降低了 1.5-4.1 倍。另外，<code>VoVNet</code> 网络的速度和效率还优于 <code>ResNet</code>，并且其对于小目标检测的性能有了显著提高。</p>
+<p>DenseNet和VoVNet之间的区别，大体上可以如下图所示：</p>
+<p><img src="/2023/06/30/VovNet/v2-06f9e7e6761c98f4f554cb5aabe9cab2_1440w.webp" alt="img"></p>
+<h3 id="贡献："><a href="#贡献：" class="headerlink" title="贡献："></a>贡献：</h3><ul>
+<li><p>讨论了 MAC 和 GPU 计算的效率，并研究了如何设计更高效的结构</p>
+</li>
+<li><p>抛出了 DenseNet 网络结构中的问题，包括低效的、冗余的操作等</p>
+</li>
+<li><p>提出了 One-shot Aggregation（OSA），将中间的特征一次性聚合（在最后一层聚合一次），如图 1b 所示，能够在</p>
+<p>保留 concat 优势的同时优化 MAC（中间层输入输出通道相同） 和 GPU 计算效率（无需 1x1 卷积）</p>
+</li>
+<li><p>基于 OSA 模块，构建了 VoVNet，一个 backbone 网络结构，并且将该 backbone 用于 DSOD、RefineDet、Mask R-CNN 等方法中，取得了比 DenseNet、ResNet 等方法更好的效率和准确率的平衡</p>
+</li>
+</ul>
+<h2 id="proposed-method"><a href="#proposed-method" class="headerlink" title="proposed method"></a>proposed method</h2><h3 id="重新思考密集连接"><a href="#重新思考密集连接" class="headerlink" title="重新思考密集连接"></a>重新思考密集连接</h3><p><strong>DenseNet 的优点</strong>：</p>
+<p>在计算第 $l$ 层的输出时，要用到之前所有层的输出的 concat 的结果。这种<strong>密集的连接使得各个层的各个尺度的特征都能被提取</strong>，供后面的网络使用。这也是它能得到比较高的精度的原因，而且<strong>密集的连接更有利于梯度的回传</strong>（ResNet shorcut 操作的加强版）。</p>
+<p><strong>DenseNet 缺点</strong>（导致了能耗和推理效率低的）：</p>
+<ul>
+<li>密集连接会增加输入通道大小，但输出通道大小保持不变，导致的输入和输出通道数都不相等。因此，DenseNet 具有具有较高的 MAC。</li>
+<li>DenseNet 采用了 <code>bottleneck</code> 结构，这种结构将一个 3×3 卷积分成了两个计算（1x1+3x3 卷积），这带来了更多的序列计算（sequential computations），导致会降低推理速度。</li>
+</ul>
+<blockquote>
+<p>密集连接会导致计算量增加，所以不得不采用 1×1 卷积的 <code>bottleneck</code> 结构。</p>
+</blockquote>
+<h3 id="One-shot-Aggregation"><a href="#One-shot-Aggregation" class="headerlink" title="One-shot Aggregation"></a>One-shot Aggregation</h3><p>OSA 模块就是只聚合每个 block 的最后一层特征，也就是在每个 block 的最后一层，对该 block 的前面所有层的特征进行 concat，只进行这一次的聚合。</p>
+<p>该模块将中间层的特征聚合到最后一层。如图所示。每个卷积层包含双向连接，一个连接到下一层以产生具有更大感受野的特征，而另一个仅聚合到最终输出特征映射。</p>
+<p><img src="/2023/06/30/VovNet/4c2143990db24da7be3fa4c43c96dd82.png" alt="在这里插入图片描述"></p>
+<ul>
+<li>首先，在和 DenseNet-40 的 dense block 参数和计算量相似的基础上，设计 OSA module</li>
+<li>先使用层数相同的方式，随着每个卷积层输入尺度的减小，OSA 的输出比 dense block 的输出更大，OSA 模块的网络得到 93.6% acc，比同量级的 ResNet 效果好，由此可见，只在最后一层进行特征聚合，比使用全部中间层聚合更好</li>
+<li>OSA 的 transition layer 和 DenseNet 有较大不同，OSA 中，从浅层来的特征对 transition layer 更有效，因为深层特征对 transition layer 没有很大的影响</li>
+<li>所以，将 OSA module 降为使用 5 层（共 43 通道），如图 2 最下边一行，得到了 5.44% err，和 DenseNet-40 的 5.24% 很接近，这说明使用大量的中间层的密集连接是低效且没有很大的作用</li>
+<li>在检测任务上，使用 5 层 43 通道的 OSA module 可以将 MAC 从 3.7M 降低到 2.5M，这是因为 OSA 的中间层输入输出通道是相同的，使得MAC 最低，此外，因为检测任务比分类任务使用更大分辨率的特征图，MAC 会更严重的影响耗时和效率</li>
+</ul>
+<p>总之，OSA 能够提升 GPU 是计算效率，OSA 中间层的输入输出通道数相同，也不大需要使用 1x1 瓶颈层来降维，所以，OSA 层数更少、更高效</p>
+<h3 id="OSA-与-DenseNet-的不同之处总结如下："><a href="#OSA-与-DenseNet-的不同之处总结如下：" class="headerlink" title="OSA 与 DenseNet 的不同之处总结如下："></a>OSA 与 DenseNet 的不同之处总结如下：</h3><ul>
+<li>每一层的输出并没有按路线（route）到所有后续的中间层，这使得中间层的输入大小是恒定的。这样就提高了 GPU 的计算效率。</li>
+<li>另外一个不同之处在于没有了密集连接，因此 MAC 比 DenseNet 小得多</li>
+<li>此外，由于 OSA 模块聚集了浅层特征，它包含的层更少。因此，OSA 模块被设计成只有几层，可以在 GPU 中高效计算。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/MobileNet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/30/MobileNet/" class="post-title-link" itemprop="url">MobileNet</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:10:03 / 修改时间：16:13:52" itemprop="dateCreated datePublished" datetime="2023-06-30T16:10:03+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="MobileNet系列"><a href="#MobileNet系列" class="headerlink" title="MobileNet系列"></a>MobileNet系列</h1><h2 id="MobileNetv1"><a href="#MobileNetv1" class="headerlink" title="MobileNetv1"></a>MobileNetv1</h2><p>贡献：</p>
+<ul>
+<li>提出了深度可分离卷积，将标准卷积用逐通道卷积+逐点卷积来代替</li>
+<li>能够在边端设备使用，在保证效果的同时提升速度</li>
+</ul>
+<h3 id="深度可分离卷积"><a href="#深度可分离卷积" class="headerlink" title="深度可分离卷积"></a>深度可分离卷积</h3><p>深度级可分离卷积其实是一种可分解卷积操作（factorized convolutions）。其可以分解为两个更小的操作：深度卷积（depthwise  convolution） 和点卷积（ pointwise convolution）。</p>
+<p>对于一个标准卷积，输入一个$12<em>12</em>3$的一个输入特征图，经过$ 5<em>5</em>3$的卷积核得到一个$8<em>8</em>1$的输出特征图。如果我们此时有$256$个特征图，我们将会得到一个$8<em>8</em>256$的输出特征图，如下图所示:</p>
+<p><img src="/2023/06/30/MobileNet/ed74994c96c043b086a6ef061bf0d4af.png" alt="img"></p>
+<p> 对于深度卷积(其实就是组为1 的分组卷积)来说，将特征图通道全部进行分解，每个特征图都是单通道模式，并对每一个单独的通道特征图进行卷积操作。这样就会得到和原特征图一样通道数的生成特征图。假设输入$12<em>12</em>3$ 的特征图，经过$5<em>5</em>1<em>3$的深度卷积之后，得到了$8</em>8*3$的输出特征图。输入和输出的维度是不变的3，这样就会有一个问题，通道数太少，特征图的维度太少，不能够有效的获得信息。</p>
+<p><img src="/2023/06/30/MobileNet/7ee519c66af94a6b9d3eb69cea3ce7bf.png" alt="img"></p>
+<p>逐点卷积就是$1<em>1$卷积，主要作用就是对特征图进行升维和降维。在深度卷积的过程中，我们得到了$8</em>8<em>3$的输出特征图，我们用256个$1</em>1<em>3$的卷积核对输入特征图进行卷积操作，输出的特征图和标准的卷积操作一样都是$8</em>8*256$了。如下图：</p>
+<p><img src="/2023/06/30/MobileNet/f750cdd5d58440e795006c3bee29c78c.png" alt="img"></p>
+<p>标准卷积与深度可分离卷积的过程对比如下：</p>
+<p><img src="/2023/06/30/MobileNet/721c0945ad57422da5c344f802e29d48.png" alt="img"></p>
+<h3 id="深度可分离卷积的优势"><a href="#深度可分离卷积的优势" class="headerlink" title="深度可分离卷积的优势"></a>深度可分离卷积的优势</h3><p>对于标准卷积来说，卷积核的尺寸是$D_k<em>D_k</em>M$，一共有$N$个，所以标准卷积的参数量是：</p>
+<p><img src="/2023/06/30/MobileNet/cd3017db342c44c5ae247f81d74e8413.png" alt="img"></p>
+<p>其计算量计算如下</p>
+<p><img src="/2023/06/30/MobileNet/6faa54a4ef7a4a4bb13c16196de618c8.png" alt="img"></p>
+<p>,深度可分离卷积的参数量由深度卷积和逐点卷积两部分组成。深度卷积的卷积核尺寸$D_k<em>D_k</em>M$；逐点卷积的卷积核尺寸为$1<em>1</em>M$，一共有$N$个，所以深度可分离卷积的参数量是：</p>
+<p><img src="/2023/06/30/MobileNet/3ad597ec791743ca9fbea1f78cf0bd8d.png" alt="img"></p>
+<p>其计算量计算如下</p>
+<p><img src="/2023/06/30/MobileNet/3e28ca45a556474ab109a013a6efb3c2.png" alt="img"></p>
+<h3 id="网络结构"><a href="#网络结构" class="headerlink" title="网络结构"></a>网络结构</h3><p><img src="/2023/06/30/MobileNet/099f6b5094204e1faf457ff6677f730e.png" alt="在这里插入图片描述"></p>
+<p>MobileNetV1 的结构如表 1 所示，下采样是使用步长为 2 的卷积实现的，共 28 层</p>
+<p><img src="/2023/06/30/MobileNet/f7310662dff144a79bce1bdccf5f90b2.png" alt="在这里插入图片描述"></p>
+<h2 id="MobileNetv2"><a href="#MobileNetv2" class="headerlink" title="MobileNetv2"></a>MobileNetv2</h2><p>贡献：</p>
+<ul>
+<li>提出了倒残差结构：先 1x1 升维，使用 3x3 提取特征，最后再 1x1 降维，和残差结构的先降维后升维的结构是反的</li>
+<li>提出了线性瓶颈</li>
+</ul>
+<p>MobileNetV2中的核心思想是，瓶颈对模型的中间输入和输出进行编码，而内层则用于封装模型从较低级别概念（如：像素等）转换到较高级别描述符（如：图像类别等）的能力。最后，与传统的剩余连接一样，快捷方式能够实现更快地训练速度和更高的准确率。</p>
+<h3 id="倒残差结构"><a href="#倒残差结构" class="headerlink" title="倒残差结构"></a>倒残差结构</h3><p>实验发现在 MobileNetv1 中，深度卷积核的参数较多为 0，也就是其卷积核没有发挥提取特征作用。那么作者先通过 1x1 卷积将维度上升，再使用深度卷积，深度卷积的输入输出通道数更高，就能够提取更多的信息。</p>
+<p><img src="/2023/06/30/MobileNet/dfc1b9f5f1c7443e85b6190eb6a8422b.png" alt="在这里插入图片描述"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">残差模块：输入首先经过1*1的卷积进行压缩，然后使用3*3的卷积进行特征提取，最后在用1*1的卷积把通道数变换回去。整个过程是“压缩-卷积-扩张”。这样做的目的是减少3*3模块的计算量，提高残差模块的计算效率。</span><br><span class="line">倒残差模块：输入首先经过1*1的卷积进行通道扩张，然后使用3*3的depthwise卷积，最后使用1*1的pointwise卷积将通道数压缩回去。整个过程是“扩张-卷积-压缩”。为什么这么做呢？因为depthwise卷积不能改变通道数，因此特征提取受限于输入的通道数，所以将通道数先提升上去。文中的扩展因子为6。</span><br></pre></td></tr></table></figure>
+<h3 id="线性瓶颈"><a href="#线性瓶颈" class="headerlink" title="线性瓶颈"></a>线性瓶颈</h3><p>线性瓶颈结构，就是末层卷积使用线性激活的瓶颈结构（将 ReLU 函数替换为线性函数），因为 ReLU 激活函数对低维信息会造成很大损失。</p>
+<p>具体来说当低维信息映射到高维，然后经过Relu映射回低维时，若映射到的维度相对较高，则信息变换回去的损失较小；若映射到的维度相对较低，则信息变换回去后损失很大，如下图所示：</p>
+<p><img src="/2023/06/30/MobileNet/7abdcc43b7bb47c8937195e9a97f8ab3.png" alt="在这里插入图片描述"></p>
+<h2 id="MobileNetv3"><a href="#MobileNetv3" class="headerlink" title="MobileNetv3"></a>MobileNetv3</h2><p>贡献：</p>
+<ul>
+<li>使用 NAS 的方法搜寻更适合移动 CPU 的结构</li>
+<li>提出了 MobileNetV3-Large 和 MobileNetV3-Small，并引入了 h-swish 和 SE 等模块进行效果优化</li>
+</ul>
+<p>MobileNetV3 提出的目标就是为了实现移动设备上的模型的准确率和耗时的平衡。</p>
+<ul>
+<li>MobileNetV1 引入了深度可分离卷积，来代替传统卷积</li>
+<li>MobileNetV2 引入了线性瓶颈和反残差结构，来提升速度</li>
+<li>MobileNetV3 为了 NAS 来搜寻更合适的网络，并且引入了 Swish 非线性方法的优化版本 h-swish 和 SE 模块，建立更高效的网络</li>
+</ul>
+<h3 id="网络优化"><a href="#网络优化" class="headerlink" title="网络优化"></a>网络优化</h3><ul>
+<li><strong>修改初始卷积核的个数</strong><ul>
+<li>对于v2的输入层，通过3*3卷积将输入扩张成32维。作者发现，其实可以32再降低一点，所以这里改成了16，在保证了精度的前提下，降低了3ms的速度。关于这一点改变可以在最后给出的网络结构中看到</li>
+</ul>
+</li>
+<li><strong>更改网络末端计算量大的层</strong></li>
+<li><strong>引入了SE模块</strong></li>
+<li><strong>H-Swish激活函数</strong></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/ShuffleNet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/06/30/ShuffleNet/" class="post-title-link" itemprop="url">ShuffleNet</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:09:52 / 修改时间：16:14:07" itemprop="dateCreated datePublished" datetime="2023-06-30T16:09:52+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="ShuffleNet系列"><a href="#ShuffleNet系列" class="headerlink" title="ShuffleNet系列"></a>ShuffleNet系列</h1><h2 id="ShuffleNetv1"><a href="#ShuffleNetv1" class="headerlink" title="ShuffleNetv1"></a>ShuffleNetv1</h2><p><strong>现有网络的问题：</strong></p>
+<p>现有的高效结构如 Xception 和 ResNeXt，其实在极小的网络上的计算效率依然不太高，主要在于很耗费计算量的 1x1 卷积。</p>
+<p><strong>ShuffleNet 如何解决：</strong>使用 point-wise 分组卷积和 channel shuffle 两个操作，很好的降低计算量并保持准确率。这种结构能够允许网络使用更多的通道，帮助 encode 阶段提取更多的信息，这点对极小的网络非常关键。</p>
+<ul>
+<li>使用 point-wise 卷积来降低 1x1 卷积的计算量</li>
+<li>使用 channel shuffle 能够让不同通道的信息进行交互</li>
+</ul>
+<p>这里再介绍几个基本概念：</p>
+<p><strong>分组卷积：</strong>AlexNet 中提出的概念，在 ResNeXt 中有使用，也就是将特征图分为 N 个组，每组分别进行卷积，然后将卷积结果 concat 起来<br><strong>深度可分离卷积：</strong>和 MobileNet 中都有使用，也就是每个特征图使用一个卷积核来提取特征，之后使用 1x1 的卷积进行通道间的特征融合<br><strong>channel shuffle：</strong>shuffle 可以翻译为重新洗牌，也就是把不同组的 channel 再细分一下，打乱重新分组<br><strong>模型加速：</strong>加速推理时候的速度，如剪枝、量化</p>
+<p><img src="/2023/06/30/ShuffleNet/0ddfad3d997b42c1a675fa533f4645b2.png" alt="在这里插入图片描述"></p>
+<h3 id="ShuffleNet的亮点"><a href="#ShuffleNet的亮点" class="headerlink" title="ShuffleNet的亮点"></a>ShuffleNet的亮点</h3><ul>
+<li>结合<strong><em>\</em>Group convolutions**</strong>和<strong><em>\</em>Channel Shuffle**</strong></li>
+</ul>
+<p>​    <strong>group conv的问题：</strong>现在的精简CNN网络设计中使用Group convolutions已经成为一种趋势，它可有效地减少传统CNN所需的密集计算的运算量。但同时由于Groups之间彼此并<strong>不share feature map特征</strong>，这样就会导致每个filter只对限定的一部分输入特征可见，最终使得输出特征集合的表达能力大大降低。</p>
+<p>​    <strong>本文改进点：</strong>为了有效地对冲Groups convolution使用导致的Groups间特征互不相通的负面影响，作者提出了<strong>对Group convolution计算后对输出的output feature maps进行\</strong>shuffle处理*<em>*</em>，以使得接下来的Group convolution filters可在每个group所输出的部分channels构成的集合上进行计算。</p>
+<h2 id="ShuffleNetv2"><a href="#ShuffleNetv2" class="headerlink" title="ShuffleNetv2"></a>ShuffleNetv2</h2><p>贡献： </p>
+<ul>
+<li>提出了更应该使用直接的效率度量方法（如速度、耗时等）</li>
+<li>在 V1 的 channel shuffle 的基础上，又提出了 channel split，增强特征的重用性的同时也减少了计算量</li>
+<li>提出了设计高效网络的方法：<ul>
+<li>使用输入输出通道相同的卷积</li>
+<li>了解使用分组卷积的代价（分组越多，MAC 越大）</li>
+<li>合理的设定分组个数</li>
+<li>降低网络并行的分支（并行越多 MAC 越大）</li>
+<li>减少逐点运算</li>
+</ul>
+</li>
+</ul>
+<p>ShuffleNetV2 首先提出了 4 条设计高效网络的方法：</p>
+<ul>
+<li>G1：Equal channel width minimizes memory access cost (MAC)：当卷积层的输入特征矩阵与输出特征矩阵 channel 相等时 MAC 最小 （保持FLOPs不变时）</li>
+<li>G2： Excessive group convolution increases MAC：当 GConv 的 groups 增大时（保持FLOPs不变时），MAC 也会增大，所以建议针对不同的硬件和需求，更好的设计对应的分组数，而非盲目的增加</li>
+<li>G3： Network fragmentation reduces degree of parallelism：网络设计的碎片化程度（或者说并行的分支数量）越高，速度越慢（Appendix Fig 1）</li>
+<li>G4：Element-wise operations are non-negligible：Element-wise操作，即逐点运算，带来的影响是不可忽视的，轻量级模型中，元素操作占用了相当多的时间，特别是在GPU上。这里的元素操作符包括 ReLU、AddTensor、AddBias 等。将 depthwise convolution 作为一个 element-wise operator，因为它的 MAC/FLOPs 比率也很高</li>
+</ul>
+<p><strong>基于上面4条指导准则总结如下：</strong></p>
+<ul>
+<li>1x1卷积进行平衡输入和输出的通道大小；</li>
+<li>组卷积要谨慎使用，注意分组数；</li>
+<li>避免网络的碎片化；</li>
+<li>减少元素级运算。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/18/YOLOv7-Trainable-bag-of-freebies-sets-new-state-of-the-art-for-real-time-object-detectors/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -552,1706 +1154,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/" class="post-title-link" itemprop="url">Bag of Tricks and A Strong Baseline for Deep Person Re-identification</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-23 20:45:36 / 修改时间：21:03:55" itemprop="dateCreated datePublished" datetime="2023-04-23T20:45:36+08:00">2023-04-23</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="Bag-of-Tricks-and-A-Strong-Baseline-for-Deep-Person-Re-identification"><a href="#Bag-of-Tricks-and-A-Strong-Baseline-for-Deep-Person-Re-identification" class="headerlink" title="Bag of Tricks and A Strong Baseline for Deep Person Re-identification"></a>Bag of Tricks and A Strong Baseline for Deep Person Re-identification</h1><p>针对的问题：目前先进的基于深度神经网络的人员重识别技术设计了复杂的网络结构和串联多分支特征。</p>
-<p>本文收集并评估了一些有效的训练技巧，通过对技巧的结合，模型仅使用全局特征即达到在Market1501上95.4％的rank-1。</p>
-<p>作者认为，一个算法的baseline是十分重要的，对发表在顶会上的算法的baseline进行调查之后发现，顶级会议文章所选用的baseline效果大都较差。因此，作者使用一些训练策略更改了baseline。</p>
-<p>本文的研究目的总结如下：</p>
-<ul>
-<li>调查了许多发表在顶级会议上的作品，发现其中大多数都是在糟糕的baseline上扩展的</li>
-<li>对于学术界，我们希望为研究人员提供一个强有力的基线，以实现更高的准确性。</li>
-<li>对于社区，我们希望给评论者一些参考，什么技巧会影响ReID模型的性能。我们建议，在比较不同方法的性能时，评审人员需要考虑这些技巧。</li>
-<li>对于行业来说，我们希望提供一些有效的技巧，在不消耗太多额外的情况下获得更好的模型</li>
-</ul>
-<p>本文研究了六个技巧，使准确率在Market1501上达到了94.5％的rank1和85.9％的mAP，本文的主要贡献如下：</p>
-<ul>
-<li><p>收集了一些有效的训练技巧并设计了一种新型颈结构，命名为BNNeck。且两个广泛使用的数据集上评估了每个技巧的改进。</p>
-</li>
-<li><p>我们提供了强大的ReID基线。值得一提的是，该结果是利用ResNet50骨干网提供的全局特征获得的。据我们所知，这是全局特性在亲自ReID中获得的最佳性能。</p>
-</li>
-<li><p>作为补充，我们评估了图像大小和批量大小的数量对ReID模型性能的影响。</p>
-</li>
-</ul>
-<h2 id="标准-Re-ID-baseline"><a href="#标准-Re-ID-baseline" class="headerlink" title="标准 Re-ID baseline"></a>标准 Re-ID baseline</h2><ol>
-<li><p>在ImageNet上使用预训练的参数初始化ResNet50，并将全连接层的维数更改为N。N表示训练数据集中的身份数。</p>
-</li>
-<li><p>我们随机抽取每个人的P个身份和K张图像，构成一个训练批次。最后批大小为B = P×K。在本文中，我们设P = 16, K = 4。</p>
-</li>
-<li><p>我们将每张图像调整为256 × 128像素，并将调整后的图像填充为10个零值像素。然后随机裁剪成256 × 128的矩形图像。</p>
-</li>
-<li><p>每幅图像以0.5概率水平翻转。</p>
-</li>
-<li><p>每张图像解码为[0,1]中的32位浮点原始像素值。然后分别减去0.485,0.456,0.406，除以0.229,0.224,0.225，归一化RGB通道。</p>
-</li>
-<li><p>该模型输出ReID特征f和ID预测logits p。</p>
-</li>
-<li><p>ReID特征f用于计算triplet loss。ID预测logits p用于计算交叉熵损失。triplet loss的边际m设置为0.3。</p>
-</li>
-<li><p>采用Adam方法对模型进行优化。初始学习率设置为0.00035，在第40 epoch和第70 epoch分别降低到初始学习率的0.1。总共有120个训练阶段。</p>
-</li>
-</ol>
-<h2 id="训练技巧"><a href="#训练技巧" class="headerlink" title="训练技巧"></a>训练技巧</h2><p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417202016054.png" alt="image-20230417202016054"></p>
-<p>使用的训练技巧如下所示：</p>
-<ul>
-<li><code>Warmup Learning Rate</code>：学习率对模型的性能表现有很大的影响。在实践中，如下所示，使用10个epoch线性增加学习速率，从$3.5\times10^{-5}$到$3.5\times10^{-4}$。在第40 epoch和第70 epoch，学习率分别衰减到$3.5\times10^{-5}$和$3.5\times10^{-6}$。即第t时代的学习率lr(t)计算为:</li>
-</ul>
-<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417202745696.png" alt="image-20230417202745696"></p>
-<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417202823803.png" alt="image-20230417202823803"></p>
-<ul>
-<li><p><code>Random Erasing Augmentation</code>:在ReID任务中，图片中的人常被其他物体遮挡，为解决该问题并提高系统的泛化性，使用随机擦除增强方案。在实际使用中，对于mini-batch中的图片I，其被随机擦除的概率为$p_e$，即保持不变的概率为$1-p_e$，REA在图片$I$中随机选择尺寸大小为$(W_e,H_e)$的矩形区域$I_e$，并将其填充为随机的数值。假设图像I和区域$I_e$的面积分别为$S = W × H$和$S_e = W_e × H_e$，使用$r_e = S_e/S$为擦除矩形区域的面积比。此外，区域$I_e$的纵横比在$r_1$和$r_2$之间随机初始化。REA随机初始化一个点$P=(x_e, y_e)$。如果$x_e + W_e≤W$,$ y_e + H_e≤H$，则设区域$I_e = (x_e, y_e, x_e + W_e, y_e + H_e)$为所选矩形区域。否则，重复上述过程，直到选择合适的$I_e$。对于所选的擦除区域$I_e$, $I_e$​中的每个像素都被赋值为区域I的均值，本文中，设置超参数如下所示：$p = 0.5$, $0.02 &lt;S_e &lt; 0.4$, $r1 = 0.3$, $r2 = 3.33$,</p>
-</li>
-<li><p><code>Label Smoothing</code>:在标准的ReID任务中，ID Embedding是ReID的一个基础组件，其输出图片的ID预测。标准的交叉熵损失的计算如下所示。</p>
-<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417205337361.png" alt="image-20230417205337361"></p>
-<p>但是由于测试集的人员ID在训练集中未曾出现，所以防止ReID模型过度拟合训练ID较为重要，针对该问题，使用标签平滑（LS）方案，对应公式如下所示：</p>
-<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417205726034.png" alt="image-20230417205726034"></p>
-<p>其中$\epsilon$为一个较小的常数，其使模型在训练集上不那么武断、不那么自信，在本研究中，设置$\epsilon$为0.1。</p>
-</li>
-<li><p><code>Last Stride</code>:由于更高的空间分辨率所带来的特征的粒度就越丰富。故增加特征图的大小可以较明显的增强特征表述。假设输入的图片初始尺寸为$256\times128$，经过ResNet50网络进行特征提取之后，输出的特征图尺寸为$8\times4$，如果将其最终一步的stride由2更改为1，对应的输出的特征图尺寸为$16\times8$，从而实现特征更为丰富空间尺寸更大的特征图，并能带来显著的改善。</p>
-</li>
-<li><p><code>BNNeck</code>:前人的许多ReID相关的工作将ID loss和triplet loss相结合，从而联合训练ReID模型。标准的联合训练方式中，ID loss和 triplet loss 约束相同的特征f，但是这两个损失的目标在嵌入空间是不同的。大量前置的研究发现，分类损失其实是在特征空间学习几个超平面，把不同类别的特征分配到不同的子空间里面（类比于SVM分类器中的超平面）。并且从人脸的SphereFace到ReID的SphereReID等工作都显示，把特征归一化到超球面，然后再优化分类损失会更好。triplet loss适合在自由的欧式空间里约束。我们经常观察到，如果把feature归一化到超球面上然后再用triplet loss优化网络的话，通常性能会比不约束的时候要差。我们推断是因为，如果把特征约束到超球面上，特征分布的自由区域会大大减小，triplet loss把正负样本对推开的难度增加。而对于分类超平面，如果把特征约束到超球面上，分类超平面还是比较清晰的。对于标准的Baseline，一个可能发生的现象是，ID loss和triplet loss不会同步收敛。通常会发现一个loss一直收敛下降，另外一个loss在某个阶段会出现先增大再下降的现象。也就是说这两个task在更新的过程中梯度方向可能不一致。<br>针对该问题，希望找个一种方式，使得triplet loss能够在自由的欧式空间里约束feature，而ID loss可以在一个超球面附近约束feature，于是乎就出现了以下的BNNeck。BNNeck的原理也很简单，网络global pooling得到的feature是在欧式空间里的，我们直接连接triplet loss，我们把这个feature记作$f_t$ 。然后这个feature经过一个BN层得到$ f_i$，经过BN层的归一化之后，batch里面$f_i$的各个维度都被拉到差不多，最后近似地在超球面附近分布。<br><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230417210658881.png" alt="image-20230417210658881"><br>最后特征的分布可以大致认为如下分布：从而感性的感受到ID loss和 Triplet loss的区别以及BNNeck的用途。</p>
-<p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230418101628876.png" alt="image-20230418101628876"></p>
-</li>
-<li><p><code>Center Loss</code>:Triplet loss的公式为$L_{Tri} = [d_p − d_n + α]_+$，其中$d_p$为正例之间的距离度量，$d_n$为负例之间的距离度量，$\alpha$为triplet loss的余量，文章中设置为0.3 。然而Triplet loss值考虑了正例与负例之间的差值，但没有考虑正例和负例的绝对值。故引入Center Loss，其学习每个类的深层特征的中心，并惩罚深层特征与对应类中心之间的距离，其表达式为</p>
-<ul>
-<li><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230418110411492.png" alt="image-20230418110411492"></li>
-<li>其中$y_j$为第一个mini-batch中第j个图像的标签，$c_{y_j}$为深层特征的第一级中心，B为batch size。其有效的描述了类内变化，增加了类间的紧凑型。</li>
-<li>最终的Loss表述为：$L=L_{ID}+L_{Triplet}+\beta L_C$，其中$\beta$为center loss的平衡系数，被设置为0.0005.</li>
-</ul>
-</li>
-</ul>
-<h2 id="试验效果"><a href="#试验效果" class="headerlink" title="试验效果"></a>试验效果</h2><p><img src="/2023/04/23/Bag%20of%20Tricks%20and%20A%20Strong%20Baseline%20for%20Deep%20Person%20Re-identification.md/image-20230418135011856.png" alt="image-20230418135011856"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/" class="post-title-link" itemprop="url">目标重识别综述阅读</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-23 19:48:09 / 修改时间：20:57:28" itemprop="dateCreated datePublished" datetime="2023-04-23T19:48:09+08:00">2023-04-23</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="目标重识别论文阅读笔记"><a href="#目标重识别论文阅读笔记" class="headerlink" title="目标重识别论文阅读笔记"></a>目标重识别论文阅读笔记</h1><h2 id="Deep-Learning-for-Person-Re-identification-A-Survey-and-Outlook"><a href="#Deep-Learning-for-Person-Re-identification-A-Survey-and-Outlook" class="headerlink" title="Deep Learning for Person Re-identification: A Survey and Outlook"></a>Deep Learning for Person Re-identification: A Survey and Outlook</h2><h3 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h3><p>行人重识别（以下简称reid）问题是在没有重叠场景的摄像机拍摄画面下，对目标行人进行检索。</p>
-<p>现阶段的reid问题主要分为两大类：closed-world和open-world。说人话就是，closed-world重在研究，在各种面向研究的假设的基础上进行研究，主要是从一大堆行人的bounding box图片中去检索目标行人，而open-world重在“落地”，主要是直接从视频中去检索目标行人，或者是偏向无监督、弱监督学习。</p>
-<h3 id="难点"><a href="#难点" class="headerlink" title="难点"></a>难点</h3><p><strong>不同视角、参差不齐的低分辨率图像、光照变化、姿态不同、遮挡情况、异构数据、复杂的相机环境、背景环境、不可靠的边缘框生成</strong>都会对ReID任务造成影响和挑战。实际部署时，摄像头的变化、Gallery十分巨大、数据要求高、对网络的泛化能力要求高、外表特征的变化等也是影响很大的因素。</p>
-<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><ol>
-<li><strong>原始数据收集</strong>：从处于不同环境的不同地方的摄像机获取原始视频数据。这些数据包含大量的背景杂波。</li>
-<li><strong>边界框（Bounding Box）生成</strong>：通过行人检测或跟踪算法从原始视频数据中提取包含行人图像的边界框。在大规模应用中不可能手动裁剪所有行人图像。</li>
-<li><strong>训练数据标注</strong>：对于区分行人任务来说，图像标注必不可少。</li>
-<li><strong>模型构建和训练</strong>：已经开发了广泛运用的模型，重点在于特征表示学习、度量学习或两者结合。</li>
-<li><strong>测试阶段</strong>：给定一个query和一组gallery，使用上一阶段训练完毕的模型进行行人特征提取，计算query图像和gallery图像的相似度进行排序。</li>
-</ol>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQmFsYWJvbw==,size_20,color_FFFFFF,t_70,g_se,x_16.png" alt="img"></p>
-<p>即closed-world和open-world ReID之间的区别可总结如下：</p>
-<ul>
-<li><strong>单模态和异构数据</strong></li>
-<li><strong>边界框生成和原始图像/视频</strong></li>
-<li><strong>丰富的标签数据和不可用/有限的标签</strong></li>
-<li><strong>正确标签和噪声标签</strong></li>
-<li><strong>query是否存在于gallery中</strong></li>
-</ul>
-<h3 id="closed-world-ReID介绍以及方法总览"><a href="#closed-world-ReID介绍以及方法总览" class="headerlink" title="closed-world ReID介绍以及方法总览"></a>closed-world ReID介绍以及方法总览</h3><h4 id="closed-wrold假设"><a href="#closed-wrold假设" class="headerlink" title="closed-wrold假设"></a>closed-wrold假设</h4><ul>
-<li>通过单模态可见光摄像机捕获行人</li>
-<li>已经给出行人bounding box</li>
-<li>有足够的标注好的训练数据。用于监督训练</li>
-<li>标签通常是正确的</li>
-<li>query行人必须出现在图库中</li>
-</ul>
-<h4 id="特征表示学习"><a href="#特征表示学习" class="headerlink" title="特征表示学习"></a>特征表示学习</h4><h4 id="全局表征学习"><a href="#全局表征学习" class="headerlink" title="全局表征学习"></a>全局表征学习</h4><p>从每个人的图像中提取特征向量，直接将行人图片送入网络进行特征的提取。</p>
-<h4 id="局部表征学习"><a href="#局部表征学习" class="headerlink" title="局部表征学习"></a>局部表征学习</h4><p>将行人的图片进行分块，使用网络对每一个块进行特征提取，最后将所有的特征结合起来</p>
-<h4 id="辅助表征学习"><a href="#辅助表征学习" class="headerlink" title="辅助表征学习"></a>辅助表征学习</h4><p>在网络中加入一些辅助性对目标进行描述的元素，例如外观描述，视角描述、区域信息等。</p>
-<h4 id="基于视频的表征学习"><a href="#基于视频的表征学习" class="headerlink" title="基于视频的表征学习"></a>基于视频的表征学习</h4><p>输入为由多张图片组成的行人的视频序列，其具有丰富的外表和时域信息。</p>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/image-20230309134909484.png" alt="image-20230309134909484"></p>
-<h4 id="度量学习"><a href="#度量学习" class="headerlink" title="度量学习"></a>度量学习</h4><p>度量学习目前的主要工作集中以及体现于特征学习中的loss函数的设计，目前最常用的三种loss为：<strong>identity loss</strong>、<strong>verification loss</strong>、<strong>triplet loss</strong>以及其的变种。</p>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/image-20230309135813177.png" alt="image-20230309135813177" style="zoom:50%;"></p>
-<h5 id="identity-loss"><a href="#identity-loss" class="headerlink" title="identity loss"></a>identity loss</h5><p>将行人重识别的训练过程视为图像分类问题，将每个人视作一个独立的类别，通过类比于图像分类的方式进行重识别。这种方式其在训练过程中能较为容易训练和自动挖掘困难样本</p>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/20200710212437448.png" alt="在这里插入图片描述"></p>
-<h5 id="verification-loss"><a href="#verification-loss" class="headerlink" title="verification loss"></a>verification loss</h5><p>用对比损失函数或者二元损失函数来优化成对样本间关联。对比损失函数提升了成对样本距离比较，即为学习使不同类别的图像对应的特征相距较远</p>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/202007102124402.png" alt="在这里插入图片描述"></p>
-<p>或</p>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/20200710212501363.png" alt="在这里插入图片描述"></p>
-<h5 id="triplet-loss"><a href="#triplet-loss" class="headerlink" title="triplet loss"></a>triplet loss</h5><p>将ReID问题看作是检索排序问题，其主要思想可以看作同一个样本之间的距离应该小于不同的样本之间的距离</p>
-<p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/2020071021245875.png" alt="在这里插入图片描述"></p>
-<h4 id="数据集和评价指标"><a href="#数据集和评价指标" class="headerlink" title="数据集和评价指标"></a>数据集和评价指标</h4><p><img src="/2023/04/23/%E7%9B%AE%E6%A0%87%E9%87%8D%E8%AF%86%E5%88%AB%E7%BB%BC%E8%BF%B0%E9%98%85%E8%AF%BB/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAQmFsYWJvbw==,size_20,color_FFFFFF,t_70,g_se,x_16-16783434167663.png" alt="img"></p>
-<h4 id="SOTA-方法解析"><a href="#SOTA-方法解析" class="headerlink" title="SOTA 方法解析"></a>SOTA 方法解析</h4><h5 id="基于图像的ReID"><a href="#基于图像的ReID" class="headerlink" title="基于图像的ReID"></a>基于图像的ReID</h5><h6 id="VAL：引入视角信息"><a href="#VAL：引入视角信息" class="headerlink" title="VAL：引入视角信息"></a>VAL：引入视角信息</h6><p>目前通过神经网络的目标重识别的识别能力已经高于人工辨识的准确度，sota数据中常常使用目标的全局特征结合局部特征进行融合，从而达到更好的效果</p>
-<p>文章强调注意力机制的有效性，多损失训练的有效性</p>
-<h5 id="基于视频的ReID"><a href="#基于视频的ReID" class="headerlink" title="基于视频的ReID"></a>基于视频的ReID</h5><p>时空建模对提取视频特征是十分重要的，其中包含跨多帧的注意力机制，甚至利用视频序列中的多帧可以填补被遮挡的部份。</p>
-<h3 id="Open-world-ReID"><a href="#Open-world-ReID" class="headerlink" title="Open-world ReID"></a>Open-world ReID</h3><h5 id="Depth-based-Re-ID：捕获人体形状和骨骼状态，提供在光照差别大、换衣服情况下的重识别的解决方案。"><a href="#Depth-based-Re-ID：捕获人体形状和骨骼状态，提供在光照差别大、换衣服情况下的重识别的解决方案。" class="headerlink" title="Depth-based Re-ID：捕获人体形状和骨骼状态，提供在光照差别大、换衣服情况下的重识别的解决方案。"></a>Depth-based Re-ID：捕获人体形状和骨骼状态，提供在光照差别大、换衣服情况下的重识别的解决方案。</h5><h5 id="Text-To-Image-ReID：解决在语言描述和RGB图像之间的匹配上的问题，用一段语言描述来代替对目标的文字描述"><a href="#Text-To-Image-ReID：解决在语言描述和RGB图像之间的匹配上的问题，用一段语言描述来代替对目标的文字描述" class="headerlink" title="Text-To-Image ReID：解决在语言描述和RGB图像之间的匹配上的问题，用一段语言描述来代替对目标的文字描述"></a>Text-To-Image ReID：解决在语言描述和RGB图像之间的匹配上的问题，用一段语言描述来代替对目标的文字描述</h5><h5 id="Visible-Infrared-Re-ID：处理在白天可视化图片和夜晚红外图片之间的跨模态匹配问题，解决低光照问题"><a href="#Visible-Infrared-Re-ID：处理在白天可视化图片和夜晚红外图片之间的跨模态匹配问题，解决低光照问题" class="headerlink" title="Visible-Infrared Re-ID：处理在白天可视化图片和夜晚红外图片之间的跨模态匹配问题，解决低光照问题"></a>Visible-Infrared Re-ID：处理在白天可视化图片和夜晚红外图片之间的跨模态匹配问题，解决低光照问题</h5><h5 id="Cross-Resolution-Re-ID：跨分辨率的ReID在低分辨率图片和高分辨率图片中进行匹配，处理大分辨率的变化问题"><a href="#Cross-Resolution-Re-ID：跨分辨率的ReID在低分辨率图片和高分辨率图片中进行匹配，处理大分辨率的变化问题" class="headerlink" title="Cross-Resolution Re-ID：跨分辨率的ReID在低分辨率图片和高分辨率图片中进行匹配，处理大分辨率的变化问题"></a>Cross-Resolution Re-ID：跨分辨率的ReID在低分辨率图片和高分辨率图片中进行匹配，处理大分辨率的变化问题</h5><h4 id="End-to-End-ReID"><a href="#End-to-End-ReID" class="headerlink" title="End-to-End ReID"></a>End-to-End ReID</h4><p>端到端的ReID减缓了对边缘框的需求问题，直接利用原始的视频信息、图像信息进行计算，得出对应的目标ID在视频中的位置</p>
-<h4 id="ReID-in-Raw-Images-Videos"><a href="#ReID-in-Raw-Images-Videos" class="headerlink" title="ReID in Raw Images/Videos"></a>ReID in Raw Images/Videos</h4><p>该任务需要同一个模型同时完成人物检测和ReID任务，由于两个主要部件的侧重点有所不同，所以是一个有挑战性的任务</p>
-<h4 id="Multi-camera-Tracking"><a href="#Multi-camera-Tracking" class="headerlink" title="Multi-camera Tracking"></a>Multi-camera Tracking</h4><p>该任务与MTMCT（multi-person, multi-camera tracking）近似，可根据基于图的连接、多目标多摄像机跟踪与重识别之间的相关性进行优化解决。</p>
-<h4 id="Semi-supervised-and-Unsupervised-Re-ID"><a href="#Semi-supervised-and-Unsupervised-Re-ID" class="headerlink" title="Semi-supervised and Unsupervised Re-ID"></a>Semi-supervised and Unsupervised Re-ID</h4><h4 id="Noise-Robust-Re-ID"><a href="#Noise-Robust-Re-ID" class="headerlink" title="Noise-Robust Re-ID"></a>Noise-Robust Re-ID</h4><h4 id="Open-set-Re-ID-and-Beyond"><a href="#Open-set-Re-ID-and-Beyond" class="headerlink" title="Open-set Re-ID and Beyond"></a>Open-set Re-ID and Beyond</h4><p>Open-set ReID通常被视为目标验证问题，辨别两个人员图像是否属于同一个目标。对于该问题，Adversarial PersonNet (APN) 共同学习GAN模块和Re-ID特征提取器。然而该问题依旧有非常大的提升空间，例如更高的识别率和更低的错误率。</p>
-<h5 id="Re-ID组"><a href="#Re-ID组" class="headerlink" title="Re-ID组"></a>Re-ID组</h5><p>它的目的是将人以群体而不是个人的形式联系起来。早期的研究主要集中在利用稀疏字典学习或协方差描述子聚集进行组表示提取。最近，应用图卷积网络，将群表示为图。在端到端人搜索和个体再识别中也应用了群体相似性来提高准确性。然而，群体Re-ID仍然具有挑战性，因为群体变异比个体更复杂。</p>
-<h5 id="动态多摄像机网络"><a href="#动态多摄像机网络" class="headerlink" title="动态多摄像机网络"></a>动态多摄像机网络</h5><p>动态更新多摄像机网络是另一个具有挑战性的问题，需要对新的摄像机或探头进行模型适配。引入一种人在循环增量学习方法来更新Re-ID模型，适应不同探测库的表示。早期的研究也将主动学习应用于多摄像头网络的连续Re-ID。引入了一种基于稀疏非冗余代表选择的连续自适应方法。设计了一种传递推理算法来开发基于测地线流核的最佳源摄像机模型。密集人群和社会关系中的多种环境约束(如摄像机拓扑)被集成到开放世界的人Re-ID系统中。在实际的动态多摄像机网络中，摄像机的模型自适应和环境因素是至关重要的。此外，如何将深度学习技术应用于动态多摄像机网络的研究还较少。</p>
-<h3 id="对ReID技术的总览和展望"><a href="#对ReID技术的总览和展望" class="headerlink" title="对ReID技术的总览和展望"></a>对ReID技术的总览和展望</h3><h4 id="mINP-A-New-Evaluation-Metric-for-Re-ID"><a href="#mINP-A-New-Evaluation-Metric-for-Re-ID" class="headerlink" title="mINP: A New Evaluation Metric for Re-ID"></a>mINP: A New Evaluation Metric for Re-ID</h4><h4 id="单-跨模态重新识别的新基线-AGW"><a href="#单-跨模态重新识别的新基线-AGW" class="headerlink" title="单/跨模态重新识别的新基线 AGW"></a>单/跨模态重新识别的新基线 AGW</h4><h4 id="尚未调查的未决问题"><a href="#尚未调查的未决问题" class="headerlink" title="尚未调查的未决问题"></a>尚未调查的未决问题</h4><p>Open-set Re-ID、overlapping camera、same time、based on video </p>
-<h2 id="Person-Re-identification-A-Retrospective-on-Domain-Specific"><a href="#Person-Re-identification-A-Retrospective-on-Domain-Specific" class="headerlink" title="Person Re-identification A Retrospective on Domain Specific"></a>Person Re-identification A Retrospective on Domain Specific</h2><p>Re-ID的应用场景：智能视频监控、机器人、人机交互、自动视觉监视系统等</p>
-<p>Re-ID遇到的问题：遮挡、位姿方差、背景杂波、不对中、尺度差异、照明方差、视点方差、低分辨率和跨域或泛化。</p>
-<p>该文从遮挡、位姿方差、背景杂波等六个方面总结了在该领域上做得最好的CNN、Attention、Self-Attention的论文。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">c++中的ffmpeg源码学习</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-12 09:36:52 / 修改时间：09:38:05" itemprop="dateCreated datePublished" datetime="2023-04-12T09:36:52+08:00">2023-04-12</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="c-中的ffmpeg使用"><a href="#c-中的ffmpeg使用" class="headerlink" title="c++中的ffmpeg使用"></a>c++中的ffmpeg使用</h2><h3 id="c-中ffmpeg的环境配置"><a href="#c-中ffmpeg的环境配置" class="headerlink" title="c++中ffmpeg的环境配置"></a>c++中ffmpeg的环境配置</h3><p>工程配置的CMakeLists.txt的一个可用案例如下所示：</p>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">2.8</span>)</span><br><span class="line"><span class="keyword">project</span>(ffmpeg_project)</span><br><span class="line"></span><br><span class="line"><span class="comment">#以使用的rk3588s为例，以下两个set按照自己ffmpeg的安装目录修改</span></span><br><span class="line"><span class="keyword">set</span>(FFMPEG_LIBS_DIR /lib/aarch64-linux-gnu)</span><br><span class="line"><span class="keyword">set</span>(FFMPEG_HEADERS_DIR /usr/local/<span class="keyword">include</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;FFMPEG_HEADERS_DIR&#125;</span>)</span><br><span class="line"><span class="keyword">link_directories</span>(<span class="variable">$&#123;FFMPEG_LIBS_DIR&#125;</span>)</span><br><span class="line"><span class="keyword">set</span>(FFMPEG_LIBS libavcodec.so libavformat.so libswscale.so libavdevice.so libavutil.so)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_executable</span>(ffmpeg_test main.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;PROJECT_NAME&#125;</span> <span class="variable">$&#123;FFMPEG_LIBS&#125;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="c-中头文件包含ffmpeg实例"><a href="#c-中头文件包含ffmpeg实例" class="headerlink" title="c++中头文件包含ffmpeg实例"></a>c++中头文件包含ffmpeg实例</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> &#123;</span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavcodec/avcodec.h&gt;</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavformat/avformat.h&gt;</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavutil/avutil.h&gt;</span></span></span><br><span class="line">	<span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;libavutil/opt.h&gt;</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在引入ffmpeg的头文件的时候，需要使用<code>extern &quot;C&quot;</code>将头文件包含。<code>extern &quot;c&quot;</code> 的主要作用就是为了能够正确实现C++代码调用其他C语言代码。加上 extern “c” 后，会指示编译器这部分的代码按C语言，而不是C++的方式进行编译。而ffmpeg的各个头文件都是使用c进行开发运行的，具体解释可见<a target="_blank" rel="noopener" href="https://blog.csdn.net/QTVLC/article/details/83962280">链接</a>。</p>
-<h3 id="c-中使用ffmpeg的大体流程"><a href="#c-中使用ffmpeg的大体流程" class="headerlink" title="c++中使用ffmpeg的大体流程"></a>c++中使用ffmpeg的大体流程</h3><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/leixiaohua1020/article/details/42658139#comments_25910979">详情可见雷神博客</a></p>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hVR09QSUdT,size_16,color_FFFFFF,t_70.png" alt="watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hVR09QSUdT,size_16,color_FFFFFF,t_70"></p>
-<p>在使用c++调用ffmpeg进行音视频处理过程中的大体流程按照<code>常见使用方法的ffmpeg音视频转换流程</code>所述。</p>
-<h3 id="c-中使用ffmpeg的常用结构体"><a href="#c-中使用ffmpeg的常用结构体" class="headerlink" title="c++中使用ffmpeg的常用结构体"></a>c++中使用ffmpeg的常用结构体</h3><p>结构体之间关系如下所示：</p>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/Center.jpeg" alt="img"></p>
-<p>FFMPEG中结构体很多。最关键的结构体可以分成以下几类：</p>
-<ul>
-<li>解协议（http,rtsp,rtmp,mms）</li>
-</ul>
-<blockquote>
-<p>AVIOContext，URLProtocol，URLContext主要存储视音频使用的协议的类型以及状态。URLProtocol存储输入视音频使用的封装格式。每种协议都对应一个URLProtocol结构。（注意：FFMPEG中文件也被当做一种协议“file”）</p>
-</blockquote>
-<ul>
-<li>解封装（flv,avi,rmvb,mp4）</li>
-</ul>
-<blockquote>
-<p>AVFormatContext主要存储视音频封装格式中包含的信息；AVInputFormat存储输入视音频使用的封装格式。每种视音频封装格式都对应一个AVInputFormat 结构。</p>
-</blockquote>
-<ul>
-<li>解码（h264,mpeg2,aac,mp3）</li>
-</ul>
-<blockquote>
-<p>每个AVStream存储一个视频/音频流的相关数据；每个AVStream对应一个AVCodecContext，存储该视频/音频流使用解码方式的相关数据；每个AVCodecContext中对应一个AVCodec，包含该视频/音频对应的解码器。每种解码器都对应一个AVCodec结构。</p>
-</blockquote>
-<ul>
-<li>存数据</li>
-</ul>
-<blockquote>
-<p>视频的话，每个结构一般是存一帧；音频可能有好几帧<br>解码前数据：AVPacket<br>解码后数据：AVFrame</p>
-</blockquote>
-<ul>
-<li><p><code>AVFormatContext</code>:封装格式上下文结构体，也是统领<strong>全局</strong>的结构体，保存了视频文件封装格式相关信息，是负责储存数据的结构体。</p>
-<ul>
-<li><p><code>AVInputFormat</code>:每种封装格式（例如<code>FLV</code>,<code>MKV</code>, <code>MP4</code>, <code>AVI</code>）对应一个该结构体。同理如<code>AVOutputFormat</code>。其保存在<code>AVFormatContext</code>中，主要被ffmpeg内部使用调用。</p>
-</li>
-<li><p>通过使用下述函数装载解封装器</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_open_input</span><span class="params">(AVFormatContext **ps, <span class="keyword">const</span> <span class="keyword">char</span> *filename, AVInputFormat *fmt, AVDictionary **options)</span></span></span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li><p><code>AVIOContext</code>:主要负责解协议，封装协议相关的过程。在整个过程中负责对例如rtmp udp进行解协议。</p>
-</li>
-<li><code>AVStream</code>:视频文件中每个视频（音频）流对应一个该结构体。</li>
-<li><p><code>AVCodecContext</code>:编解码器上下文结构体，保存了视频（音频）编解码相关信息。</p>
-<ul>
-<li><code>AVCodec</code>:每种视频（音频）编解码器(例如H.264解码器)对应一个该结构体。其保存于<code>AVCodecContext</code>中，使用<code>avcodec_find_decoder(AVCodecID id)</code>装载解码器</li>
-</ul>
-</li>
-<li><p><code>AVFrame</code>:存储一帧解码后像素（采样）数据。</p>
-</li>
-<li><code>AVPacket</code>:存储一帧压缩编码数据。</li>
-</ul>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBA5byA5rC05aSq54Or,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center.png" alt="在这里插入图片描述"></p>
-<h3 id="解码过程中常用函数的解析"><a href="#解码过程中常用函数的解析" class="headerlink" title="解码过程中常用函数的解析"></a>解码过程中常用函数的解析</h3><p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/1426134989_1189.jpg" alt="1426134989_1189" style="zoom:200%;"></p>
-<h4 id="av-register-all"><a href="#av-register-all" class="headerlink" title="av_register_all()"></a>av_register_all()</h4><p><code>av_register_all()</code>注册所有解复用、解码等，将各个类别串成一个链表。在目前使用的ffmpeg4.2及以上的版本里面可不用该函数。其代码整个流程为首先确定有没有进行初始化，如果没有初始化，就调用avcodec_register_all()注册编解码器。函数的调用关系如下所示：</p>
-<ul>
-<li>在新版本的ffmpeg中，所有的解复用器，协议，复用器等被组织为一个全局静态数组，该数组在执行./configure命令的时候根据配置生成</li>
-</ul>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/SouthEast.jpeg" alt="img"></p>
-<h4 id="avformat-alloc-context"><a href="#avformat-alloc-context" class="headerlink" title="avformat_alloc_context()"></a>avformat_alloc_context()</h4><p><code>avformat_alloc_context()</code>主要负责AVFormatContext的初始化，主要功能为分配内存以及设置其中某些项的值为默认值。</p>
-<blockquote>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150303154603565.png" alt="img"></p>
-<h4 id="avformat-open-input"><a href="#avformat-open-input" class="headerlink" title="avformat_open_input()"></a>avformat_open_input()</h4><p>avformat_open_input()主要负责打开多媒体数据，并获得一些数据相关的信息。</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_open_input</span><span class="params">(AVFormatContext **ps, <span class="keyword">const</span> <span class="keyword">char</span> *filename, AVInputFormat *fmt, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">ps：函数调用成功之后处理过的AVFormatContext结构体。</span><br><span class="line">file：打开的视音频流的URL。</span><br><span class="line">fmt：强制指定AVFormatContext中AVInputFormat的。这个参数一般情况下可以设置为<span class="literal">NULL</span>，这样FFmpeg可以自动检测AVInputFormat。</span><br><span class="line">dictionay：附加的一些选项，一般情况下可以设置为<span class="literal">NULL</span>。</span><br><span class="line">当函数执行成功时，返回值大于等于<span class="number">0</span>，可以通过判断返回值与<span class="number">0</span>的关系从而判断是否打开多媒体数据成功。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150304201149635.jpeg" alt="img"></p>
-<p>函数首先对输入进来的<code>AVFormatContext</code>指针进行容错检查，如有无进行初始化等操作，然后针对一些格式进行特殊处理。核心处理流程有两步。</p>
-<ul>
-<li>一为使用<code>init_input</code>函数，打开输入的视频数据并且探测视频的格式。<a target="_blank" rel="noopener" href="https://blog.csdn.net/leixiaohua1020/article/details/44064715">详细解释链接</a><ul>
-<li>FFmpeg内部判断封装格式的原理实际上是对每种AVInputFormat给出一个分数，满分是100分，越有可能正确的AVInputFormat给出的分数就越高。最后选择分数最高的AVInputFormat作为推测结果。<ul>
-<li>如果AVInputFormat中包含read_probe()，就调用read_probe()函数获取匹配分数（这一方法如果结果匹配的话，一般会获得AVPROBE_SCORE_MAX的分值，即100分）。如果不包含该函数，就使用av_match_ext()函数比较输入媒体的扩展名和AVInputFormat的扩展名是否匹配，如果匹配的话，设定匹配分数为AVPROBE_SCORE_EXTENSION（AVPROBE_SCORE_EXTENSION取值为50，即50分）。</li>
-<li>使用av_match_name()比较输入媒体的mime_type和AVInputFormat的mime_type，如果匹配的话，设定匹配分数为AVPROBE_SCORE_MIME（AVPROBE_SCORE_MIME取值为75，即75分）。</li>
-<li>如果该AVInputFormat的匹配分数大于此前的最大匹配分数，则记录当前的匹配分数为最大匹配分数，并且记录当前的AVInputFormat为最佳匹配的AVInputFormat.</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>二为使用<code>s-&gt;iformat-&gt;read_header()</code>，读取多媒体数据文件头，根据视音频流创建相应的AVStream。</li>
-</ul>
-<h4 id="avformat-find-stream-info"><a href="#avformat-find-stream-info" class="headerlink" title="avformat_find_stream_info()"></a>avformat_find_stream_info()</h4><p><code>avformat_find_stream_info</code>主要用于给每个媒体流（音频/视频）的AVStream结构体赋值，函数正常执行后返回值大于等于0。</p>
-<ul>
-<li><p>函数内部实现了解码器的查找，解码器的打开，视音频帧的读取，视音频帧的解码等工作。函数流程大致如下所示：</p>
-<ul>
-<li>查找解码器：find_decoder()</li>
-<li>打开解码器：avcodec_open2()</li>
-<li><p>读取完整的一帧压缩编码的数据：read_frame_internal()</p>
-<ul>
-<li>注：av_read_frame()内部实际上就是调用的read_frame_internal()。</li>
-</ul>
-</li>
-<li><p>解码一些压缩编码数据：try_decode_frame()</p>
-</li>
-</ul>
-</li>
-</ul>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_find_stream_info</span><span class="params">(AVFormatContext *ic, AVDictionary **options)</span></span>;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150306173746865.png" alt="img"></p>
-<h4 id="avcodec-find-decoder"><a href="#avcodec-find-decoder" class="headerlink" title="avcodec_find_decoder()"></a>avcodec_find_decoder()</h4><p><code>avcodec_find_encoder()</code>用于查找FFmpeg的编码器</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">AVCodec *<span class="title">avcodec_find_encoder</span><span class="params">(<span class="keyword">enum</span> AVCodecID id)</span></span></span><br><span class="line"><span class="function"> 该id为编码器的ID，返回为查找到的编码器，</span></span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150305163655358.png" alt="img"></p>
-<p>在其中通过调用<code>AVCodec *find_encdec(enum AVCodecID id, int encoder)</code>进行编码器的搜索，该搜索遍历AVCodec结构的链表，逐一比较输入的ID和每一个编码器的ID，直到找到ID取值相同的编码器。</p>
-<h4 id="avcodec-open2"><a href="#avcodec-open2" class="headerlink" title="avcodec_open2()"></a>avcodec_open2()</h4><p><code>avcodec_open2()</code>用于初始化一个视音频编解码器的AVCodecContext</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avcodec_open2</span><span class="params">(AVCodecContext *avctx, <span class="keyword">const</span> AVCodec *codec, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">avctx：需要初始化的AVCodecContext。</span><br><span class="line">codec：输入的AVCodec</span><br><span class="line">options：一些选项。例如使用libx264编码的时候，“preset”，“tune”等都可以通过该参数设置。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150307171545202.png" alt="img"></p>
-<p>函数整体工作流程如下所示：</p>
-<ul>
-<li>为各种结构体分配内存（通过各种av_malloc()实现）。</li>
-<li>将输入的AVDictionary形式的选项设置到AVCodecContext。</li>
-<li>其他一些零零碎碎的检查，比如说检查编解码器是否处于“实验”阶段。</li>
-<li>如果是编码器，检查输入参数是否符合编码器的要求</li>
-<li>调用AVCodec的init()初始化具体的解码器。</li>
-</ul>
-<h4 id="av-read-frame"><a href="#av-read-frame" class="headerlink" title="av_read_frame()"></a>av_read_frame()</h4><p><code>av_read_frame()</code>的作用是读取码流中的音频若干帧或者视频一帧。例如，解码视频的时候，每解码一个视频帧，需要先调用 av_read_frame()获得一帧视频的压缩数据，然后才能对该数据进行解码（例如H.264中一帧压缩数据通常对应一个NAL）</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">av_read_frame</span><span class="params">(AVFormatContext *s, AVPacket *pkt)</span></span>;</span><br><span class="line"></span><br><span class="line">s：输入的AVFormatContext</span><br><span class="line">pkt：输出的AVPacket</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150312025330316.jpeg" alt="img"></p>
-<p>详细解析见<a target="_blank" rel="noopener" href="https://blog.csdn.net/leixiaohua1020/article/details/12678577">链接</a>，其大体思路为</p>
-<ul>
-<li>从对应的格式中，调用<code>ff_read_packet()</code>从相应的AVInputFormat中读取数据</li>
-<li>视需求调用parse_packet()解析相应的AVPacket</li>
-</ul>
-<h4 id="avcodec-decode-video2"><a href="#avcodec-decode-video2" class="headerlink" title="avcodec_decode_video2()"></a>avcodec_decode_video2()</h4><p><code>avcodec_decode_video2()</code>的作用是解码一帧视频数据。输入一个压缩编码的结构体AVPacket，输出一个解码后的结构体AVFrame</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avcodec_decode_video2</span><span class="params">(AVCodecContext *avctx, AVFrame *picture, <span class="keyword">int</span> *got_picture_ptr, <span class="keyword">const</span> AVPacket *avpkt)</span></span>;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<ul>
-<li>对输入的字段进行了一系列的检查工作：例如宽高是否正确，输入是否为视频等等。</li>
-<li>通过ret = avctx-&gt;codec-&gt;decode(avctx, picture, got_picture_ptr,&amp;tmp)这句代码，调用了相应AVCodec的decode()函数，完成了解码操作。</li>
-<li>对得到的AVFrame的一些字段进行了赋值，例如宽高、像素格式等等。</li>
-</ul>
-<h3 id="编码过程中常用函数的解析"><a href="#编码过程中常用函数的解析" class="headerlink" title="编码过程中常用函数的解析"></a>编码过程中常用函数的解析</h3><p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/1426229411_4898.jpg" alt="1426229411_4898"></p>
-<h4 id="av-register-all-1"><a href="#av-register-all-1" class="headerlink" title="av_register_all()"></a>av_register_all()</h4><p>该函数与解码时一样。</p>
-<h4 id="avformat-alloc-output-context2"><a href="#avformat-alloc-output-context2" class="headerlink" title="avformat_alloc_output_context2()"></a>avformat_alloc_output_context2()</h4><p><code>avformat_alloc_output_context2()</code>函数可以初始化一个用于输出的AVFormatContext结构体。其</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_alloc_output_context2</span><span class="params">(AVFormatContext **ctx, AVOutputFormat *oformat, <span class="keyword">const</span> <span class="keyword">char</span> *format_name, <span class="keyword">const</span> <span class="keyword">char</span> *filename)</span></span>;</span><br><span class="line"></span><br><span class="line">ctx：函数调用成功之后创建的AVFormatContext结构体。</span><br><span class="line">oformat：指定AVFormatContext中的AVOutputFormat，用于确定输出格式。如果指定为<span class="literal">NULL</span>，可以设定后两个参数（format_name或者filename）由FFmpeg猜测输出格式。</span><br><span class="line">	PS：使用该参数需要自己手动获取AVOutputFormat，相对于使用后两个参数来说要麻烦一些。</span><br><span class="line">format_name：指定输出格式的名称。根据格式名称，FFmpeg会推测输出格式。输出格式可以是“flv”，“mkv”等等。</span><br><span class="line">filename：指定输出文件的名称。根据文件名称，FFmpeg会推测输出格式。文件名称可以是“xx.flv”，“yy.mkv”等等。</span><br><span class="line">函数执行成功的话，其返回值大于等于<span class="number">0</span>。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150303220720490.png" alt="img"></p>
-<p>函数执行流程可简单概括为以下两步：</p>
-<ul>
-<li>调用avformat_alloc_context()进行内存分配以及初始化默认的AVFormatContext。</li>
-<li>如果指定了输入的AVOutputFormat，则直接将输入的AVOutputFormat赋值给AVOutputFormat的oformat。如果没有指定输入的AVOutputFormat，就需要根据文件格式名称或者文件名推测输出的AVOutputFormat。无论是通过文件格式名称还是文件名推测输出格式，都会调用一个函数av_guess_format()。<ul>
-<li>在<code>av_guess_format()</code>中，使用socre记录每种输出格式的匹配程度，遍历ffmpeg中所有的AVOutputFormat并逐一计算每个输出格式的score，具体的计算流程如下所示：<ul>
-<li>如果封装格式名称匹配，score增加100。匹配中使用了函数av_match_name()。</li>
-<li>如果mime类型匹配，score增加10。匹配直接使用字符串比较函数strcmp()。</li>
-<li>如果文件名称的后缀匹配，score增加5。匹配中使用了函数av_match_ext()。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h4 id="avio-open2"><a href="#avio-open2" class="headerlink" title="avio_open2()"></a>avio_open2()</h4><p><code>avio_open2()</code>用于打开FFmpeg的输入输出文件。</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avio_open2</span><span class="params">(AVIOContext **s, <span class="keyword">const</span> <span class="keyword">char</span> *url, <span class="keyword">int</span> flags, <span class="keyword">const</span> AVIOInterruptCB *int_cb, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">s：函数调用成功之后创建的AVIOContext结构体。</span><br><span class="line">url：输入输出协议的地址（文件也是一种“广义”的协议，对于文件来说就是文件的路径）。</span><br><span class="line">flags：打开地址的方式。可以选择只读，只写，或者读写。取值如下。</span><br><span class="line">	AVIO_FLAG_READ：只读。</span><br><span class="line">	AVIO_FLAG_WRITE：只写。</span><br><span class="line">	AVIO_FLAG_READ_WRITE：读写。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150304132258935.png" alt="img"></p>
-<p>该函数主要调用了两个函数<code>ffurl_open()</code>和<code>ffio_fdopen()</code>。</p>
-<ul>
-<li>ffurl_open()用于初始化URLContext<ul>
-<li>ffurl_open()主要调用了2个函数：ffurl_alloc()和ffurl_connect()。<ul>
-<li>ffurl_alloc()用于查找合适的URLProtocol，并创建一个URLContext</li>
-<li>ffurl_connect()用于打开获得的URLProtocol。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>ffio_fdopen()用于根据URLContext初始化AVIOContext。<ul>
-<li>URLContext中包含的URLProtocol完成了具体的协议读写等工作。AVIOContext则是在URLContext的读写函数外面加上了一层“包装”（通过retry_transfer_wrapper()函数）。</li>
-</ul>
-</li>
-</ul>
-<h4 id="avformat-new-stream"><a href="#avformat-new-stream" class="headerlink" title="avformat_new_stream()"></a>avformat_new_stream()</h4><p><code>avformat_new_stream()</code>是初始化<code>AVStream</code>的函数。</p>
-<h4 id="avcodec-find-encoder"><a href="#avcodec-find-encoder" class="headerlink" title="avcodec_find_encoder()"></a>avcodec_find_encoder()</h4><p><code>avcodec_find_encoder()</code>与解码过程中的<code>avcodec_find_decoder()</code>类似。</p>
-<h4 id="avcodec-open2-1"><a href="#avcodec-open2-1" class="headerlink" title="avcodec_open2()"></a>avcodec_open2()</h4><p><code>avcodec_open2()</code>用于初始化一个视音频编解码器的AVCodecContext。</p>
-<h4 id="avformat-write-header"><a href="#avformat-write-header" class="headerlink" title="avformat_write_header()"></a>avformat_write_header()</h4><p><code>avformat_write_header()</code>用于写视频文件头。</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avformat_write_header</span><span class="params">(AVFormatContext *s, AVDictionary **options)</span></span>;</span><br><span class="line"></span><br><span class="line">s：用于输出的AVFormatContext。</span><br><span class="line">options：额外的选项，目前没有深入研究过，一般为<span class="literal">NULL</span>。</span><br><span class="line">函数正常执行后返回值为<span class="number">0</span></span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150307142222277.png" alt="img"></p>
-<p>avformat_write_header()完成了以下工作：</p>
-<ul>
-<li>调用init_muxer()初始化复用器<ul>
-<li>将传入的AVDictionary形式的选项设置到AVFormatContext</li>
-<li>遍历AVFormatContext中的每个AVStream，并作如下检查：<ul>
-<li>AVStream的time_base是否正确设置。如果发现AVStream的time_base没有设置，则会调用avpriv_set_pts_info()进行设置。</li>
-<li>对于音频，检查采样率设置是否正确；对于视频，检查宽、高、宽高比。</li>
-<li>其他一些检查</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>调用AVOutputFormat的write_header()，write_header()是AVOutputFormat中的一个函数指针，指向写文件头的函数。不同的AVOutputFormat有不同的write_header()的实现方法。</li>
-</ul>
-<h4 id="avcodec-encode-video2"><a href="#avcodec-encode-video2" class="headerlink" title="avcodec_encode_video2()"></a>avcodec_encode_video2()</h4><p><code>avcodec_encode_video2()</code>用于编码一帧视频数据</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">avcodec_encode_video2</span><span class="params">(AVCodecContext *avctx, AVPacket *avpkt, <span class="keyword">const</span> AVFrame *frame, <span class="keyword">int</span> *got_packet_ptr)</span></span>;</span><br><span class="line"> avctx：编码器的AVCodecContext。</span><br><span class="line"> avpkt：编码输出的AVPacket。</span><br><span class="line"> frame：编码输入的AVFrame。</span><br><span class="line"> got_packet_ptr：成功编码一个AVPacket的时候设置为<span class="number">1</span>。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150311222209829.png" alt="img"></p>
-<p>在该函数中，主要由两个部分组成。首先调用<code>av_image_check_size()</code>检查设置的宽高等参数是否合理，然后调用AVcodec的<code>encode2()</code>调用具体的解码器。</p>
-<h4 id="av-write-frame"><a href="#av-write-frame" class="headerlink" title="av_write_frame()"></a>av_write_frame()</h4><p><code>av_write_frame()</code>用于输出一帧视频数据。</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">av_write_frame</span><span class="params">(AVFormatContext *s, AVPacket *pkt)</span></span>;</span><br><span class="line">	s：用于输出的AVFormatContext。</span><br><span class="line">	pkt：等待输出的AVPacket。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><img src="/2023/04/12/c-%E4%B8%AD%E7%9A%84ffmpeg%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/20150311155409612.png" alt="img"></p>
-<p>该函数主要包括以下三个步骤：</p>
-<ul>
-<li>调用check_packet()做一些简单的检测</li>
-<li>调用compute_pkt_fields2()设置AVPacket的一些属性值</li>
-<li>调用write_packet()写入数据</li>
-</ul>
-<h4 id="av-write-trailer"><a href="#av-write-trailer" class="headerlink" title="av_write_trailer()"></a>av_write_trailer()</h4><p><code>av_write_trailer()</code>用于写视频文件尾</p>
-<blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">av_write_trailer</span><span class="params">(AVFormatContext *s)</span></span>;</span><br><span class="line">	s：用于输出的AVFormatContext。</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p>av_write_trailer()主要完成了以下两步工作：</p>
-<ul>
-<li>循环调用interleave_packet()以及write_packet()，将还未输出的AVPacket输出出来。</li>
-<li>调用AVOutputFormat的write_trailer()，输出文件尾。</li>
-</ul>
-<h3 id="c-使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）"><a href="#c-使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）" class="headerlink" title="c++使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）"></a>c++使用ffmpeg进行视频格式转换的案例（由mp4转换为flv）</h3><p>工程链接：<a target="_blank" rel="noopener" href="https://github.com/XDUwsk/ffmpeg_demo/tree/main/change_mp4_2_flv">change_mp4_2_flv</a></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavformat/avformat.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavutil/dict.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavutil/opt.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libavutil/timestamp.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libswscale/swscale.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;libswresample/swresample.h&quot;</span></span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//本质上ffmpeg4.2.7不需要这句话，但是加上也没有问题</span></span><br><span class="line">	<span class="built_in">av_register_all</span>();</span><br><span class="line">	<span class="comment">//avformat_network_init();</span></span><br><span class="line"> </span><br><span class="line">    AVFormatContext* ifmt_ctx = <span class="literal">NULL</span>;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span>* inputUrl = <span class="string">&quot;/home/firefly/ffmpeg_workspace/media/4.mp4&quot;</span>;</span><br><span class="line"> </span><br><span class="line">	<span class="comment">///打开输入的流</span></span><br><span class="line">	<span class="keyword">int</span> ret = <span class="built_in">avformat_open_input</span>(&amp;ifmt_ctx, inputUrl, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (ret != <span class="number">0</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;Couldn&#x27;t open input stream.\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	<span class="comment">//查找流信息</span></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">avformat_find_stream_info</span>(ifmt_ctx, <span class="literal">NULL</span>) &lt; <span class="number">0</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;Couldn&#x27;t find stream information.\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//输出的文件</span></span><br><span class="line">    AVOutputFormat *ofmt = <span class="literal">NULL</span>;</span><br><span class="line">    AVFormatContext *ofmt_ctx = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span>* out_filename = <span class="string">&quot;4_out.flv&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">avformat_alloc_output_context2</span>(&amp;ofmt_ctx, <span class="literal">NULL</span>, <span class="literal">NULL</span>, out_filename);</span><br><span class="line">    <span class="keyword">if</span> (!ofmt_ctx) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">int</span> stream_mapping_size = ifmt_ctx-&gt;nb_streams;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//为数组分配内存</span></span><br><span class="line">    <span class="keyword">int</span>* stream_mapping = (<span class="keyword">int</span> *)<span class="built_in">av_mallocz_array</span>(stream_mapping_size, <span class="built_in"><span class="keyword">sizeof</span></span>(*stream_mapping));</span><br><span class="line">    <span class="keyword">if</span> (!stream_mapping) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">int</span> stream_index = <span class="number">0</span>;</span><br><span class="line">    ofmt = ofmt_ctx-&gt;oformat;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; ifmt_ctx-&gt;nb_streams; i++) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//输出的流</span></span><br><span class="line">        AVStream* out_stream = <span class="literal">NULL</span>;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//输入的流 视频、音频、字幕等</span></span><br><span class="line">        AVStream* in_stream = ifmt_ctx-&gt;streams[i];</span><br><span class="line">        AVCodecParameters* in_codecpar = in_stream-&gt;codecpar;</span><br><span class="line">        <span class="keyword">if</span> (in_codecpar-&gt;codec_type != AVMEDIA_TYPE_AUDIO &amp;&amp; in_codecpar-&gt;codec_type != AVMEDIA_TYPE_VIDEO &amp;&amp; in_codecpar-&gt;codec_type != AVMEDIA_TYPE_SUBTITLE) </span><br><span class="line">        &#123;</span><br><span class="line">            stream_mapping[i] = <span class="number">-1</span>;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        stream_mapping[i] = stream_index++;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//创建一个新的流</span></span><br><span class="line">        out_stream = <span class="built_in">avformat_new_stream</span>(ofmt_ctx, <span class="literal">NULL</span>); </span><br><span class="line">        <span class="keyword">if</span> (!out_stream) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//复制输入的流信息到输出流中</span></span><br><span class="line">        ret = <span class="built_in">avcodec_parameters_copy</span>(out_stream-&gt;codecpar, in_codecpar);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        out_stream-&gt;codecpar-&gt;codec_tag = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (!(ofmt-&gt;flags &amp; AVFMT_NOFILE)) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//打开输出文件</span></span><br><span class="line">        ret = <span class="built_in">avio_open</span>(&amp;ofmt_ctx-&gt;pb, out_filename, AVIO_FLAG_WRITE); </span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//写入头</span></span><br><span class="line">    ret = <span class="built_in">avformat_write_header</span>(ofmt_ctx, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    AVPacket pkt;</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) </span><br><span class="line">    &#123;</span><br><span class="line">        AVStream* in_stream = <span class="literal">NULL</span>;</span><br><span class="line">        AVStream* out_stream = <span class="literal">NULL</span>;</span><br><span class="line"> </span><br><span class="line">        <span class="comment">//从输入流中读取数据到pkt中</span></span><br><span class="line">        ret = <span class="built_in">av_read_frame</span>(ifmt_ctx, &amp;pkt);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"> </span><br><span class="line">        in_stream = ifmt_ctx-&gt;streams[pkt.stream_index];</span><br><span class="line">        <span class="keyword">if</span> (pkt.stream_index &gt;= stream_mapping_size || stream_mapping[pkt.stream_index] &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">av_packet_unref</span>(&amp;pkt);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        pkt.stream_index = stream_mapping[pkt.stream_index];</span><br><span class="line">        out_stream = ofmt_ctx-&gt;streams[pkt.stream_index];</span><br><span class="line"> </span><br><span class="line">        <span class="comment">/* copy packet */</span></span><br><span class="line">        pkt.pts = <span class="built_in">av_rescale_q_rnd</span>(pkt.pts, in_stream-&gt;time_base, out_stream-&gt;time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));</span><br><span class="line">        pkt.dts = <span class="built_in">av_rescale_q_rnd</span>(pkt.dts, in_stream-&gt;time_base, out_stream-&gt;time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));</span><br><span class="line">        pkt.duration = <span class="built_in">av_rescale_q</span>(pkt.duration, in_stream-&gt;time_base, out_stream-&gt;time_base);</span><br><span class="line">        pkt.pos = <span class="number">-1</span>;</span><br><span class="line"> </span><br><span class="line">        ret = <span class="built_in">av_interleaved_write_frame</span>(ofmt_ctx, &amp;pkt);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Error muxing packet\n&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">av_packet_unref</span>(&amp;pkt);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//写文件尾</span></span><br><span class="line">    <span class="built_in">av_write_trailer</span>(ofmt_ctx);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">//关闭</span></span><br><span class="line">    <span class="built_in">avformat_close_input</span>(&amp;ifmt_ctx);</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (ofmt_ctx &amp;&amp; !(ofmt-&gt;flags &amp; AVFMT_NOFILE))</span><br><span class="line">        <span class="built_in">avio_closep</span>(&amp;ofmt_ctx-&gt;pb);</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">avformat_free_context</span>(ofmt_ctx);</span><br><span class="line">    <span class="built_in">av_freep</span>(&amp;stream_mapping);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span> &amp;&amp; ret != AVERROR_EOF)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/12/ffmpeg%E5%9F%BA%E7%A1%80%E4%BA%86%E8%A7%A3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/12/ffmpeg%E5%9F%BA%E7%A1%80%E4%BA%86%E8%A7%A3/" class="post-title-link" itemprop="url">ffmpeg基础了解</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-04-12 09:36:29 / 修改时间：09:39:30" itemprop="dateCreated datePublished" datetime="2023-04-12T09:36:29+08:00">2023-04-12</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ffmpeg是什么"><a href="#ffmpeg是什么" class="headerlink" title="ffmpeg是什么"></a>ffmpeg是什么</h2><p>FFmpeg是一个库和工具的集合，用于处理音频、视频、字幕和相关元数据等多媒体内容。</p>
-<h2 id="ffmpeg的组成"><a href="#ffmpeg的组成" class="headerlink" title="ffmpeg的组成"></a>ffmpeg的组成</h2><p>ffmpeg由以下几个核心依赖包组成</p>
-<ul>
-<li><strong>libavcodec</strong> - 提供了更广泛的编码器解码器的实现。各种格式的编解码代码(如aacenc.c、aacdec.c等)都位于该目录下。</li>
-<li><strong>libavformat</strong> - 实现了流协议、容器格式和基本的I/O实现。用于各种音视频封装格式的生成和解析，包括获取解码所需信息、读取音视频数据等功能。各种流媒体协议代码(如rtmpproto.c等)以及音视频格式的(解)复用代码(如flvdec.c、flvenc.c等)都位于该目录下。</li>
-<li><strong>libavutil</strong> - 为核心工具包，包含一些公共的工具函数的使用库，包括算数运算，字符操作等。</li>
-<li><strong>libavfilter</strong> - 提供各种音视频滤波器。</li>
-<li><strong>libavdevice</strong> - 用于硬件的音视频采集、加速和显示。</li>
-<li><strong>libswresample</strong> - 提供音频重采样，采样格式转换和音频混合等功能。</li>
-<li><strong>libswscale</strong> - 提供原始视频的比例缩放、色彩映射转换、图像颜色空间或格式转换的功能。</li>
-</ul>
-<h2 id="ffmpeg用到的工具"><a href="#ffmpeg用到的工具" class="headerlink" title="ffmpeg用到的工具"></a>ffmpeg用到的工具</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffmpeg.html">ffmpeg</a>是一个用于操作、转换和流式传输多媒体内容的命令行工具箱。</li>
-<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffplay.html">ffplay</a>是一款简约的多媒体播放器。</li>
-<li><a target="_blank" rel="noopener" href="https://ffmpeg.org/ffprobe.html">ffprobe</a>是一种检查多媒体内容的简单分析工具。</li>
-<li>其他小工具，如”aviocat”、”ismindex”和”qt faststart”。</li>
-</ul>
-<h2 id="ffmpeg的源码编译"><a href="#ffmpeg的源码编译" class="headerlink" title="ffmpeg的源码编译"></a>ffmpeg的源码编译</h2><h3 id="ffmpeg的源码下载-以ffmpeg-release-6-0为例"><a href="#ffmpeg的源码下载-以ffmpeg-release-6-0为例" class="headerlink" title="ffmpeg的源码下载    以ffmpeg release 6.0为例"></a>ffmpeg的源码下载    以<a target="_blank" rel="noopener" href="https://github.com/FFmpeg/FFmpeg/tree/release/6.0">ffmpeg release 6.0为例</a></h3><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/FFmpeg/FFmpeg/<span class="built_in">tree</span>/release/<span class="number">6</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
-<h3 id="yasm的安装"><a href="#yasm的安装" class="headerlink" title="yasm的安装"></a>yasm的安装</h3><p>由于ffmpeg的安装过程中为了提高效率使用了汇编指令，而yasm是汇编编译器，在ffmpeg的编译过程中对其有依赖，所以需要对其提前进行下载安装。</p>
-<p>linux环境下直接：</p>
-<ul>
-<li>下载：wget  <a target="_blank" rel="noopener" href="http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz">http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz</a></li>
-<li>解压：tar zxvf yasm-1.3.0.tar.gz</li>
-<li>切换路径： cd yasm-1.3.0</li>
-<li>执行配置： ./configure</li>
-<li>编译：make</li>
-<li>安装：make install</li>
-</ul>
-<h3 id="ffmpeg的源码编译-1"><a href="#ffmpeg的源码编译-1" class="headerlink" title="ffmpeg的源码编译"></a>ffmpeg的源码编译</h3><p>进入ffmpeg的源码文件夹。</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">./configure --prefix=/usr/local/ffmpeg</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">vi /etc/profile</span><br><span class="line">export <span class="built_in">PATH</span>=$<span class="built_in">PATH</span>:/usr/local/ffmpeg/bin</span><br></pre></td></tr></table></figure>
-<h3 id="ffmpeg的安装测试"><a href="#ffmpeg的安装测试" class="headerlink" title="ffmpeg的安装测试"></a>ffmpeg的安装测试</h3><p>在命令行中直接输入ffmpeg，得到ffmpeg相关的信息输出即可。</p>
-<h2 id="常见使用方法"><a href="#常见使用方法" class="headerlink" title="常见使用方法"></a>常见使用方法</h2><p>具体详细版的ffmpeg文档可见： <a target="_blank" rel="noopener" href="https://xdsnet.gitbooks.io/other-doc-cn-ffmpeg/content/index.html">ffmpeg中文文档</a></p>
-<h3 id="统一语法"><a href="#统一语法" class="headerlink" title="统一语法"></a>统一语法</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg [全局选项] &#123;[输入文件选项] -i 输入文件&#125; ... &#123;[输出文件选项] 输出文件&#125; ...</span><br></pre></td></tr></table></figure>
-<p>即</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg [global_options] &#123;[input_file_options] -i input_file&#125; ... &#123;[output_file_options] output_file&#125; ...</span><br></pre></td></tr></table></figure>
-<h3 id="基本选项"><a href="#基本选项" class="headerlink" title="基本选项"></a>基本选项</h3><p>能力集列表</p>
-<ul>
-<li>-formats：列出支持的文件格式。</li>
-<li>-codecs：列出支持的编解码器。</li>
-<li>-decoders：列出支持的解码器。</li>
-<li>-encoders：列出支持的编码器。</li>
-<li>-protocols：列出支持的协议。</li>
-<li>-bsfs：列出支持的比特流过滤器。</li>
-<li>-filters：列出支持的滤镜。</li>
-<li>-pix_fmts：列出支持的图像采样格式。</li>
-<li>-sample_fmts：列出支持的声音采样格式。</li>
-</ul>
-<p>常用输入选项</p>
-<ul>
-<li>-i filename：指定输入文件名。</li>
-<li>-f fmt：强制设定文件格式，需使用能力集列表中的名称(缺省是根据扩展名选择的)。</li>
-<li>-ss hh:mm:ss[.xxx]：设定输入文件的起始时间点，启动后将跳转到此时间点然后开始读取数据。</li>
-</ul>
-<p>对于输入，以下选项通常是自动识别的，但也可以强制设定。</p>
-<ul>
-<li>-c codec：指定解码器，需使用能力集列表中的名称。</li>
-<li>-acodec codec：指定声音的解码器，需使用能力集列表中的名称。</li>
-<li>-vcodec codec：指定视频的解码器，需使用能力集列表中的名称。</li>
-<li>-b:v bitrate：设定视频流的比特率，整数，单位bps。</li>
-<li>-r fps：设定视频流的帧率，整数，单位fps。</li>
-<li>-s WxH : 设定视频的画面大小。也可以通过挂载画面缩放滤镜实现。</li>
-<li>-pix_fmt format：设定视频流的图像格式(如RGB还是YUV)。</li>
-<li>-ar sample rate：设定音频流的采样率，整数，单位Hz。</li>
-<li>-ab bitrate：设定音频流的比特率，整数，单位bps。</li>
-<li>-ac channels：设置音频流的声道数目。</li>
-</ul>
-<p>常用输出选项</p>
-<ul>
-<li>-f fmt：强制设定文件格式，需使用能力集列表中的名称(缺省是根据扩展名选择的)。</li>
-<li>-c codec：指定编码器，需使用能力集列表中的名称(编码器设定为”copy“表示不进行编解码)。</li>
-<li>-acodec codec：指定声音的编码器，需使用能力集列表中的名称(编码器设定为”copy“表示不进行编解码)。</li>
-<li>-vcodec codec：指定视频的编码器，需使用能力集列表中的名称(编解码器设定为”copy“表示不进行编解码)。</li>
-<li>-r fps：设定视频编码器的帧率，整数，单位fps。</li>
-<li>-pix_fmt format：设置视频编码器使用的图像格式(如RGB还是YUV)。</li>
-<li>-ar sample rate：设定音频编码器的采样率，整数，单位Hz。</li>
-<li>-b bitrate：设定音视频编码器输出的比特率，整数，单位bps。</li>
-<li>-ab bitrate：设定音频编码器输出的比特率，整数，单位bps。</li>
-<li>-ac channels：设置音频编码器的声道数目。</li>
-<li>-an 忽略任何音频流。</li>
-<li>-vn 忽略任何视频流。</li>
-<li>-t hh:mm:ss[.xxx]：设定输出文件的时间长度。</li>
-<li>-to hh:mm:ss[.xxx]：如果没有设定输出文件的时间长度的画可以设定终止时间点。</li>
-</ul>
-<h3 id="ffmpeg音视频转换流程"><a href="#ffmpeg音视频转换流程" class="headerlink" title="ffmpeg音视频转换流程"></a>ffmpeg音视频转换流程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> _______              ______________</span><br><span class="line">|       |            |              |</span><br><span class="line">| input |  demuxer   | encoded data |   decoder</span><br><span class="line">| file  | ---------&gt; | packets      | -----+</span><br><span class="line">|_______|            |______________|      |</span><br><span class="line">                                           v</span><br><span class="line">                                       _________</span><br><span class="line">                                      |         |</span><br><span class="line">                                      | decoded |</span><br><span class="line">                                      | frames  |</span><br><span class="line">                                      |_________|</span><br><span class="line">  ________             ______________      |</span><br><span class="line">|        |           |              |      |</span><br><span class="line">| output | &lt;-------- | encoded data | &lt;----+</span><br><span class="line">| file   |   muxer   | packets      |   encoder</span><br><span class="line">|________|           |______________|</span><br></pre></td></tr></table></figure>
-<p><code>ffmpeg</code>调用<code>libavformat</code>库(含分离器<code>demuxer</code>)读取输入文件，分离出各类编码的数据包(流)。编码数据包通过解码器解码出非压缩的数据帧(raw视频/PCM格式音频…)，这些数据帧可以被滤镜进一步处理。经过滤镜处理的数据被重新编码为新的数据包(流)，然后经过混合器混合(例如按一定顺序和比例把音频数据包和视频数据包交叉组合)，写入到输出文件。</p>
-<h3 id="滤镜处理-Filtering"><a href="#滤镜处理-Filtering" class="headerlink" title="滤镜处理(Filtering)"></a>滤镜处理(Filtering)</h3><p>在上述音视频转换流程中，decoder得到原始音视频数据之后，可以使用<code>libavfilter</code>库中的滤镜进行处理，滤镜之间可以组合使用<code>filtergraphs</code> ，对于ffmpeg而言，滤镜分为<code>简单滤镜</code>和<code>复合滤镜</code>。</p>
-<h4 id="简单滤镜"><a href="#简单滤镜" class="headerlink" title="简单滤镜"></a>简单滤镜</h4><p>简单滤镜即为只有一个输入和输出的滤镜，且滤镜两边的数据为同一类型的数据，可以理解为从raw data到encoder处理之前简单附加的一步。其具体流程可如下所示：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> _________                        ______________</span><br><span class="line">|         |                      |              |</span><br><span class="line">| decoded |                      | encoded data |</span><br><span class="line">| frames  |\                     | packets      |</span><br><span class="line">|_________| \                  /||______________|</span><br><span class="line">             \   __________   /</span><br><span class="line">  simple      \ |          | /  encoder</span><br><span class="line">  filtergraph  \| filtered |/</span><br><span class="line">                | frames   |</span><br><span class="line">                |__________|</span><br></pre></td></tr></table></figure>
-<p>tips：滤镜改变的不止可以为帧内容，还可以是帧属性。例如帧率的变化，尺寸的变化等。对应于帧内容并不发生改变。</p>
-<h4 id="复合滤镜"><a href="#复合滤镜" class="headerlink" title="复合滤镜"></a>复合滤镜</h4><p>不为简单滤镜的行为均可视为复合滤镜，例如多个输入多个输出的场景，示意图如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> _________</span><br><span class="line">|         |</span><br><span class="line">| input 0 |\                    __________</span><br><span class="line">|_________| \                  |          |</span><br><span class="line">             \   _________    /| output 0 |</span><br><span class="line">              \ |         |  / |__________|</span><br><span class="line"> _________     \| complex | /</span><br><span class="line">|         |     |         |/</span><br><span class="line">| input 1 |----&gt;| filter  |\</span><br><span class="line">|_________|     |         | \   __________</span><br><span class="line">               /| graph   |  \ |          |</span><br><span class="line">              / |         |   \| output 1 |</span><br><span class="line"> _________   /  |_________|    |__________|</span><br><span class="line">|         | /</span><br><span class="line">| input 2 |/</span><br><span class="line">|_________|</span><br></pre></td></tr></table></figure>
-<p>复合滤镜由<code>-filter_complex</code>选项进行设定。<strong>注意</strong>这是一个全局选项，因为一个复合滤镜必然是不能只关联到一个单一流或者文件的。<code>-lavfi</code>选项等效于<code>-filter_complex</code></p>
-<p>一个复合滤镜的简单例子就是<code>overlay</code>滤镜，它从两路输入中，把一个视频叠加到一个输出上。对应的类似音频滤镜是<code>amix</code>。</p>
-<h4 id="流拷贝"><a href="#流拷贝" class="headerlink" title="流拷贝"></a>流拷贝</h4><p>流拷贝(Stream copy)是一种对指定流数据仅仅进行复制的<code>拷贝(copy)</code>模式。这种情况下<code>ffmpeg</code>不会对指定流进行解码和编码步骤，而仅仅是分离和混合数据包。这种模式常用于文件包装格式的转换或者修改部分元数据信息，这个过程简单图示如下：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_______              ______________            ________</span><br><span class="line">|       |            |              |          |        |</span><br><span class="line">| input |  demuxer   | encoded data |  muxer   | output |</span><br><span class="line">| file  | ---------&gt; | packets      | -------&gt; | file   |</span><br><span class="line">|_______|            |______________|          |________|</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p>因为这种模式下不存在解码和编码过程，所以也特别快，而且不会造成新的质量损失。然而这也使得这样的模式不能适合很多工作需求，例如这个模式下不能使用大量的滤镜了，因为滤镜仅能对未压缩(编码)的数据进行处理。</p>
-<h3 id="流"><a href="#流" class="headerlink" title="流"></a>流</h3><h4 id="4-1流处理"><a href="#4-1流处理" class="headerlink" title="4.1流处理"></a>4.1流处理</h4><p>默认情况下，<code>ffmpeg</code>把输入文件每种类型(视频、音频和字幕)仅仅采用一个流转换输出到输出文件中，就是把<strong>最好</strong>效果的流进行输出：</p>
-<ul>
-<li>对于视频，它是具有最高分辨率的流</li>
-<li>对于音频，它是具有最多频道的流</li>
-<li>对于字幕，它是第一个找到的字幕流，但有一个警告。输出格式的默认字幕编码器可以是基于文本的，也可以是基于图像的，并且仅选择相同类型的字幕流</li>
-<li>在几个相同类型的流速率相等的情况下，选择具有最低索引的流。</li>
-</ul>
-<p>当然，你可以禁用默认设置，而采用<code>-vn/-an/-sn</code>选项进行专门的指定，如果要进行完全的手动控制，则是以<code>-map</code>选项，它将禁止默认值而选用指定的配置。</p>
-<h4 id="4-1流处理-1"><a href="#4-1流处理-1" class="headerlink" title="4.1流处理"></a>4.1流处理</h4><p>流处理独立于流选择，下面描述的字幕除外。流处理通过<code>-codec</code>选项进行设置，该选项寻址到特定输出文件内的流。特别是，<code>-codec</code>在流选择过程之后被ffmpeg应用，因此不影响后者。如果没有为流类型指定<code>-codec</code>选项，ffmpeg将选择输出文件muxer注册的默认编码器。</p>
-<p>对于字幕存在例外。如果为输出文件指定了字幕编码器，则将包括找到任何类型的第一个字幕流，如文本或图像。 ffmpeg不验证指定的编码器是否可以转换所选的流，或者转换的流是否在输出格式中是可接受的。这通常也适用：当用户手动设置编码器时，流选择过程不能检查编码流是否可以复用到输出文件中。如果不能，则ffmpeg将中止，并且所有输出文件都将无法处理。</p>
-<h4 id="4-2例子"><a href="#4-2例子" class="headerlink" title="4.2例子"></a>4.2例子</h4><p>假设以下三个输入文件。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">input file &#x27;A.avi&#x27;</span><br><span class="line">      stream 0: video 640x360</span><br><span class="line">      stream 1: audio 2 channels</span><br><span class="line"> </span><br><span class="line">input file &#x27;B.mp4&#x27;</span><br><span class="line">      stream 0: video 1920x1080</span><br><span class="line">      stream 1: audio 2 channels</span><br><span class="line">      stream 2: subtitles (text)</span><br><span class="line">      stream 3: audio 5.1 channels</span><br><span class="line">      stream 4: subtitles (text)</span><br><span class="line"> </span><br><span class="line">input file &#x27;C.mkv&#x27;</span><br><span class="line">      stream 0: video 1280x720</span><br><span class="line">      stream 1: audio 2 channels</span><br><span class="line">      stream 2: subtitles (image)</span><br></pre></td></tr></table></figure>
-<h5 id="示例：自动流选择"><a href="#示例：自动流选择" class="headerlink" title="示例：自动流选择"></a>示例：自动流选择</h5><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i A.avi -i B.mp4 out1.mkv out2.wav -map <span class="number">1</span>:a -c:a <span class="built_in">copy</span> out3.mov</span><br></pre></td></tr></table></figure>
-<p>指定了三个输出文件，对于前两个out1 out2，由于未设置<code>-map</code>选项，因此ffmpeg将自动为这两个文件选择流。<br>out1.mkv是一个Matroska容器文件，接受视频，音频和字幕流，因此ffmpeg将尝试选择每种类型中的一种。<br>对于视频，它将从B.mp4中选择流 stream 0 ，其在所有输入视频流中具有最高分辨率。<br>对于音频，它将从B.mp4中选择流 stream 3 ，因为它具有最多的通道。<br>对于字幕，它将从B.mp4中选择流 stream 2 ，这是A.avi和B.mp4中的第一个字幕流。<br>out2.wav只接受音频流，因此只选择来自B.mp4的stream 3。<br>out3.mov，由于设置了<code>-map</code>选项，因此不会进行自动流选择。 <code>-map 1:a</code>选项将从第二个输入B.mp4中选择所有音频流。此输出文件中不包含其他流。<br>对于前两个输出，将对所有包含的流进行转码。选择的编码器将是每种输出格式注册的默认编码器，可能与所选输入流的编解码器不匹配。<br>对于第三个输出，<code>-c:a copy</code>意为使用指定音视频编码中的所有音频流编解码器，设置为<code>copy</code>，因此不会发生以及不可能发生解码 - 过滤 - 编码操作。所选流的数据包应从输入文件传送，并在输出文件中复用。</p>
-<h5 id="示例：自动字幕选择"><a href="#示例：自动字幕选择" class="headerlink" title="示例：自动字幕选择"></a>示例：自动字幕选择</h5><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i C.mkv out1.mkv -c:s dvdsub -an out2.mkv</span><br></pre></td></tr></table></figure>
-<p>尽管out1.mkv是Matroska容器文件，它接受字幕流，但只能选择视频和音频流。 C.mkv的字幕流是基于图像的，并且Matroska复用器的默认字幕编码器是基于文本的，因此字幕的转码操作预计会失败，因此不选择该流。 然而，在out2.mkv中，在命令中<code>-c:s dvdsub</code>指定字幕编码器，因此，除了视频流之外，还选择字幕流。 <code>-an</code>的存在禁用out2.mkv的音频流选择。</p>
-<h3 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h3><p>所有的数值选项，如果没有特殊定义，则需要一个接受一个字符串代表一个数作为输入，这可能跟着一个单位量词首字母，例如<code>&quot;k&quot;</code>,<code>&quot;m&quot;</code>或<code>&quot;G&quot;</code></p>
-<p>如果<code>i</code>是附加到SI单位的首字母，完整的字母将被解释为一个2的幂数单位，这是基于1024而不是1000的，添加<code>B</code>的SI单位则是再将此值乘以8。例如<code>KB</code>，<code>MiB</code>，<code>G</code>和<code>B</code></p>
-<p>对于选项中不带参数的布尔选项，即把相应的值设置为<code>true</code>，它们可以添加<code>no</code>设置为false，例如<code>nofoo</code>就相当于<code>foo false</code> 。</p>
-<h4 id="流说明-限定-符"><a href="#流说明-限定-符" class="headerlink" title="流说明(限定)符"></a>流说明(限定)符</h4><ul>
-<li>很多选项是作用于单独的流的，例如码率(bitrate)或者编码(codec)，流说明符就是精确的为每个流指定相应的选项。</li>
-<li>一个流说明符是一个以冒号分隔的字符串，其中分隔出的部分是附加选项，例如<code>-codec:a:1 ac3</code>表示编码器是对第2音频流以ac3编码。</li>
-<li>一个流说明符可能匹配多个流，则该选项是所有匹配项的选项，例如<code>-b:a 128k</code>表示所有的音频流都是128k的码率。</li>
-<li>一个空的流说明符匹配所有的流，例如<code>-codec copy</code>或者<code>-codec: copy</code>表示所有的流都不进行再次编码(包括视频和音频)</li>
-</ul>
-<p>可能的流说明符有：</p>
-<ul>
-<li><strong><code>stream_index</code></strong>:匹配流的索引，例如<code>-threads:1 4</code>表示对2号流采用4个线程处理</li>
-<li><strong><code>stream_type[:stream_index]</code></strong>:<code>stream_type</code>有<code>v</code>表示视频，<code>a</code>表示音频，<code>s</code>表示字幕，<code>d</code>表示数据和<code>t</code>表示附加/附件等可能，如果<code>stream_index</code>同时被指定，则匹配该索引对于的该类型的流。例如<code>-codec:v:0 h264</code>表示第1视频流是h.264编码。</li>
-<li><strong><code>p:program_id[:stream_index]</code></strong>:如果<code>stream_index</code>被指定，则表示被<code>program_id</code>指定的程序仅作用于<code>stream_index</code>所指流，否则将作用于所有流。</li>
-<li><strong><code>#stream_id</code>或者<code>i:stream_id</code></strong>：匹配<code>stream_id</code>所指流(MPEG-TS中的PID)</li>
-<li><strong><code>m:key[:value]</code></strong>:匹配在元数据中以标签<code>key</code>=<code>value</code>值的流，如果<code>value</code>没有设置，则匹配所有。</li>
-<li><strong><code>u</code></strong>：匹配不能被配置的流，这时编码器必须被定义且有必要的视频维度或者音频采样率之类的信息。<strong>注意</strong>，<code>ffmpeg</code>匹配由元数据标识的状态仅对于输入文件有效。</li>
-</ul>
-<h4 id="常规选项"><a href="#常规选项" class="headerlink" title="常规选项"></a>常规选项</h4><p>这些常规选项也可以用在<code>ffmpeg</code>项目中其他<code>ff*</code>工具，例如<code>ffplayer</code></p>
-<ul>
-<li><p><code>-L</code>：显示授权协议</p>
-</li>
-<li><p><code>-h，-？，-help，--help[arg]</code>:显示帮助，一个附加选项可以指定帮助显示的模式，如果没有参数，则是基本选项(没有特别声明)说明被显示，下面是参数定义</p>
-<ul>
-<li><code>long</code>：在基本选项说明基础上增加高级选项说明</li>
-<li><code>full</code>：输出完整的选项列表，包括编(解)码器，分离器混合器以及滤镜等等的共享和私有选项</li>
-<li><code>decoder=decoder_name</code>：输出指定解码器名的详细信息。可以使用<code>-decoders</code>来获取当前支持的所有解码器名</li>
-<li><code>encoder=encoder_name</code>：输出指定编码器名的详细信息。可以使用<code>-encoders</code>来获取当前支持的所有编码器名</li>
-<li><code>demuxer=demuxer_name</code>：输出指定分离器名详细信息。可以使用<code>-formats</code>来获取当前支持的所有分离器和混合器</li>
-<li><code>muxer=muxer_name</code>：输出指定混合器名详细信息。可以使用<code>-formats</code>来获取当前支持的所有分离器和混合器</li>
-<li><code>filter=filter_name</code>：输出指定滤镜名的详细信息。可以使用<code>-filters</code>来获取当前支持的所有滤镜</li>
-</ul>
-</li>
-<li><p><code>-version</code>：显示版</p>
-</li>
-<li><p><code>-buildconf</code> : 显示构建选项</p>
-</li>
-<li><p><code>-formats</code>：显示所有有效的格式(包括设备)</p>
-</li>
-<li><p><code>-devices</code>：显示有效设备</p>
-</li>
-<li><p><code>-codecs</code>：显示所有已支持的编码(libavcodec中的)</p>
-</li>
-<li><p><code>-decoders</code>：显示所有有效解码器</p>
-</li>
-<li><p><code>-encoders</code>：显示所有有效的编码器</p>
-</li>
-<li><p><code>-bsfs</code>：显示有效的数据流(bitstream)滤镜</p>
-</li>
-<li><p><code>-protocols</code>：显示支持的协议</p>
-</li>
-<li><p><code>-filters</code>：显示libavfilter中的滤镜</p>
-</li>
-<li><p><code>-pix_fmts</code>：显示有效的像素(pixel)格式</p>
-</li>
-<li><p><code>-sample_fmts</code>：显示有效的实例格式</p>
-</li>
-<li><p><code>-layouts</code>：显示信道名字和信道布局</p>
-</li>
-<li><p><code>-colors</code>：显示注册的颜色名</p>
-</li>
-<li><p><code>-sources device[,opt1=val1[,opt2=val]...]</code>：显示自动识别的输入设备源。一些设备可能需要提供一些系统指派的源名字而不能自动识别。返回的列表不能认为一定是完整的(即有可能还有设备没有列出来)</p>
-<p><code>ffmpeg -sources pulse,server=192.168.0.4</code></p>
-</li>
-<li><p><code>-sinks device[,opt1=val1[,opt2=val]...]</code>:显示自动识别的输出设备。一些设备可能需要提供一些系统指派的源名字而不能自动识别。返回的列表不能认为一定是完整的(即有可能还有设备没有列出来)</p>
-<p><code>ffmpeg -sinks pulse,server=192.168.0.4</code></p>
-</li>
-<li><p><code>-loglevel [repeat+]loglevel 或者 -v [repeat+]loglevel</code>：设置日志层次。如果附加有<code>repeat+</code>则表示从第一条非压缩行到达到最后消息n次之间的行将被忽略。<code>&quot;repeat&quot;</code>也可以一直使用，如果没有现有日志层级设置，则采用默认日志层级。如果有多个日志层级参数被获取，使用<code>&quot;repeat&quot;</code>不改变当前日志层级。日志层级是一个字符串或数值，有以下可能值：</p>
-<ul>
-<li><p><code>quiet,-8</code>，什么都不输出，是无声的</p>
-</li>
-<li><p><code>panic,0</code>，仅显示造成进程失败的致命错误，它当前不能使用</p>
-</li>
-<li><p><code>fatal,8</code>仅仅显示致命错误，这些错误使得处理不能继续</p>
-</li>
-<li><p><code>error,16</code>显示所有的错误，包括可以回收的错误(进程还可以继续的)</p>
-</li>
-<li><p><code>warning,24</code>显示所有警告和错误，任何错误或者意外事件相关信息均被显示</p>
-</li>
-<li><p><code>info,32</code>显示过程中的信息，还包括警告和错误，则是默认值</p>
-</li>
-<li><p><code>verbose,40</code>类似<code>info</code>，但更冗长</p>
-</li>
-<li><p><code>debug,48</code>显示所有，包括调试信息</p>
-</li>
-<li><p><code>trace,56</code></p>
-<p>默认的日志输出是stderr设备，如果在控制台支持颜色，则错误和警告标记的颜色将被显示处理，默认日志的颜色设置可以由环境变量的<code>AV_LOG_FORCE_NOCOLOR</code>或者<code>NO_COLOR</code>或者环境变量<code>AV_LOG_RORCE_COLOR</code>覆盖。环境变量<code>NO_COLOR</code>不推荐使用，因为其已经不被新版本支持。</p>
-</li>
-</ul>
-</li>
-<li><p><code>-report</code>：复制所有命令行和控制台输出到当前目录下名为<code>program-YYYMMDD-HHMMSS.log</code>文件中。这常用于报告bug，所以一般会同时设置<code>-loglevel verbose</code></p>
-<p>设置环境变量<code>FFREPORT</code>可以起到相同的效果。如果值是一个以<code>：</code>分隔的关键值对，则将影响到报告效果。值中的特殊符号或者分隔符<code>：</code>必须被转义(参考ffmepg-utils手册中”引用逃逸”(“Quoting and escaping”)章节)。以下是选项值范围：</p>
-<ul>
-<li><p>file：设置报告文件名字，<code>%p</code>被扩展为程序名字，<code>%t</code>是时间码，<code>%%</code>表示一个字符<code>%</code></p>
-</li>
-<li><p>level：用数字设定日志信息详略程度(参考<code>-longlevel</code>)</p>
-<p>例如：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">`FFREPORT=file=ffreport.log:level=32 ffmpeg -i input output`</span><br></pre></td></tr></table></figure>
-<p>会把日志信息输出到环境变量定义的文件中， 内容包括简要过程信息，警告和错误。</p>
-</li>
-</ul>
-</li>
-<li><p><code>-hide_banner</code>：禁止打印输出banner。所有FFmpeg工具使用中常规都会在前面显示一些版权通知、编译选项和库版本等，这个选项可以禁止这部分的显示。</p>
-</li>
-<li><p><code>cpuflags flags(global)</code>：允许设置或者清除cpu标志性和。当前这个选项主要还是测试特性，不要使用，除非你明确需要：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -cpuflags -sse+mmx ... </span><br><span class="line">ffmpeg -cpuflags mmx ... </span><br><span class="line">ffmpeg -cpuflags 0 ...</span><br></pre></td></tr></table></figure>
-<p>可能的选项参数有：</p>
-<ul>
-<li><p>x86</p>
-<ul>
-<li>mmx</li>
-<li>mmxext</li>
-<li>sse</li>
-<li>sse2</li>
-<li>sse2slow</li>
-<li>sse3</li>
-<li>atom</li>
-<li>sse4.1</li>
-<li>sse4.2</li>
-<li>avx</li>
-<li>avx2</li>
-<li>xop</li>
-<li>fma3</li>
-<li>fma4</li>
-<li>3dnow</li>
-<li>3dnowext</li>
-<li>bmi1</li>
-<li>bmi2</li>
-<li>cmov</li>
-</ul>
-</li>
-<li><p>ARM</p>
-<ul>
-<li>armv5te</li>
-<li>armv6</li>
-<li>armv6t2</li>
-<li>vfp</li>
-<li>vfpv3</li>
-<li>neon</li>
-<li>setend</li>
-</ul>
-</li>
-<li><p>AArch64</p>
-<ul>
-<li>armv8</li>
-<li>vfp</li>
-<li>neon</li>
-</ul>
-</li>
-<li><p>PowerPC</p>
-<ul>
-<li>altivec</li>
-</ul>
-</li>
-<li><p>Specific Processors</p>
-<ul>
-<li>pentium2</li>
-<li>pentium3</li>
-<li>pentium4</li>
-<li>k6</li>
-<li>athlon</li>
-<li>athlonxp</li>
-<li>k8</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><code>-opencl_bench</code>：输出所有效OpenCL设备的基准测试情况。当前选项仅在编译FFmepg中打开了<code>--enable-opencl</code>才有效。</p>
-<p>当FFmpeg指定了<code>--enable-opencl</code>编译后，这个选项还可以通过全局参数<code>-opencl_options</code>进行设定，参考OpenCL选项，在ffmpeg-utils手册中对于选项的支持情况，这包括在特定的平台设备上支持OpenCL的能力。默认，FFmpeg会运行在首选平台的首选设备上，通过设置全局的OpenCL则可以实现在选定的OpenCL设备上运行，这样就可以在更快的OpenCL设备上运行(平时节点，需要时才选用性能高但耗电的设备)</p>
-<p>这个选项有助于帮助用户了解信息以进行有效配置。它将在每个设备上运行基准测试，并以性能排序所有设备，用户可以在随后调用<code>ffmpeg</code>时使用<code>-opencl_options</code>配置合适的OpenCL加速特性。</p>
-<p>一般以下面的步骤使用这个参数：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -opencl_bench        </span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><strong>注意</strong>输出中第一行的平台ID(<em>pidx</em>)和设备ID(<em>didx</em>)，然后在选择平台和设备用于命令行：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -opencl_options platform_idx=pidx:device_idx=didx ...</span><br></pre></td></tr></table></figure>
-</blockquote>
-</li>
-<li><p><code>opencl_options options(global)</code>:设置OpenCL环境选项，这个选项仅仅在FFmpeg编译选项中打开了<code>--enable-opencl</code>才有效。</p>
-<p><em>options</em>必须是一个由<code>:</code>分隔的<code>key=value</code>键值对列表。参考OpenCL选项，在ffmpeg-utils手册中对于选项的支持情况</p>
-</li>
-</ul>
-<h4 id="AV选项"><a href="#AV选项" class="headerlink" title="AV选项"></a>AV选项</h4><p>这些选项由特定的库提供(如libavformat，libavdevice以及libavcodec)。为了更多的了解AV选项，使用<code>-help</code>进行进一步了解。它们可以指定下面2个分类：</p>
-<ul>
-<li>generic(常规)：这类选项可以用于设置容器、设备、编码器、解码器等。通用选项对列在<code>AVFormatContext</code>中的容器/设备以及<code>AVCodecContext</code>中的编码有效。</li>
-<li>private(私有)：这类仅对特定的容器、设备或者编码有效。私有选项由相应的 容器/设备/编码 指定(确定)。</li>
-</ul>
-<p>例如要在一个默认为ID3v2.4为头的MP3文件中写入ID3v2.3头，需要使用id3v2_version 私有选项来对MP3混流：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.flac -id3v2_version 3 out.mp3</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p>所有编码AV选项是针对单独流的，所以必须详细指定。</p>
-<p><strong>注意</strong></p>
-<ol>
-<li><code>-nooption</code>语法不能被用于AV选项中的布尔值项目，而必须使用<code>-option 0/-option 1</code></li>
-<li>以往使用<code>v/a/s</code>命名指定每个流的AV选项语法已经不建议使用，它们很快就会失效移除。</li>
-</ol>
-<h4 id="主要选项"><a href="#主要选项" class="headerlink" title="主要选项"></a>主要选项</h4><ul>
-<li><p><code>-f fmt (input/output)</code> :指定输入或者输出文件格式。常规可省略而使用依据扩展名的自动指定，但一些选项需要强制明确设定。</p>
-</li>
-<li><p><code>-i filename (input)</code>：指定输入文件</p>
-</li>
-<li><p><code>-y (global)</code>：默认自动覆盖输出文件，而不再询问确认。</p>
-</li>
-<li><p><code>-n (global)</code>:不覆盖输出文件，如果输出文件已经存在则立即退出</p>
-</li>
-<li><p>-<code>c[:stream_specifier] codec (input/output,per-stream)</code></p>
-</li>
-<li><p><code>-codec[:stream_specifier] codec (input/output,per-stream)</code> 为特定的文件选择编/解码模式，对于输出文件就是编码器，对于输入或者某个流就是解码器。选项参数中<code>codec</code>是编解码器的名字，或者是<code>copy</code>(仅对输出文件)则意味着流数据直接复制而不再编码。例如： </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -map 0 -c:v libx264 -c:a copy OUTPUT</span><br></pre></td></tr></table></figure>
-<p>是使用libx264编码所有的视频流，然后复制所有的音频流。</p>
-<p>再如除了特殊设置外所有的流都由<code>c</code>匹配指定： </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -map 0 -c copy -c:v:1 libx264 -c:a:137 libvorbis OUTPUT</span><br></pre></td></tr></table></figure>
-<p>这将在输出文件中第2视频流按libx264编码，第138音频流按libvorbis编码，其余都直接复制输出。</p>
-</li>
-<li><p><code>-t duration (input/output)</code>:限制输入/输出的时间。如果是在<code>-i</code>前面，就是限定从输入中读取多少时间的数据；如果是用于限定输出文件，则表示写入多少时间数据后就停止。<code>duration</code>可以是以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值。 <strong>注意</strong><code>-to</code>和<code>-t</code>是互斥的，<code>-t</code>有更高优先级。</p>
-</li>
-<li><p><code>-to position (output)</code>:只写入<code>position</code>时间后就停止，<code>position</code>可以是以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值。 <strong>注意</strong><code>-to</code>和<code>-t</code>是互斥的，<code>-t</code>有更高优先级。</p>
-</li>
-<li><p><code>-fs limit_size (output)</code>:设置输出文件大小限制，单位是字节(bytes)。</p>
-</li>
-<li><p><code>-ss position (input/output)</code>:</p>
-<ul>
-<li>当在<code>-i</code>前，表示定位输入文件到<code>position</code>指定的位置。<strong>注意</strong>可能一些格式是不支持精确定位的，所以<code>ffmpeg</code>可能是定位到最接近<code>position</code>(在之前)的可定位点。当有转码发生且<code>-accurate_seek</code>被设置为启用(默认)，则实际定位点到<code>position</code>间的数据被解码出来但丢弃掉。如果是复制模式或者<code>-noaccurate_seek</code>被使用，则这之间的数据会被保留。</li>
-<li>当用于输出文件时，会解码丢弃<code>position</code>对应时间码前的输入文件数据。</li>
-<li><code>position</code>可以是以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值</li>
-</ul>
-</li>
-<li><p><code>-itsoffset offset (input)</code>:设置输入文件的时间偏移。<code>offset</code>必须采用时间持续的方式指定，即可以有<code>-</code>号的时间值(以秒为单位的数值或者 <code>hh:mm:ss[.xxx]</code>格式的时间值)。偏移会附加到输入文件的时间码上，意味着所指定的流会以时间码+偏移量作为最终输出时间码。</p>
-</li>
-<li><p><code>-timestamp date (output)</code>:设置在容器中记录时间戳。</p>
-<p>date 必须是一个时间持续描述格式，即</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[(YYYY-MM-DD|YYYYMMDD)[T|t| ]]((HH:MM:SS[.m...]]])|(HHMMSS[.m...]]]))[Z]</span><br><span class="line">或者为</span><br><span class="line">now</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><code>-metadata[:metadata_specifier] key=value (output,per-metadata)</code>：指定元数据中的键值对。</p>
-<p>流或者章的<code>metadata_specifier</code>可能值是可以参考文档中<code>-map_metadata</code>部分了解。</p>
-<p>简单的覆盖<code>-map_metadata</code>可以通过一个为空的选项实现，例如：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i in.avi -metadata title=&quot;my title&quot; out.flv</span><br></pre></td></tr></table></figure>
-<p>设置第1声道语言:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -metadata:s:a:0 language=eng OUTPUT</span><br></pre></td></tr></table></figure>
-</blockquote>
-</li>
-<li><p><code>-taget type (output)</code>：指定目标文件类型(vcd,svcd,dvd,dv,dv50)，类型还可以前缀一个<code>pal-</code>,<code>ntsc-</code>或者<code>film-</code>来设定更具体的标准。所有的格式选项(码率、编码、缓冲尺寸)都会自动设置，而你仅仅只需要设置目标类型：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i myfile.avi -taget vcd /tmp/vcd.mpg</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p>当然，你也可以指定一些额外的选项，只要你知道这些不会与标准冲突，如：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i myfile.avi -target vcd -bf 2 /tmp/vcd.mpg</span><br></pre></td></tr></table></figure>
-</blockquote>
-</li>
-<li><p><code>-dframes number (output)</code>:设定指定<code>number</code>数据帧到输出文件，这是<code>-frames:d</code>的别名。</p>
-</li>
-<li><p><code>frames[:stream_specifier] framecount (output,per-stream)</code>:在指定计数帧后停止写入数据。</p>
-</li>
-<li><p><code>-q[:stream_specifier] q (output,per-stream)</code></p>
-</li>
-<li><p><code>-qscale[:stream_specifier] q (output,per-stream)</code></p>
-<p>使用固定的质量品质(VBR)。用于指定<code>q|qscale</code>编码依赖。如果<code>qscale</code>没有跟<code>stream_specifier</code>则只适用于视频。其中值<code>q</code>取值在0.01-255,越小质量越好。</p>
-</li>
-<li><p><code>-filter[:stream_specifier] filtergraph (output,per-stream)</code>:创建一个由<code>filtergraph</code>指定的滤镜，并应用于指定流。</p>
-<p><code>filtergraph</code>是应用于流的滤镜链图，它必须有一个输入和输出，而且流的类型需要相同。在滤镜链图中，从<code>in</code>标签指定出输入，从<code>out</code>标签出输出。要了解更多语法，请参考<code>ffmpeg－filters</code>手册。</p>
-<p>参考<code>－filter_complex</code>选项以了解如何建立多个输入／输出的滤镜链图。</p>
-</li>
-<li><p><code>－filter_script［：stream_specifier］ filename (output，per－stream)</code>：这个选项类似于<code>－filter</code>，只是这里的参数是一个文件名，它的内容将被读取用于构建滤镜链图。</p>
-</li>
-<li><p><code>－pre［：stream_specifier］ preset_name (output，per－stream)</code>：指定预设名字的流(单个或者多个)。</p>
-</li>
-<li><p><code>－stats (global)</code>：输出编码过程／统计，这是系统默认值，如果你想禁止，则需要采用<code>－nostats</code>。</p>
-</li>
-<li><p><code>－progress url (global)</code>：发送友好的处理过程信息到<code>url</code>。处理过程信息是一种键值对(key=value)序列信息，它每秒都输出，或者在一次编码结束时输出。信息中最后的一个键值对表明了当前处理进度。</p>
-</li>
-<li><p><code>-stdin</code>:允许标准输入作为交互。在默认情况下除非标准输入作为真正的输入。要禁用标准输入交互，则你需要显式的使用<code>-nostdin</code>进行设置。禁用标准输入作为交互作用是有用的，例如FFmpeg是后台进程组，它需要一些相同的从shell开始的调用(<code>ffmpeg ... &lt;/dev/null</code>)。</p>
-</li>
-<li><p><code>-debug_ts (global)</code>：打印时间码信息，默认是禁止的。这个选项对于测试或者调试是非常有用的特性，或者用于从一种格式切换到另外的格式(包括特性)的时间成本分析，所以不用于脚本处理中。还可以参考<code>-fdebug ts</code>选项。</p>
-</li>
-<li><p><code>-attach filename (output)</code>：把一个文件附加到输出文件中。这里只有很少文件类型能被支持，例如使用Matroska技术为了渲染字幕的字体文件。附件作为一种特殊的流类型，所以这个选项会添加一个流到文件中，然后你就可以像操作其他流一样使用每种流选项。在应用本选项时，附件流须作为最后一个流(例如根据<code>-map</code>映射流或者自动映射时需要注意)。<strong>注意</strong>对于<code>Matroska</code>你也可以在元数据标签中进行类型设定： &gt; ffmpeg -i INPUT -attach DejaVuSans.ttf -metadata:s:2 mimetype=application/x-truetype-font out.mkv</p>
-</li>
-</ul>
-<p>(这时要访问到附件流，则就是访问输出文件中的第3个流)</p>
-<ul>
-<li><p><code>-dump_attachment[:stream_specifier] filename (input,per-stream)</code>：从输入文件中解出指定的附件流到文件filename： &gt; ffmpeg -dump_attachment:t:0 out.ttf -i INPUT</p>
-<p>如果想一次性把所有附件都解出来，则 &gt; ffmpeg -dump_attachment:t “” -i INPUT</p>
-<p>技术说明：附件流是作为编码扩展数据来工作的，所以其他流数据也能展开，而不仅仅是这个附件属性。</p>
-</li>
-<li><p><code>-noautorotate</code>：禁止自动依据文件元数据旋转视频。</p>
-</li>
-</ul>
-<h4 id="视频-video-选项"><a href="#视频-video-选项" class="headerlink" title="视频(video)选项"></a>视频(video)选项</h4><ul>
-<li><p><code>-vframes number (output)</code>：设置输出文件的帧数，是<code>-frames:v</code>的别名。</p>
-</li>
-<li><p><code>-r[:stream_specifier] fps (input/output,per-stream)</code>：设置帧率(一种Hz值，缩写或者分数值)。</p>
-<p>在作为输入选项时，会忽略文件中存储的时间戳和时间戳而产生的假设恒定帧率<code>fps</code>，即强制按设定帧率处理视频产生(快进/减缓效果)。这不像<code>-framerate</code>选项是用来让一些输入文件格式如image2或者v412(兼容旧版本的FFmpeg)等，要注意这一点区别，而不要造成混淆。</p>
-<p>作为输出选项时，会复制或者丢弃输入中个别的帧以满足设定达到<code>fps</code>要求的帧率。</p>
-</li>
-<li><p><code>-s[:stream_specifier] size (input/output,per-stream)</code>：设置帧的尺寸。</p>
-<p>当作为输入选项时，是私有选项<code>video_size</code>的缩写，一些文件没有把帧尺寸进行存储，或者设备对帧尺寸是可以设置的，例如一些采集卡或者raw视频数据。</p>
-<p>当作为输出选项是，则相当于<code>scale</code>滤镜作用在滤镜链图的最后。请使用<code>scale</code>滤镜插入到开始或者其他地方。</p>
-<p>数据的格式是<code>wxh</code>，即<code>宽度值X高度值</code>，例如<code>320x240</code>，(默认同源尺寸)</p>
-</li>
-<li><p><code>aspect[:stream_specifier] aspect (output,per-stream)</code>：指定视频的纵横比(长宽显示比例)。<code>aspect</code>是一个浮点数字符串或者<code>num:den</code>格式字符串(其值就是num/den)，例如”4:3”,”16:9”,”1.3333”以及”1.7777”都是常用参数值。</p>
-<p>如果还同时使用了<code>-vcodec copy</code>选项，它将只影响容器级的长宽比，而不是存储在编码中的帧纵横比。</p>
-</li>
-<li><p><code>-vn (output)</code>：禁止输出视频</p>
-</li>
-<li><p><code>-vcodec codec (output)</code>：设置视频编码器，这是<code>-codec:v</code>的一个别名。</p>
-</li>
-<li><p><code>-pass[:stream_specifier] n (output,per-stream)</code>:选择当前编码数(1或者2)，它通常用于2次视频编码的场景。第一次编码通常把分析统计数据记录到1个日志文件中(参考<code>-passlogfile</code>选项)，然后在第二次编码时读取分析以精确要求码率。在第一次编码时通常可以禁止音频，并且把输出文件设置为<code>null</code>，在windows和类unix分别是:</p>
-<blockquote>
-<p>ffmpeg -i foo.mov -c:v libxvid -pass 1 -an -f rawvideo -y NUL ffmpeg -i foo.mov -c:v libxvid -pass 1 -an -f rawvideo -y /dev/null</p>
-</blockquote>
-</li>
-<li><p><code>-passlogfile[:stream_specifier] prefix (output,per-stream)</code>：设置2次编码模式下日志文件存储文件前导，默认是”ffmepg2pass”，则完整的文件名就是”PREFIX-N.log”，其中的N是指定的输出流序号(对多流输出情况)</p>
-</li>
-<li><p><code>-vf filtergraph (output)</code>：创建一个<code>filtergraph</code>的滤镜链并作用在流上。它实为<code>-filter:v</code>的别名，详细参考<code>-filter</code>选项。</p>
-</li>
-</ul>
-<h4 id="高级视频选项"><a href="#高级视频选项" class="headerlink" title="高级视频选项"></a>高级视频选项</h4><ul>
-<li><p><code>-pix_fmt[:stream_specifier] format (input/output,per-stream)</code>：设置像素格式。使用<code>-pix_fmts</code>可以显示所有支持的像素格式。如果设置的像素格式不能被选中(启用)，则ffmpeg会输出一个警告和并选择这个编码最好(兼容)的像素格式。如果<code>pix_fmt</code>前面前导了一个<code>+</code>字符，ffmepg会在要求的像素格式不被支持时退出，这也意味着滤镜中的自动转换也会被禁止。如果<code>pix_fmt</code>是单独的<code>+</code>，则ffmpeg选择和输入(或者滤镜通道)一样的像素格式作为输出，这时自动转换也会被禁止。</p>
-</li>
-<li><p><code>-sws_flags flags (input/output)</code>:选择<code>SwScaler</code>放缩标志量。</p>
-</li>
-<li><p><code>-vdt n</code>：丢弃的门限设置。</p>
-</li>
-<li><p><code>-rc_override[:stream_specifier] override (output,per-stream)</code>:在特定时间范围内的间隔覆盖率，<code>override</code>的格式是”int\int\int”。其中前两个数字是开始帧和结束帧，最后一个数字如果为正则是量化模式，如果为负则是品质因素。</p>
-</li>
-<li><p><code>-ilme</code>：支持交错编码(仅MPEG-2和MPEG-4)。如果你的输入是交错的，而且你想保持交错格式，又想减少质量损失，则选此项。另一种方法是采用<code>-deinterlace</code>对输入流进行分离，但会引入更多的质量损失。</p>
-</li>
-<li><p><code>-psnr</code>：计算压缩帧的<code>PSNR</code></p>
-</li>
-<li><p><code>-vstats</code>：复制视频编码统计分析到日志文件<code>vstats_HHMMSS.log</code></p>
-</li>
-<li><p><code>-vstats_file file</code>:复制视频编码统计分析到<code>file</code>所指的日志文件中。</p>
-</li>
-<li><p><code>-top[:stream_specifier] n (output,per-stream)</code>: 指明视频帧数据描述的起点。<code>顶部=1/底部=0/自动=-1</code>(以往CRT电视扫描线模式)</p>
-</li>
-<li><p><code>-dc precision</code>：Intra_dc_precision值。</p>
-</li>
-<li><p><code>-vtag fourcc/tag (output)</code>:是<code>-tag:v</code>的别名，强制指定视频标签/fourCC (FourCC全称Four-Character Codes，代表四字符代码 (four character code), 它是一个32位的标示符，其实就是typedef unsigned int FOURCC;是一种独立标示视频数据流格式的四字符代码。)</p>
-</li>
-<li><p><code>-qphist (global)</code>：显示<code>QP</code>直方图。</p>
-</li>
-<li><p><code>-vbsf bitstream_filter</code>：参考<code>-bsf</code>以进一步了解。</p>
-</li>
-<li><p><code>-force_key_frames[:stream_specifier] time[,time...] (output,per-stream)</code> ：(见下)</p>
-</li>
-<li><p><code>-force_key_frames[:stream_specifier] expr:expr (output,per-stream)</code>：强制时间戳位置帧为关键帧，更确切说是从第一帧起每设置时间都是关键帧(即强制关键帧率)。</p>
-<p>如果参数值是以<code>expr:</code>前导的，则字符串<code>expr</code>为一个表达式用于计算关键帧间隔数。关键帧间隔值必须是一个非零数值。</p>
-<p>如果一个时间值是”<code>chapters</code> [delta]”则表示文件中从<code>delta</code>章开始的所有章节点计算以秒为单位的时间，并把该时间所指帧强制为关键帧。这个选项常用于确保输出文件中所有章标记点或者其他点所指帧都是关键帧(这样可以方便定位)。例如下面的选项代码就可以使“第5分钟以及章节chapters-0.1开始的所有标记点都成为关键帧”：</p>
-<blockquote>
-<p>-force_key_frames 0:05:00,chapters-0.1</p>
-</blockquote>
-<p>其中表达式<code>expr</code>接受如下的内容：</p>
-<ul>
-<li><p><code>n</code>：当前帧序数，从0开始计数</p>
-</li>
-<li><p><code>n_forced</code>：强制关键帧数</p>
-</li>
-<li><p><code>prev_forced_n</code>：之前强制关键帧数，如果之前还没有强制关键帧，则其值为<code>NAN</code></p>
-</li>
-<li><p><code>prev_forced_t</code>：之前强制关键帧时间，如果之前还没有强制关键帧则为<code>NAN</code></p>
-</li>
-<li><p><code>t</code>：当前处理到的帧对应时间。</p>
-<p>例如要强制每5秒一个关键帧：</p>
-<blockquote>
-<p>-force_key_frames expr:gte(t,n_forced*5)</p>
-</blockquote>
-<p>从13秒后每5秒一个关键帧：</p>
-<blockquote>
-<p>-force_key_frames expr:if(isnan(prev_forced_t),gte(t,13),gte(t,prev_forced_t+5))</p>
-</blockquote>
-<p><strong>注意</strong>设置太多强制关键帧会损害编码器前瞻算法效率，采用固定<code>GOP</code>选项或采用一些近似设置可能更高效。</p>
-</li>
-</ul>
-</li>
-<li><p><code>-copyinkf[:stream_specifier] (output,per-stream)</code>:流复制时同时复制非关键帧。</p>
-</li>
-<li><p><code>-hwaccel[:stream_specifier] hwaccel (input,per-stream)</code>：使用硬件加速解码匹配的流。允许的<code>hwaccel</code>值为：</p>
-<ul>
-<li><p><code>none</code>：没有硬件加速(默认值)</p>
-</li>
-<li><p><code>auto</code>：自动选择硬件加速</p>
-</li>
-<li><p><code>vda</code>：使用Apple的VDA硬件加速</p>
-</li>
-<li><p><code>vdpau</code>：使用VDPAU(Video Decode and Presentation API for Unix，类unix下的技术标准)硬件加速</p>
-</li>
-<li><p><code>dxva2</code>：使用DXVA2 (DirectX Video Acceleration，windows下的技术标准) 硬件加速。</p>
-<p>这个选项可能并不能起效果(它依赖于硬件设备支持和选择的解码器支持)</p>
-<p><strong>注意</strong>：很多加速方法(设备)现在并不比现代CPU快了，而且额外的<code>ffmpeg</code>需要拷贝解码的帧(从GPU内存到系统内存)完成后续处理(例如写入文件)，从而造成进一步的性能损失。所以当前这个选项更多的用于测试。</p>
-</li>
-</ul>
-</li>
-<li><p><code>-hwaccel_device:[:stream_specifier] hwaccel_device (input,per-stream)</code>：选择一个设备用于硬件解码加速。这个选项必须同时指定了<code>-hwaccel</code>才可能生效。它也依赖于指定的设备对于特定编码的解码加速支持性能。</p>
-<ul>
-<li><code>vdpau</code>：对应于<code>VDPAU</code>，在<code>X11</code>(类Unix)显示/屏幕 上的，如果这个选项值没有选中，则必须在<code>DISPLAY</code>环境变量中有设置。</li>
-<li><code>dxva2</code>：对应于<code>DXVA2</code>，这个是显示硬件(卡)的设备号，如果没有指明，则采用默认设备(对于多个卡时)。</li>
-</ul>
-</li>
-</ul>
-<h4 id="音频选项"><a href="#音频选项" class="headerlink" title="音频选项"></a>音频选项</h4><ul>
-<li><code>-aframes number (output)</code>：设置<code>number</code>音频帧输出，是<code>-frames:a</code>的别名</li>
-<li><code>-ar[:stream_specifier] freq (input/output,per-stream)</code>:设置音频采样率。默认是输出同于输入。对于输入进行设置，仅仅通道是真实的设备或者raw数据分离出并映射的通道才有效。对于输出则可以强制设置音频量化的采用率。</li>
-<li><code>-aq q (output)</code>：设置音频品质(编码指定为VBR)，它是<code>-q:a</code>的别名。</li>
-<li><code>-ac[:stream_specifier] channels (input/output,per-stream)</code>：设置音频通道数。默认输出会有输入相同的音频通道。对于输入进行设置，仅仅通道是真实的设备或者raw数据分离出并映射的通道才有效。</li>
-<li><code>-an (output)</code>：禁止输出音频</li>
-<li><code>-acode codec (input/output)</code>：设置音频解码/编码的编/解码器，是<code>-codec:a</code>的别名</li>
-<li><code>-sample_fmt[:stream_specifier] sample_fmt (output,per-stream)</code>:设置音频样例格式。使用<code>-sample_fmts</code>可以获取所有支持的样例格式。</li>
-<li><code>-af filtergraph (output)</code>：对音频使用<code>filtergraph</code>滤镜效果，其是<code>-filter:a</code>的别名，参考<code>-filter</code>选项。</li>
-</ul>
-<h4 id="高级音频选项"><a href="#高级音频选项" class="headerlink" title="高级音频选项"></a>高级音频选项</h4><ul>
-<li><code>-atag fourcc/tag (output)</code>：强制音频标签/fourcc。这个是<code>-tag:a</code>的别名。</li>
-<li><code>-absf bitstream_filter</code>：要深入了解参考<code>-bsf</code></li>
-<li><code>-guess_layout_max channels (input,per-stream)</code>:如果音频输入通道的布局不确定，则尝试猜测选择一个能包括所有指定通道的布局。例如：通道数是2，则<code>ffmpeg</code>可以认为是2个单声道，或者1个立体声声道而不会认为是6通道或者5.1通道模式。默认值是总是试图猜测一个包含所有通道的布局，用0来禁用。</li>
-</ul>
-<h4 id="字幕选项"><a href="#字幕选项" class="headerlink" title="字幕选项"></a>字幕选项</h4><ul>
-<li><code>-scodec codec (input/output)</code>：设置字幕解码器，是<code>-codec:s</code>的别名。</li>
-<li><code>-sn (output)</code>：禁止输出字幕</li>
-<li><code>-sbsf bitstream_filter</code>：深入了解请参考<code>-bsf</code></li>
-</ul>
-<h4 id="高级字幕选项"><a href="#高级字幕选项" class="headerlink" title="高级字幕选项"></a>高级字幕选项</h4><ul>
-<li><p><code>-fix_sub_duration</code>：修正字幕持续时间。对每个字幕根据接下来的数据包调整字幕流的时间常数以防止相互覆盖(第一个没有完下一个就出来了)。这对很多字幕解码来说是必须的，特别是DVB字幕，因为它在原始数据包中只记录了一个粗略的估计值，最后还以一个空的字幕帧结束。</p>
-<p>这个选项可能失败，或者出现夸张的持续时间或者合成失败，这是因为数据中有非单调递增的时间戳。</p>
-<p><strong>注意</strong>此选项将导致所有数据延迟输出到字幕解码器，它会增加内存消耗，并引起大量延迟。</p>
-</li>
-<li><p><code>-canvas_size size</code>：设置字幕渲染区域的尺寸(位置)</p>
-</li>
-</ul>
-<h4 id="高级选项"><a href="#高级选项" class="headerlink" title="高级选项"></a>高级选项</h4><ul>
-<li><p><code>-map [-]input_file_id[:stream_specifier][,sync_file_id[:stream_specifier]] | [linklabel] (output)</code>：设定一个或者多个输入流作为输出流的源。每个输入流是以<code>input_file_id</code>序数标记的输入文件和<code>input_stream_id</code>标记的流序号共同作用指明，它们都以0起始计数。如果设置了<code>sync_file_id:stream_specifier</code>，则把这个输入流作为同步信号参考。</p>
-<p>命令行中的第一个<code>-map</code>选项指定了输出文件中第一个流的映射规则(编号为0的流，0号流)，第二个则指定1号流的，以此类推。</p>
-<p>如果在流限定符前面有一个<code>-</code>标记则表明创建一个“负”映射，这意味着禁止该流输出，及排除该流。</p>
-<p>一种替代的形式是在复合滤镜中利用<code>[linklabel]</code>来进行映射(参看<code>-filter_complex</code>选项)。其中的<code>linklabel</code>必须是输出滤镜链图中已命名的标签。</p>
-<p>例子：映射第一个输入文件的所有流到输出文件：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i INPUT -map 0 output</span><br></pre></td></tr></table></figure>
-<p>又如，如果在输入文件中有两路音频流，则这些流的标签就是”0:0”和”0:1”，你可以使用<code>-map</code>来选择某个输出，例如： &gt; ffmpeg -i INPUT -map 0:1 out.wav</p>
-<p>这将只把输入文件中流标签为”0:1”的音频流单独输出到out.wav中。</p>
-<p>再如，从文件a.mov中选择序号为2的流(流标签0:2)，以及从b.mov中选择序号为6的流(流标签1:6)，然后共同复制输出到out.mov需要如下写: </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i a.mov -i b.mov -c copy -map 0:2 -map 1:6 out.mov</span><br><span class="line">选择所有的视频和第三个音频流则是:</span><br><span class="line">ffmpeg -i INPUT -map 0:v -map:a:2 OUTPUT</span><br><span class="line">选择所有的流除了第二音频流外的流进行输出是：</span><br><span class="line">ffmpeg -i INPUT -map 0 -map -0:a:1 OUTPUT</span><br><span class="line">选择输出英语音频流:</span><br><span class="line">ffmpeg -i INPUT -map 0:m:language:eng OUTPUT</span><br></pre></td></tr></table></figure>
-<p><strong>注意</strong>应用了该选项将自动禁用默认的映射。</p>
-</li>
-<li><p><code>-ignore_unknown</code>：如果流的类型未知则忽略，而不进行复制。</p>
-</li>
-<li><p><code>-copy_unknown</code>：复制类型未知的流。</p>
-</li>
-<li><p><code>-map_channel [input_file_id.stream_specifier.channel_id|-1][:output_file_id.stream_specifier]</code>:从输入文件中指定映射一个通道的音频到输出文件指定流。如果<code>output_file_id.stream_specifier</code>没有设置，则音频通道将映射到输出文件的所有音频流中。</p>
-<p>使用<code>-1</code>插入到<code>input_file_id.stream_specifier.chnnel_id</code>会映射一个静音通道</p>
-<p>例如<code>INPUT</code>是一个立体声音频文件，你可以分别选择两个音频通道(下面实际上对于输入是交换了2个音频通道顺序进行输出)： &gt; ffmpeg -i INPUT -map_channel 0.0.1 -map_channel 0.0.0 OUTPUT</p>
-<p>如果你想静音第一个通道，而只保留第二通道，则可使用: &gt; ffmpeg -i INPUT -map_channel -1 -map_channel 0.0.1 OUTPUT</p>
-<p>以<code>-map_channel</code>选项指定的顺序在输出文件中输出音频流通道布局，即第一个<code>-map_channel</code>对应输出中第一个音频流通道，第二个对应第二个音频流通道，以此类推(只有一个则是单声道，2个是立体声)。联合使用<code>-ac</code>与<code>-map_channel</code>，而且在输入的<code>-map_channel</code>与<code>-ac</code>不匹配(例如只有2个<code>-map_channel</code>，又设置了<code>-ac 6</code>)时将使指定音频流通道提高增益。</p>
-<p>你可以详细的对每个输入通道指派输出以分离整个输入文件，例如下面就把有<code>INPUT</code>文件中的两个音频分别输出到两个输出文件中(OUTPUT_CH0 和 OUTPUT_CH1 )： &gt; ffmpeg -i INPUT -map_channel 0.0.0 OUTPUT_CH0 -map_channel 0.0.1 OUTPUT_CH1</p>
-<p>下面的例子则把一个立体声音频的两个音频通道分离输出到两个相互独立的流(相当于两个单声道了)中(但还是放置在同一个输出文件中): &gt; ffmpeg -i stereo.wav -map 0:0 -map 0:0 -map_channel 0.0.0:0.0 -map_channel 0.0.1:0.1 -y out.ogg</p>
-<p><strong>注意</strong>当前一个输出流仅能与一个输入通道连接，既你不能实现利用<code>-map_channel</code>把多个输入的音频通道整合到不同的流中(从同一个文件或者不同文件)或者是混合它们成为单独的流，例如整合2个单声道形成立体声是不可能的。但是分离一个立体声成为2个独立的单声道是可行的。</p>
-<p>如果你需要类似的应用，你需要使用<code>amerge</code>滤镜，例如你需要整合一个媒体(这里是input.mkv)中的2个单声道成为一个立体声通道(保持视频流不变)，你需要采用下面的命令: &gt; ffmpeg -i input.mkv -filter_complex “[0:1] [0:2] amerge” -c:a pcm_s16le -c:v copy output.mkv</p>
-</li>
-<li><p><code>-map_metadata[:metadata_spec_out] infile[:metadata_spec_in] (output,per-metadata)</code>：在下一个输出文件中从<code>infile</code>读取输出元数据信息。<strong>注意</strong>这里的文件索引也是以0开始计数的，而不是文件名。参数<code>metadata_spec_in/out</code>指定的元数据将被复制，一个元数据描述可以有如下的信息块:</p>
-<ul>
-<li><p><code>g</code>:全局元数据，这些元数据将作用于整个文件</p>
-</li>
-<li><p><code>s[:stream_spec]</code>:每个流的元数据，<code>steam_spec</code>的介绍在<code>流指定</code>章节。如果是描述输入流，则第一个被匹配的流相关内容被复制，如果是输出元数据指定，则所有匹配的流相关信息被复制到该处。</p>
-</li>
-<li><p><code>c:chapter_index</code>:每个章节的元数据，<code>chapter_index</code>也是以0开始的章节索引。</p>
-</li>
-<li><p><code>p:program_index</code>：每个节目元数据，<code>program_index</code>是以0开始的节目索引</p>
-<p>如果元数据指定被省略，则默认是全局的。</p>
-<p>默认全局元数据会从第一个输入文件每个流每个章节依次复制(流/章节)，这种默认映射会因为显式创建了任意的映射而失效。一个负的文件索引就可以禁用默认的自动复制。</p>
-<p>例如从输入文件的第一个流复制一些元数据作为输出的全局元数据 &gt; ffmpeg -i in.ogg -map_metadata 0:s:0 out.mp3</p>
-<p>与上相反的操作，例如复制全局元数据给所有的音频流 &gt; ffmpeg -i in.mkv -map_metadata:s:a 0:g out.mkv</p>
-<p><strong>注意</strong>这里简单的<code>0</code>在这里能正常工作是因为全局元数据是默认访问的。</p>
-</li>
-</ul>
-</li>
-<li><p><code>-map_chapters input_file_index (output)</code>:从输入文件中复制由<code>input_file_index</code>指定的章节的内容到输出。如果没有匹配的章节，则复制第一个输入文件至少一章内容(第一章)。使用负数索引则禁用所有的复制。</p>
-</li>
-<li><p><code>-benchmark (global)</code>：在编码结束后显示基准信息。则包括CPU使用时间和最大内存消耗，最大内存消耗是不一定在所有的系统中被支持，它通常以显示为0表示不支持。</p>
-</li>
-<li><p><code>-benchmark_all (global)</code>:在编码过程中持续显示基准信息，则包括CPU使用时间(音频/视频 的 编/解码)</p>
-</li>
-<li><p><code>-timelimit duration (global)</code>:ffmpeg在编码处理了<code>duration</code>秒后退出。</p>
-</li>
-<li><p><code>-dump (global)</code>：复制每个输入包到标准输出设备</p>
-</li>
-<li><p><code>-hex (global)</code>:复制包时也复制荷载信息</p>
-</li>
-<li><p><code>-re (input)</code>：以指定帧率读取输入。通常用于模拟一个硬件设备，例如在直播输入流(这时是读取一个文件)。不应该在实际设备或者在直播输入中使用(因为这将导致数据包的丢弃)。默认<code>ffmpeg</code>会尽量以最高可能的帧率读取。这个选项可以降低从输入读取的帧率，这常用于实时输出(例如直播流)。</p>
-</li>
-<li><p><code>-loop_input</code>：循环输入流。当前它仅作用于图片流。这个选项主要用于FFserver自动化测试。这个选项现在过时了，应该使用<code>-loop 1</code>。</p>
-</li>
-<li><p><code>-loop_output number_of_times</code>：重复播放<code>number_of_times</code>次。这是对于GIF类型的动画(0表示持续重复而不停止)。这是一个过时的选项，用<code>-loop</code>替代。</p>
-</li>
-<li><p><code>-vsync parameter</code>：视频同步方式。为了兼容旧，常被设置为一个数字值。也可以接受字符串来作为描述参数值，其中可能的值是:</p>
-<ul>
-<li><p><code>0,passthrough</code>:每个帧都通过时间戳来同步(从解复用到混合)。</p>
-</li>
-<li><p><code>1，cfr</code>：帧将复制或者降速以精准达到所要求的恒定帧速率。</p>
-</li>
-<li><p><code>2，vfr</code>：个别帧通过他们的时间戳或者降速以防止2帧具有相同的时间戳</p>
-</li>
-<li><p><code>drop</code>：直接丢弃所有的时间戳，而是在混合器中基于设定的帧率产生新的时间戳。</p>
-</li>
-<li><p><code>-1，auto</code>：根据混合器功能在1或者2中选择，这是默认值。</p>
-<p><strong>注意</strong>时间戳可以通过混合器进一步修改。例如<code>avoid_negative_ts</code>被设置时。</p>
-<p>利用<code>-map</code>你可以选择一个流的时间戳作为凭据，它可以对任何视频或者音频 不改变或者重新同步持续流到这个凭据。</p>
-</li>
-</ul>
-</li>
-<li><p><code>-frame_drop_threshold parameter</code>：丢帧的阀值，它指定后面多少帧内可能有丢帧。在帧率计数时1.0是1帧，默认值是1.1。一个可能的用例是避免在混杂的时间戳或者需要增加精准时间戳的情况下确立丢帧率。</p>
-</li>
-<li><p><code>-async samples_per_second</code>：音频同步方式。”拉伸/压缩”音频以匹配时间戳。参数是每秒最大可能的音频改变样本。<code>-async 1</code>是一种特殊情况指只有开始时校正，后续不再校正。</p>
-<p><strong>注意</strong>时间戳还可以进一步被混合器修改。例如<code>avoid_negative_ts</code>选项被指定时</p>
-<p>已不推荐这个选项，而是用<code>aresample</code>音频滤波器代替。</p>
-</li>
-<li><p><code>-copyts</code>：不处理输入的时间戳，保持它们而不是尝试审核。特别是不会消除启动时间偏移值。</p>
-<p><strong>注意</strong>根据<code>vsync</code>同步选项或者特定的混合器处理流程(例如格式选项<code>avoid_negative_ts</code>被设置)输出时间戳会忽略匹配输入时间戳(即使这个选项被设置)</p>
-</li>
-<li><p><code>-start_at_zero</code>：当使用<code>-copyts</code>,位移输入时间戳作为开始时间0.这意味着使用该选项，同时又设置了<code>-ss</code>，例如<code>-ss 50</code>则输出中会从50秒开始加入输入文件时间戳。</p>
-</li>
-<li><p>```<br>-copytb mode</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">：指定当流复制时如何设置编码时间基准。</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>mode</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  参数是一个整数值，可以有如下可能：</span><br><span class="line"></span><br><span class="line">  - `1`表示使用分离器时间基准，从分离器中复制时间戳到编码中。复制可变帧率视频流时需要避免非单调递增的时间戳。</span><br><span class="line">  - `0`表示使用解码器时间基准，使用解码器中获取的时间戳作为输出编码基准。</span><br><span class="line">  - `-1`尝试自动选择，只要能产生一个正常的输出，这是默认值。</span><br><span class="line"></span><br><span class="line">- `-shortest (output)`：完成编码时最短输入端。</span><br><span class="line"></span><br><span class="line">- `-dts_delta_threshold`：时间不连续增量阀值。</span><br><span class="line"></span><br><span class="line">- `-muxdelay seconds (input)`：设置最大 解复用-解码 延迟。参数是秒数值。</span><br><span class="line"></span><br><span class="line">- `-maxpreload seconds (input)`：设置初始的 解复用-解码延迟，参数是秒数值。</span><br><span class="line"></span><br><span class="line">- `-streamid output-stream-index:new-value (output)`:强制把输出文件中序号为output-stream-id的流命名为new-value的值。这对应于这样的场景：在存在了多输出文件时需要把一个流分配给不同的值。例如设置0号流为33号流，1号流为36号流到一个mpegts格式输出文件中(这相当于对流建立链接/别名)：</span><br><span class="line">  </span><br><span class="line">  &gt; ffmpeg -i infile -streamid 0:33 -streamid 1:36 out.ts</span><br><span class="line"></span><br><span class="line">- `-bsf[:stream_specifier] bitstream_filters (output,per-stream)`：为每个匹配流设置bit流滤镜。`bitstream_filters`是一个逗号分隔的bit流滤镜列表。可以使用`-bsfs`来获得当前可用的bit流滤镜。</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i h264.mp4 -c:v copy -bsf:v h264_mp4toannexb -an out.h264 ffmpeg -i file.mov -an -vn -bsf:s mov2textsub -c:s copy -f rawvideo sub.txt</span><br><span class="line"></span><br><span class="line">- `-tag[:stream_specifier codec_tag (input/output,per-stream`：为匹配的流设置标签/fourcc。</span><br><span class="line"></span><br><span class="line">- `-timecode hh:mm:ssSEDff`:指定时间码，这里`SEP`如果是`:`则不减少时间码，如果是`;`或者`.`则可减少。</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i input.mpg -timecode 01:02:03.04 -r 30000/1001 -s ntsc output.mpg</span><br><span class="line"></span><br><span class="line">- `-filter_complex filtergraph (global)`：定义一个复合滤镜，可以有任意数量的输入/输出。最简单的滤镜链图至少有一个输入和一个输出，且需要相同类型。参考`-filter`以获取更多信息(更有价值)。`filtergraph`用来指定一个滤镜链图。关于`滤镜链图的语法`可以参考`ffmpeg-filters`相关章节。</span><br><span class="line"></span><br><span class="line">  其中输入链标签必须对应于一个输入流。filtergraph的具体描述可以使用`file_index:stream_specifier`语法(事实上这同于`-map`)。如果`stream_specifier`匹配到了一个多输出流，则第一个被使用。滤镜链图中一个未命名输入将匹配链接到的输入中第一个未使用且类型匹配的流。</span><br><span class="line"></span><br><span class="line">  使用`-map`来把输出链接到指定位置上。未标记的输出会添加到第一个输出文件。</span><br><span class="line"></span><br><span class="line">  **注意**这个选项参数在用于`-lavfi`源时不是普通的输入文件。 &gt; ffmpeg -i video.mkv -i image.png -filter_complex &#x27;[0:v][1:v]overlay[out]&#x27; -map &#x27;[out]&#x27; out.mkv</span><br><span class="line"></span><br><span class="line">  这里`[0:v]`是第一个输入文件的第一个视频流，它作为滤镜的第一个(主要的)输入，同样，第二个输入文件的第一个视频流作为滤镜的第二个输入。</span><br><span class="line"></span><br><span class="line">  假如每个输入文件只有一个视频流，则我们可以省略流选择标签，所以上面的内容在这时等价于:</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i video.mkv -i image.png -filter_complex &#x27;overlay[out]&#x27; -map &#x27;[out]&#x27; out.mkv</span><br><span class="line"></span><br><span class="line">  此外，在滤镜是单输出时我们还可以进一步省略输出标签，它会自动添加到输出文件，所以进一步简写为:</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -i video.mkv -i image.png -filter_complex &#x27;overlay&#x27; out.mkv</span><br><span class="line"></span><br><span class="line">  利用`lavfi`生成5秒的 红`color`(色块):</span><br><span class="line"></span><br><span class="line">  &gt; ffmpeg -filter_complex &#x27;color=c=red&#x27; -t 5 out.mkv</span><br><span class="line"></span><br><span class="line">- `-lavfi filtergraph (global)`：定义一个复合滤镜，至少有一个输入和/或输出，等效于`-filter_complex`。</span><br><span class="line"></span><br><span class="line">- `-filter_complex_script filename (global)`：这个选项类似于`-filter_complex`，唯一不同就是它的参数是文件名，会从这个文件中读取复合滤镜的定义。</span><br><span class="line"></span><br><span class="line">- `-accurate_seek (input)`：这个选项会启用/禁止输入文件的精确定位(配合`-ss`)，它默认是启用的，即可以精确定位。需要时可以使用`-noaccurate_seek`来禁用，例如在复制一些流而转码另一些的场景下。</span><br><span class="line"></span><br><span class="line">- `-seek_timestamp (input)`：这个选项配合`-ss`参数可以在输入文件上启用或者禁止利用时间戳的定位。默认是禁止的，如果启用，则认为`-ss`选项参数是正式的时间戳，而不是由文件开始计算出来的偏移。这一般用于具有不是从0开始时间戳的文件，例如一些传输流(直播下)。</span><br><span class="line"></span><br><span class="line">- `-thread_queue_size size (input)`：这个选项设置可以从文件或者设备读取的最大排队数据包数量。对于低延迟高速率的直播流，如果不能及时读取，则出现丢包，所以提高这个值可以避免出现大量丢包现象。</span><br><span class="line"></span><br><span class="line">- `-override_ffserver (global)`:对`ffserver`的输入进行指定。使用这个选项`ffmpeg`可以把任意输入映射给`ffserver`并且同时控制很多编码可能。如果没有这个选项，则`ffmpeg`仅能根据`ffserver`所要求的数据进行传输。</span><br><span class="line"></span><br><span class="line">  这个选项应用场景是`ffserver`需要一些特性，但文件/设备不提供，这时可以利用`ffmpeg`作为中间处理环节控制后输出到`ffserver`到达所需要求。</span><br><span class="line"></span><br><span class="line">- `-sdp_file file (global)`：输出`sdp`信息到文件`file`。它会在至少一个输出不是`rtp`流时同时输出`sdp`信息。</span><br><span class="line"></span><br><span class="line">- ```</span><br><span class="line">  -discard (input)</span><br></pre></td></tr></table></figure>
-<p>：允许丢弃特定的流或者分离出的流上的部分帧，但不是所有的分离器都支持这个特性。</p>
-<ul>
-<li><code>none</code>：不丢帧</li>
-<li><code>default</code>：丢弃无效帧</li>
-<li><code>noref</code>：丢弃所有非参考帧</li>
-<li><code>bidir</code>：丢弃所有双向帧</li>
-<li><code>nokey</code>：丢弃所有非关键帧</li>
-<li><code>all</code>：丢弃所有帧</li>
-</ul>
-</li>
-<li><p><code>-xerror (global)</code>:在出错时停止并退出</p>
-</li>
-</ul>
-<p>作为一个特殊的例外，你可以把一个位图字幕(bitmap subtitle)流作为输入，它将转换作为同于文件最大尺寸的视频(如果没有视频则是720x576分辨率)。<strong>注意</strong>这仅仅是一个特殊的例外的临时解决方案，如果在<code>libavfilter</code>中字幕处理方案成熟后这样的处理方案将被移除。</p>
-<p>例如需要为一个储存在DVB-T上的MPEG-TS格式硬编码字幕，而且字幕延迟1秒： &gt; ffmpeg -i input.ts -filter_complex \ ‘[#0x2ef] setpts=PTS+1/TB [sub] ; [#0x2d0] [sub] overlay’ \ -sn -map ‘#0x2dc’ output.mkv</p>
-<p>(0x2d0, 0x2dc 以及 0x2ef 是MPEG-TS 的PIDs，分别指向视频、音频和字幕流，一般作为MPEG-TS中的0:0,0:3和0：7是实际流标签)</p>
-<h4 id="预设文件"><a href="#预设文件" class="headerlink" title="预设文件"></a>预设文件</h4><p>一个预设文件是选项/值对的序列(option=value)，每行都是一个选项/值对， 用于指定一系列的选项，而这些一般很难在命令行中指定(限于命令行的一些限制，例如长度限制)。以<code>#</code>开始的行是注释，会被忽略。一般<code>ffmpeg</code>会在目录树中检查<code>presets</code>子目录以获取预设文件。</p>
-<p>有两种类型的预设文件:ffpreset 和 avpreset。</p>
-<h5 id="ffpreset类型预设文件"><a href="#ffpreset类型预设文件" class="headerlink" title="ffpreset类型预设文件"></a>ffpreset类型预设文件</h5><p>采用<code>ffpreset</code>类型预设文件主要包含<code>vpre</code>、<code>apre</code>、<code>spre</code>和<code>fpre</code>选项。其中<code>fpre</code>选项的参数可以代替预设的名称作为输入预设文件名，以用于任何一种编码格式。对于<code>vpre</code>、<code>apre</code>和<code>spre</code>选项参数会指定一个预设定文件用于当前编码格式以替代(作为)同类项的预订选项。</p>
-<p>选用预设文件传递<code>vpre</code>、<code>apre</code>和<code>spre</code>的参数<code>arg</code>有下面一些搜索应用规则：</p>
-<ul>
-<li>将在目录<code>$FFMPEG_DATADIR</code>(如果设置了)和<code>$HOME/.ffmpeg</code>目录和配置文件中定义的数据目录(一般是<code>PREFIX/share/ffmpeg</code>)，以及<code>ffpresets</code>所在的执行文件目录下ffmpeg搜索对应的预定义文件<code>arg.ffpreset</code>，例如参数是<code>libvpx-1080p</code>,则对应于文件<code>libvpx-1080p.ffpreset</code></li>
-<li>如果没有该文件，则进一步在前述目录下搜索<code>codec_name-arg.ffpreset</code>文件，如果找到即应用。例如选择了视频编码器<code>-vcodec libvpx</code>和<code>-vpre 1080p</code>则对应的预设文件名是<code>libvpx-1080p.ffpreset</code></li>
-</ul>
-<h5 id="avpreset类型预设文件"><a href="#avpreset类型预设文件" class="headerlink" title="avpreset类型预设文件"></a>avpreset类型预设文件</h5><p><code>avprest</code>类型预设文件以<code>pre</code>选项引入。他们工作方式类似于<code>ffpreset</code>类型预设文件(即也是选项值对序列)，但只对于特定编码器选项，因此一些 选项值 对于不适合的编码器是无效的。根据<code>pre</code>的参数<code>arg</code>查找预设文件基于如下规则：</p>
-<ul>
-<li>首先搜索<code>$AVCONV_DATADIR</code>所指目录(如果定义了)，其次搜索<code>$HOME/.avconv</code>目录，然后搜索执行文件所在目录(通常是<code>PREFIX/share/ffmpeg</code>)，在其下查找<code>arg.avpreset</code>文件。第一个匹配的文件被应用。</li>
-<li>如果查找不到，如果还同步还指定了编码(如<code>-vcodec libvpx</code>)再以前面目录顺序，以<code>codec_name-arg.avpreset</code>再次查找文件。例如对于有选项<code>-vcodec libvpx</code>和<code>-pre 1080p</code>将搜索<code>libvpx-1080p.avpreset</code></li>
-<li>如果还没有找到，将在当前目录下搜索<code>arg.avpreset</code>文件</li>
-</ul>
-<h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><h4 id="视频和音频抓取"><a href="#视频和音频抓取" class="headerlink" title="视频和音频抓取"></a>视频和音频抓取</h4><p>如果你指定了输入格式和设备，ffmpeg可以直接抓取视频和音频：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f oss -i /dev/dsp -f video4linux2 -i /dev/video0 /tmp/out.mpg</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p>或者采用ALSA音频源(单声道，卡的id是1)替代OSS:</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f alsa -ac 1 -i hw:1 -f video4linux2 -i /dev/video0 /tmp/out.mpg</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p><strong>注意</strong>对于不同的视频采集卡，你必须正确激活视频源和通道，例如Gerd Knorr的<code>xawtv</code>。你还需要设置正确的音频记录层次和混合模式。只有这样你才能采集到想要的视音频。</p>
-<h4 id="X11显示的抓取"><a href="#X11显示的抓取" class="headerlink" title="X11显示的抓取"></a>X11显示的抓取</h4><p>可以通过ffmpeg直接抓取X11显示内容：</p>
-<blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -f x11grab -video_size cif -framerate 25 -i :0.0+10，20 /tmp/out.mpg</span><br></pre></td></tr></table></figure>
-<p><code>0.0</code>是X11服务的显示屏幕号(display.screen)，定义于<code>DISPLAY</code>环境变量。10是水平偏移，20是垂直偏移</p>
-</blockquote>
-<h4 id="视频和音频文件格式转换"><a href="#视频和音频文件格式转换" class="headerlink" title="视频和音频文件格式转换"></a>视频和音频文件格式转换</h4><p>任何支持的文件格式或者协议都可以作为ffmpeg输入。例如：</p>
-<ul>
-<li><p>你可以使用YUV文件作为输入</p>
-<blockquote>
-<p>ffmpeg -i /tmp/test%d.Y /tmp/out.mpg</p>
-</blockquote>
-<p>这里可能是这样一些文件</p>
-<blockquote>
-<p>/tmp/test0.Y, /tmp/test0.U, /tmp/test1.V, /tmp/test1.Y, /tmp/test1.U, /tmp/test1.V, etc…</p>
-</blockquote>
-<p>这里Y还有对应分辨率的2个关联文件U和V。这是一种raw数据文件而没有文件头，它可以被所有的视频解码器生成。你必须利用<code>-s</code>对它指定一个尺寸而不是让ffmpeg去猜测。</p>
-</li>
-<li><p>你可以把raw YUV420P文件作为输入：</p>
-<blockquote>
-<p>ffmpeg -i /tmp/test/yuv /tmp/out.avi</p>
-</blockquote>
-<p>test.yuv 是一个包含raw YUV通道数据的文件。每个帧先是Y数据，然后是U和V数据。</p>
-</li>
-<li><p>也可以输出YUV420P类型的文件</p>
-<blockquote>
-<p>ffmpeg -i mydivx.avi hugefile.yuv</p>
-</blockquote>
-</li>
-<li><p>可以设置一些输入文件和输出文件</p>
-<blockquote>
-<p>ffmpeg -i /tmp/a.wav -s 640x480 -i /tmp/a.yuv /tmp/a.mpg</p>
-</blockquote>
-<p>这将转换一个音频和raw的YUV视频到一个MPEG文件中</p>
-</li>
-<li><p>你也可以同时对音频或者视频进行转换</p>
-<blockquote>
-<p>ffmpeg -i /tmp/a.wav -ar 22050 /tmp/a.mp2</p>
-</blockquote>
-<p>这里把a.wav转换为MPEG音频，同时转换了采样率为22050HZ</p>
-</li>
-<li><p>你也可以利用映射同时编码多个格式作为输入或者输出：</p>
-<blockquote>
-<p>ffmpeg -i /tmp/a.wav -map 0:a -b:a 64k /tmp/a.mp2 -map 0:a -b:a 128k /tmp/b.mp2</p>
-</blockquote>
-<p>这将同时把a.wav以64k码率输出到a.mp2，以128k码率输出到b.mp2。 “-map file:index”指定了对于每个输出是连接到那个输入流的。</p>
-</li>
-<li><p>还可以转换解码VOBs：</p>
-<blockquote>
-<p>ffmpeg -i snatch_1.vob -f avi -c:v mpeg4 -b:v 800k -g 300 -bf 2 -c:a libmp3lame -b:a 128k snatch.avi</p>
-</blockquote>
-<p>这是一个典型的DVD抓取例子。这里的输入是一个VOB文件，输出是MPEG-4编码视频以及MP3编码音频的AVI文件。<strong>注意</strong>在这个命令行里使用了B-frames（B帧）是兼容DivX5的，GOP设置为300则意味着有一个内帧是适合29.97fps的输入视频。此外，音频流采用MP3编码需要运行LAME支持，它需要通过在编译是设置<code>--enable-libmp3lame</code>。这种转换设置在多语言DVD抓取转换出所需的语言音频时特别有用。</p>
-<p><strong>注意</strong>要了解支持那些格式，可以采用<code>ffmpeg -formats</code></p>
-</li>
-<li><p>可以从一个视频扩展生成图片（序列），或者从一些图片生成视频：</p>
-<ul>
-<li><p>导出图片</p>
-<blockquote>
-<p>ffmpeg -i foo.avi -r 1 -s WxH -f image2 foo-%03d.jpeg</p>
-</blockquote>
-<p>这将每秒依据foo.avi生成一个图片命名为foo-001.jpeg ,foo-002.jpeg以此类推,图片尺寸是WxH定义的值。</p>
-<p>如果你想只生成有限数量的视频帧，你可以进一步结合<code>-vframes</code>或者<code>-t</code>或者<code>-ss</code>选项实现。</p>
-</li>
-<li><p>从图片生成视频</p>
-<blockquote>
-<p>ffmpeg -f image2 -framerate 12 -i foo-%03d.jpeg -s WxH foo.avi</p>
-</blockquote>
-<p>这里的语法<code>foo-%03d.jpeg</code>指明使用3位数字来补充完整文件名，不足3位以0补齐。这类似于C语言的printf函数中的格式，但只接受常规整数作为部分。</p>
-<p>当导入一个图片序列时，<code>-i</code>也支持shell的通配符模式(内置的)，这需要同时选择image2的特性选项<code>-pattern_type glob</code>：例如下面就利用了所有匹配<code>foo-*.jpeg</code>的图片序列创建一个视频：</p>
-<blockquote>
-<p>ffmpeg -f image2 -pattern_type glob -framerate 12 -i ‘foo-*.jpeg’ -s WxH foo.avi</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li><p>你可以把很多相同类型的流一起放到一个输出中：</p>
-<blockquote>
-<p>ffmpeg -i test1.avi -i test2.avi -map 1:1 -map 1:0 -map 0:1 -map 0:0 -c copy -y test12.nut</p>
-</blockquote>
-<p>这里最后输出文件test12.nut包括了4个流，其中流的顺序完全根据前面<code>-map</code>的指定顺序。</p>
-</li>
-<li><p>强制为固定码率编码(CBR)输出视频：</p>
-<blockquote>
-<p>ffmpeg -i myfile.avi -b 4000k -minrate 4000k -maxrate 4000k -bufsize 1835k out.m2v</p>
-</blockquote>
-</li>
-<li><p>使用<code>lambda</code>工具的4个选项<code>lmin</code>，<code>lmax</code>，<code>mblmin</code>以及<code>mblmax</code>使你能更简单的从<code>q</code>转换到<code>QP2LAMBDA</code>:</p>
-<blockquote>
-<p>ffmpeg -i src.ext -lmax 21*QP2LAMBDA dst.ext</p>
-</blockquote>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/21/RK3588%E3%80%81ros%E3%80%81fastdeploy%E8%81%94%E5%90%88%E7%8E%AF%E5%A2%83%E8%AE%BE%E7%BD%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/21/RK3588%E3%80%81ros%E3%80%81fastdeploy%E8%81%94%E5%90%88%E7%8E%AF%E5%A2%83%E8%AE%BE%E7%BD%AE/" class="post-title-link" itemprop="url">RK3588、ros、fastdeploy联合环境设置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-03-21 21:00:27 / 修改时间：22:16:15" itemprop="dateCreated datePublished" datetime="2023-03-21T21:00:27+08:00">2023-03-21</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="基础环境设置"><a href="#基础环境设置" class="headerlink" title="基础环境设置"></a>基础环境设置</h2><h3 id="ROS环境设置"><a href="#ROS环境设置" class="headerlink" title="ROS环境设置"></a>ROS环境设置</h3><p>ros与ubuntu系统紧密相连，要求在固定版本的Ubuntu系统上安装对应版本的ros系统，对应版本如下：</p>
-<div class="table-container">
-<table>
-<thead>
-<tr>
-<th>Ubuntu版本</th>
-<th>ros版本</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ubuntu16.04</td>
-<td>ros-kinetic</td>
-</tr>
-<tr>
-<td>ubuntu18.04</td>
-<td>ros-melodic</td>
-</tr>
-<tr>
-<td>ubuntu20.04</td>
-<td>ros-noetic</td>
-</tr>
-<tr>
-<td>Ubuntu22.04</td>
-<td>ros-humble（ros2）</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>以在rk3588上安装ros为例，rk3588上系统环境为ubuntu20.04，即需要安装的ros版本为ros-noetic。</p>
-<p>安装类比于<a target="_blank" rel="noopener" href="https://blog.csdn.net/KIK9973/article/details/118755045">Ubuntu18.04安装Ros</a>进行ubuntu20.04下的ros安装，注意将其中的ros-melodic替换为ros-noetic。</p>
-<p>核心命令为</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#设置中科大源</span><br><span class="line">sudo sh -c &#x27;. /etc/lsb-release &amp;&amp; <span class="built_in">echo</span> &quot;deb http://mirrors.ustc.edu.cn/ros/ubuntu/ `lsb_release -cs` main&quot; &gt; /etc/apt/sources.list.d/ros-latest.list&#x27;</span><br><span class="line">#设置公钥</span><br><span class="line">sudo apt-key adv --keyserver &#x27;hkp://keyserver.ubuntu.com:<span class="number">80</span>&#x27; --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654</span><br><span class="line">#更新软件包列表</span><br><span class="line">sudo apt update</span><br><span class="line">#安装ros（需要替换网址中的melodic为noetic）</span><br><span class="line">sudo apt install ros-noetic-desktop-full</span><br><span class="line">#设置环境变量</span><br><span class="line"><span class="built_in">echo</span> &quot;source /opt/ros/melodic/setup.bash&quot; &gt;&gt; ~/.bashrc</span><br><span class="line">source ~/.bashrc</span><br></pre></td></tr></table></figure>
-<h3 id="FFMPEG源码编译"><a href="#FFMPEG源码编译" class="headerlink" title="FFMPEG源码编译"></a>FFMPEG源码编译</h3><p>在官方github中下载FFMPEG源码，例如版本4.2.7</p>
-<p>安装依赖库</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install libx264-dev </span><br><span class="line">sudo apt install libdrm-dev  </span><br></pre></td></tr></table></figure>
-<p>根据需求配置configure，配置makefile</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --enable-shared --enable-gpl --enable-libx264 --enable-rkmpp --enable-version3 --enable-libdrm</span><br></pre></td></tr></table></figure>
-<p>make直接编译</p>
-<h3 id="OPENCV源码编译"><a href="#OPENCV源码编译" class="headerlink" title="OPENCV源码编译"></a>OPENCV源码编译</h3><p>在官方github中下载OpenCV源码，例如版本4.5.5</p>
-<ul>
-<li>安装依赖库</li>
-</ul>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install libgtk-dev</span><br><span class="line">sudo apt install libgail-dev</span><br></pre></td></tr></table></figure>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build </span><br><span class="line">cmake ..</span><br></pre></td></tr></table></figure>
-<h2 id="环境依赖兼容问题"><a href="#环境依赖兼容问题" class="headerlink" title="环境依赖兼容问题"></a>环境依赖兼容问题</h2><p>ros、fastdeploy、opencv版本问题</p>
-<p>解决方法：</p>
-<ul>
-<li><p>针对fastdeploy，自定义opencv版本进行fastdeploy的编译</p>
-<ul>
-<li><p>需要修改的文件路径如下所示：</p>
-<ul>
-<li><p><strong>/FastDeploy/CmakeLists.txt</strong></p>
-<ul>
-<li><pre><code class="lang-txt">#修改opencv_dir
-set(OPENCV_DIRECTORY &quot;/usr/local/lib/cmake/opencv4&quot; CACHR PATH &quot;User can specify the installed opencv directory.&quot;)
-</code></pre>
-<p>这个地方修改之后会在后续引入opencv.cmake的时候将该参数传入，并在opencv.cmake中进行cmakelist中头文件的包含，动态链接库的链接等操作</p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3-NEW/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="凯">
-      <meta itemprop="description" content="选择大于努力">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="凯_kaiii">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3-NEW/" class="post-title-link" itemprop="url">RK3588s部署相关</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2023-03-04 15:28:29 / 修改时间：15:35:38" itemprop="dateCreated datePublished" datetime="2023-03-04T15:28:29+08:00">2023-03-04</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="RK3588s部署相关"><a href="#RK3588s部署相关" class="headerlink" title="RK3588s部署相关"></a>RK3588s部署相关</h1><p>目前无人机上开发板为ROC-RK3588S-PC，为在其上进行深度学习模型的推理，需要对板载的NPU进行配置使用。为使用该NPU，需要下载<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">RKNN SDK</a>，RKNN SDK为RK3588s提供编程接口，帮助用户部署使用通过RKNN-Toolkit2导出的RKNN模型。</p>
-<p>下列代码输出的是rk3588机载npu的使用率，从而可以验证板载npu是否被使用</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat /sys/kernel/debug/rknpu/load</span><br></pre></td></tr></table></figure>
-<p>目前3588的部署方式大致有两种，一为利用RKNN官方支持的方式进行部署，另一为利用FastDeploy，其在RKNN官方的基础上加了一层进行后续部署。</p>
-<h2 id="基本组件及功能介绍"><a href="#基本组件及功能介绍" class="headerlink" title="基本组件及功能介绍"></a>基本组件及功能介绍</h2><h3 id="RKNN-Toolkit2与RKNN-Toolkit-Lite2套件介绍"><a href="#RKNN-Toolkit2与RKNN-Toolkit-Lite2套件介绍" class="headerlink" title="RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍"></a><strong>RKNN-Toolkit2与RKNN Toolkit Lite2套件介绍</strong></h3><h4 id="RKNN-Toolkit2"><a href="#RKNN-Toolkit2" class="headerlink" title="RKNN-Toolkit2"></a>RKNN-Toolkit2</h4><p>RKNN-Toolkit2是为用户提供在PC平台上进行Rockchip芯片NPU模型转换、推理和性能评估的开发套件。用户通过该工具提供的Python 接口可以便捷地完成以下功能：</p>
-<ol>
-<li>模型转换：支持Caffe、TensorFlow、TensorFlow Lite、ONNX、DarkNet、PyTorch 等模型转为RKNN 模型，并支持RKNN 模型导入导出，RKNN 模型能够在Rockchip NPU 平台上加载使用。</li>
-<li>量化功能：支持将浮点模型量化为定点模型，目前支持的量化方法为非对称量化（ asymmetric_quantized-8 及asymmetric_quantized-16 ） ， 并支持混合量化功能。</li>
-<li>模型推理：能够在PC 上模拟Rockchip NPU 运行RKNN 模型并获取推理结果；或将RKNN模型分发到指定的NPU 设备上进行推理并获取推理结果。</li>
-<li>性能和内存评估：将RKNN 模型分发到指定NPU 设备上运行，以评估模型在实际设备上运行时的性能和内存占用情况。</li>
-<li>量化精度分析：该功能将给出模型量化前后每一层推理结果与浮点模型推理结果的余弦距离，以便于分析量化误差是如何出现的，为提高量化模型的精度提供思路。</li>
-</ol>
-<p><strong>即，该部分需要在linux-ubuntu的电脑上进行安装，从而完成模型的转换和模型的量化等功能</strong></p>
-<h4 id="RKNN-Toolkit-Lite2"><a href="#RKNN-Toolkit-Lite2" class="headerlink" title="RKNN -Toolkit-Lite2"></a>RKNN -Toolkit-Lite2</h4><p>RKNN -Toolkit-Lite2为RKNN-Toolkit-lite2的一部分，为带有瑞芯NPU平台提供Python编程接口，帮助用户部署使用RKNN-Toolkit2导出的RKNN模型。</p>
-<h4 id="rknpu2"><a href="#rknpu2" class="headerlink" title="rknpu2"></a>rknpu2</h4><p>rknpu2为带有瑞芯NPU平台提供c语言编程接口，帮助用户部署使用 RKNN-Toolkit2 导出的 RKNN 模型。</p>
-<p><strong>即RKNN -Toolkit-Lite2和rknpu2分别为板载上使用python或c++调用npu的接口，需要在板子上进行安装从而完成对应的npu的调用</strong></p>
-<h4 id="FastDeploy"><a href="#FastDeploy" class="headerlink" title="FastDeploy"></a>FastDeploy</h4><p>FastDeploy是百度推出的一款AI算法推理部署的工具。其为在RKNN官方的库的基础上进行二次开发及封装，从而实现更方便的一种算法部署方式。但是其由于目前依旧为develop阶段，很多接口尚未完全开发完毕。</p>
-<p><strong>即FastDeploy需要在ubuntu服务器端和板载端均进行安装，目前正在快速开发中，交流群内较为活跃，遇到问题好解决</strong></p>
-<h2 id="使用RKNN官方例程"><a href="#使用RKNN官方例程" class="headerlink" title="使用RKNN官方例程"></a>使用RKNN官方例程</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><h4 id="服务器端环境"><a href="#服务器端环境" class="headerlink" title="服务器端环境"></a>服务器端环境</h4><p>首先在<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">firefly官网中的RK3588S中的NPU使用</a>中或者<a href="wget https://bj.bcebos.com/fastdeploy/third_libs/rknpu2_device_install_1.4.0.zip">百度提供的下载链接</a>下载RKNN SDK，然后由于目前RKNN ToolKit2只支持python3.6或者python3.8，所以在linux-ubuntu的电脑运行如下代码，安装对应代码</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 创建python3.<span class="number">8</span>环境</span><br><span class="line">conda create -n rknn2 python=<span class="number">3</span>.<span class="number">8</span></span><br><span class="line">conda activate rknn2</span><br><span class="line"></span><br><span class="line"># 安装 rknn-toolkit2</span><br><span class="line">pip install numpy==<span class="number">1</span>.<span class="number">16</span>.<span class="number">6</span></span><br><span class="line">sudo apt-get install libxslt1-dev zlib1g zlib1g-dev libglib2.<span class="number">0</span>-<span class="number">0</span> libsm6 libgl1-mesa-glx libprotobuf-dev gcc g++</span><br><span class="line">pip install rknn-toolkit2/packages/rknn_toolkit2-<span class="number">1</span>.<span class="number">3</span>.<span class="number">0</span>_11912b58-cp38-cp38-linux_x86_64.whl</span><br><span class="line"></span><br><span class="line"># 安装yaml</span><br><span class="line">pip install pyyaml</span><br></pre></td></tr></table></figure>
-<h4 id="板端环境"><a href="#板端环境" class="headerlink" title="板端环境"></a>板端环境</h4><p>首先将板子从原生的安卓刷系统为ubuntu系统，然后在<a target="_blank" rel="noopener" href="https://wiki.t-firefly.com/zh_CN/ROC-RK3588S-PC/usage_npu.html">firefly官网中的RK3588S中的NPU使用</a>中下载RKNN SDK，由于目前的rknn_toolkit2_lite2只支持python3.7或者python3.9，所以输入下列代码安装rknn_toolkit2_lite2</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> rknpu2_device_install</span><br><span class="line"># RK3588运行以下代码</span><br><span class="line">sudo rknn_install_rk3588.sh</span><br></pre></td></tr></table></figure>
-<h3 id="模型转换步骤"><a href="#模型转换步骤" class="headerlink" title="模型转换步骤"></a>模型转换步骤</h3><ul>
-<li><p>首先通过任务的不同需求训练出神经网络</p>
-</li>
-<li><p>通过各类转换工具将模型转换为onnx</p>
-</li>
-<li><p>将onnx模型通过PKNN-Toolkit2转换为RKNN格式</p>
-<ul>
-<li><p>利用RKNN-Toolkit2的Python API接口导出RKNN格式的模型。操作流程如下</p>
-<p>1、 创建RKNN对象，初始化RKNN SDK环境。</p>
-<p>2、 调用config接口设置模型预处理参数。</p>
-<p>3、 调用对应加载第3方框架接口，加载TensorFlow、Pytorch、ONNX模型。</p>
-<p>4、 调用build接口构建RKNN模型。</p>
-<p>5、 调用export_rknn接口导出RKNN模型</p>
-</li>
-</ul>
-<p>对应文档查看下载包内的<strong>Rockchip_User_Guide_RKNN_Toolkit2_CN</strong></p>
-</li>
-</ul>
-<h3 id="默认转换好的模型在RK3588s上的使用（RKNPU2）"><a href="#默认转换好的模型在RK3588s上的使用（RKNPU2）" class="headerlink" title="默认转换好的模型在RK3588s上的使用（RKNPU2）"></a>默认转换好的模型在RK3588s上的使用（RKNPU2）</h3><ul>
-<li>首先针对于自身平台下载gcc交叉编译器 gcc-9.3.0-x86_64_arrch64-linux-gnu</li>
-<li>然后进入/rknpu2_1.3.0/examples 文件夹</li>
-<li>假定想要测试转换好了的yolov5，则进入对应的rknn_yolov5_demo文件夹</li>
-<li>使用./build-linux_RK3588.sh进行编译</li>
-<li>进入./install/rknn_yolov5_demo_linux 文件夹使用./rknn_yolov5_demo ./model/RK3588/yolov5s-640-640.rknn ./model/bus.jpg 进行测试</li>
-</ul>
-<h3 id="默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）"><a href="#默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）" class="headerlink" title="默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）"></a>默认转换好的模型在RK3588s上的使用（RKNN-ToolKit2-lite）</h3><ul>
-<li>利用conda 创建py36或者py38的环境</li>
-<li>进入rknn-toolkit2-1.3.0/rknn_toolkit_lite2文件夹，进入package文件夹安装对应的whl</li>
-<li>进入examples/inference_with_lite文件夹，使用python test.py进行测试</li>
-</ul>
-<h2 id="使用百度-Fast-Deploy相关工具进行部署"><a href="#使用百度-Fast-Deploy相关工具进行部署" class="headerlink" title="使用百度 Fast Deploy相关工具进行部署"></a>使用百度 Fast Deploy相关工具进行部署</h2><p>官方视频例程大都是老版本的配置，其在现有的工程下的使用比较落后。故大致步骤可和<a target="_blank" rel="noopener" href="https://aistudio.baidu.com/aistudio/education/preview/3610910">官方视频</a>内相同，但具体节点的使用方式有所差异。</p>
-<h3 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h3><p>对应部署的环境配置分为板载RK3588s上的环境配置和个人PC上的环境配置，对应需要配置的环境如下所示</p>
-<p><img src="/2023/03/04/RK3588s%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3-NEW/image-20230221221155971.png" alt="image-20230221221155971"></p>
-<p>RKNN官方例程中的服务器端环境和板端环境均需要进行配置，然后针对于FastDeploy进行环境配置。</p>
-<p>FastDeploy在板端的安装（c++）</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br><span class="line"><span class="built_in">cd</span> FastDeploy</span><br><span class="line"><span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build</span><br><span class="line"></span><br><span class="line"># Only a few key configurations are introduced here, see README.<span class="built_in">md</span> <span class="keyword">for</span> details.</span><br><span class="line"># -DENABLE_ORT_BACKEND:     Whether to enable ONNX model, default OFF</span><br><span class="line"># -DENABLE_RKNPU2_BACKEND:  Whether to enable RKNPU model, default OFF</span><br><span class="line"># -RKNN2_TARGET_SOC:        Compile the SDK board model. Enter RK356X or RK3588 with case sensitive required.</span><br><span class="line">cmake ..  -DENABLE_ORT_BACKEND=ON \</span><br><span class="line">	      -DENABLE_RKNPU2_BACKEND=ON \</span><br><span class="line">	      -DENABLE_VISION=ON \</span><br><span class="line">	      -DRKNN2_TARGET_SOC=RK3588 \</span><br><span class="line">          -DCMAKE_INSTALL_PREFIX=$&#123;PWD&#125;/fastdeploy-<span class="number">0</span>.<span class="number">0</span>.<span class="number">3</span></span><br><span class="line">make -j8</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-<p>FastDeploy在板端的安装（python）</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/PaddlePaddle/FastDeploy.git</span><br><span class="line"><span class="built_in">cd</span> FastDeploy</span><br><span class="line"><span class="built_in">cd</span> python</span><br><span class="line"></span><br><span class="line">export ENABLE_ORT_BACKEND=ON</span><br><span class="line">export ENABLE_RKNPU2_BACKEND=ON</span><br><span class="line">export ENABLE_VISION=ON</span><br><span class="line">export RKNN2_TARGET_SOC=RK3588</span><br><span class="line">python3 setup.py build</span><br><span class="line">python3 setup.py bdist_wheel</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> dist</span><br><span class="line"></span><br><span class="line">pip3 install fastdeploy_python-<span class="number">0</span>.<span class="number">0</span>.<span class="number">0</span>-cp39-cp39-linux_aarch64.whl</span><br></pre></td></tr></table></figure>
-<p>个人PC环境配置及模型转换</p>
-<p>本次尝试在对应远程服务器上进行环境部署，该服务器主要负责对应模型的训练，模型的转换，目前要求为linux-64bit环境。</p>
-<ul>
-<li><p>假定使用的是paddleDetection训练得到想要的模型，首先使用PaddleDetection中的/tools/export_model.py对训练得出的模型进行导出，将Paddle动态图转换为静态图，对应转换模型代码为</p>
-<ul>
-<li>```cmd<br>python ./tools/export_model.py —config configs/picodet/picodet_s_416_visdrone.yml<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 转换后的模型会存放于</span><br><span class="line"></span><br><span class="line">- ```cmd</span><br><span class="line">  ./output_inference/picodet_s_416_visdrone</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li><p>进一步将模型从静态的paddle模型转化到onnx模型，需要使用Paddle2ONNX库，该库的安装命令使用</p>
-<ul>
-<li><p>```cmd<br>pip install paddle2onnx    </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 对应的模型的转换，从静态paddle模型转换为onnx格式，使用命令，对应[官网](https://github.com/PaddlePaddle/Paddle2ONNX)，（在Paddle2ONNX文件夹内使用）</span><br><span class="line"></span><br><span class="line">- ```cmd</span><br><span class="line">  #静态图转onnx模型</span><br><span class="line">  paddle2onnx --model_dir picodet_s_416_coco_lcnet --model_filename model.pdmodel --params_filename model.pdiparams --save_file  picodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx --enable_dev_version True</span><br><span class="line">  #固定模型输入形状，改为静态shape</span><br><span class="line">  python -m paddle2onnx.optimize \--input_modelpicodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx \--output_modelpicodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet.onnx \--input_shape_dict&quot;&#123;&#x27;image&#x27;:[1,3,416,416]&#125;&quot;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>注意，若ONNX不支持对应的算子，如自适应池化层，需要对得到的模型进行输入的固定，即改为静态shape。对应的查看方式为转换为onnx格式文件之后，使用[onnx结构查询——netron][<a target="_blank" rel="noopener" href="https://netron.app/]对onnx模型结构进行查看。">https://netron.app/]对onnx模型结构进行查看。</a></p>
-</li>
-</ul>
-</li>
-<li><p>然后将得到的onnx模型转换为对应的rknn模型，需要书写转换用到的yaml文件</p>
-<ul>
-<li><p>转换的yaml书写要点可见<a target="_blank" rel="noopener" href="https://www.github.com/PaddlePaddle/FastDeploy/blob/develop/docs/cn/faq/rknpu2/export.md">官网</a></p>
-<ul>
-<li><p>大体上如下所示</p>
-</li>
-<li><p>```cmd<br>mean:<br>  -</p>
-<pre><code>- 128.5
-- 128.5
-- 128.5
-</code></pre><p>std:<br>  -</p>
-<pre><code>- 128.5
-- 128.5
-- 128.5
-</code></pre><p>model_path: “./scrfd_500m_bnkps_shape640x640.onnx”<br>outputs_nodes:<br>do_quantization: True<br>dataset: “./datasets.txt”<br>output_folder: “./“</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- 转换用的语句为</span><br><span class="line"></span><br><span class="line">  - ```cmd</span><br><span class="line">    python tools/rknpu2/export.py --config_path tools/rknpu2/config/RK3588/picodet_s_416_coco_lcnet.yaml</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>对应使用的为fastdeploy内的对rknpu2的export函数，得到对应的rknn模型</p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="RK3588s环境配置及实机程序运行"><a href="#RK3588s环境配置及实机程序运行" class="headerlink" title="RK3588s环境配置及实机程序运行"></a>RK3588s环境配置及实机程序运行</h3><ul>
-<li><p>将对应的rknn模型和cfg，对应图像拷贝到RK3588板子上，并运行<a target="_blank" rel="noopener" href="https://github.com/PaddlePaddle/FastDeploy/tree/develop/examples/vision/detection/paddledetection/rknpu2/python">官网</a>提供的infer代码进行推理检测</p>
-<ul>
-<li>```python<br>import fastdeploy as fd<br>import cv2<br>import os</li>
-</ul>
-</li>
-</ul>
-<pre><code>def parse_arguments():
-    import argparse
-    import ast
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        &quot;--model_file&quot;,
-        default=&quot;./picodet_s_416_coco_lcnet/picodet_s_416_coco_lcnet_rk3588_unquantized.rknn&quot;,
-        help=&quot;Path of rknn model.&quot;)
-    parser.add_argument(
-        &quot;--config_file&quot;,
-        default=&quot;./picodet_s_416_coco_lcnet/infer_cfg.yml&quot;,
-        help=&quot;Path of config.&quot;)
-    parser.add_argument(
-        &quot;--image&quot;,
-        type=str,
-        default=&quot;./000000014439.jpg&quot;,
-        help=&quot;Path of test image file.&quot;)
-    return parser.parse_args()
-
-
-if __name__ == &quot;__main__&quot;:
-    args = parse_arguments()
-
-    model_file = args.model_file
-    params_file = &quot;&quot;
-    config_file = args.config_file
-
-    # 配置runtime，加载模型
-    runtime_option = fd.RuntimeOption()
-    runtime_option.use_rknpu2()
-
-    model = fd.vision.detection.PPYOLOE(
-        model_file,
-        params_file,
-        config_file,
-        runtime_option=runtime_option,
-        model_format=fd.ModelFormat.RKNN)
-    model.preprocessor.disable_normalize()
-    model.preprocessor.disable_permute()
-    model.postprocessor.apply_decode_and_nms()
-
-    # 预测图片分割结果
-    im = cv2.imread(args.image)
-    result = model.predict(im)
-    print(result)
-
-    # 可视化结果
-    vis_im = fd.vision.vis_detection(im, result, score_threshold=0.5)
-    cv2.imwrite(&quot;visualized_result.jpg&quot;, vis_im)
-    print(&quot;Visualized result save in ./visualized_result.jpg&quot;)
-```
-</code></pre>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -2317,7 +1223,7 @@ if __name__ == &quot;__main__&quot;:
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-count">31</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

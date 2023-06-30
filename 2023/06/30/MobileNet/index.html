@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="MobileNet系列MobileNetv1贡献：  提出了深度可分离卷积，将标准卷积用逐通道卷积+逐点卷积来代替 能够在边端设备使用，在保证效果的同时提升速度  深度可分离卷积深度级可分离卷积其实是一种可分解卷积操作（factorized convolutions）。其可以分解为两个更小的操作：深度卷积（depthwise  convolution） 和点卷积（ pointwise convol">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MobileNet">
+<meta property="og:url" content="http://example.com/2023/06/30/MobileNet/index.html">
+<meta property="og:site_name" content="凯_kaiii">
+<meta property="og:description" content="MobileNet系列MobileNetv1贡献：  提出了深度可分离卷积，将标准卷积用逐通道卷积+逐点卷积来代替 能够在边端设备使用，在保证效果的同时提升速度  深度可分离卷积深度级可分离卷积其实是一种可分解卷积操作（factorized convolutions）。其可以分解为两个更小的操作：深度卷积（depthwise  convolution） 和点卷积（ pointwise convol">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/ed74994c96c043b086a6ef061bf0d4af.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/7ee519c66af94a6b9d3eb69cea3ce7bf.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/f750cdd5d58440e795006c3bee29c78c.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/721c0945ad57422da5c344f802e29d48.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/cd3017db342c44c5ae247f81d74e8413.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/6faa54a4ef7a4a4bb13c16196de618c8.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/3ad597ec791743ca9fbea1f78cf0bd8d.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/3e28ca45a556474ab109a013a6efb3c2.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/099f6b5094204e1faf457ff6677f730e.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/f7310662dff144a79bce1bdccf5f90b2.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/dfc1b9f5f1c7443e85b6190eb6a8422b.png">
+<meta property="og:image" content="http://example.com/2023/06/30/MobileNet/7abdcc43b7bb47c8937195e9a97f8ab3.png">
+<meta property="article:published_time" content="2023-06-30T08:10:03.000Z">
+<meta property="article:modified_time" content="2023-06-30T08:13:52.303Z">
+<meta property="article:author" content="凯">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/06/30/MobileNet/ed74994c96c043b086a6ef061bf0d4af.png">
+
+<link rel="canonical" href="http://example.com/2023/06/30/MobileNet/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>MobileNet | 凯_kaiii</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">凯_kaiii</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">暂无</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/30/MobileNet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="凯">
+      <meta itemprop="description" content="选择大于努力">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="凯_kaiii">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MobileNet
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-06-30 16:10:03 / 修改时间：16:13:52" itemprop="dateCreated datePublished" datetime="2023-06-30T16:10:03+08:00">2023-06-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="MobileNet系列"><a href="#MobileNet系列" class="headerlink" title="MobileNet系列"></a>MobileNet系列</h1><h2 id="MobileNetv1"><a href="#MobileNetv1" class="headerlink" title="MobileNetv1"></a>MobileNetv1</h2><p>贡献：</p>
+<ul>
+<li>提出了深度可分离卷积，将标准卷积用逐通道卷积+逐点卷积来代替</li>
+<li>能够在边端设备使用，在保证效果的同时提升速度</li>
+</ul>
+<h3 id="深度可分离卷积"><a href="#深度可分离卷积" class="headerlink" title="深度可分离卷积"></a>深度可分离卷积</h3><p>深度级可分离卷积其实是一种可分解卷积操作（factorized convolutions）。其可以分解为两个更小的操作：深度卷积（depthwise  convolution） 和点卷积（ pointwise convolution）。</p>
+<p>对于一个标准卷积，输入一个$12<em>12</em>3$的一个输入特征图，经过$ 5<em>5</em>3$的卷积核得到一个$8<em>8</em>1$的输出特征图。如果我们此时有$256$个特征图，我们将会得到一个$8<em>8</em>256$的输出特征图，如下图所示:</p>
+<p><img src="/2023/06/30/MobileNet/ed74994c96c043b086a6ef061bf0d4af.png" alt="img"></p>
+<p> 对于深度卷积(其实就是组为1 的分组卷积)来说，将特征图通道全部进行分解，每个特征图都是单通道模式，并对每一个单独的通道特征图进行卷积操作。这样就会得到和原特征图一样通道数的生成特征图。假设输入$12<em>12</em>3$ 的特征图，经过$5<em>5</em>1<em>3$的深度卷积之后，得到了$8</em>8*3$的输出特征图。输入和输出的维度是不变的3，这样就会有一个问题，通道数太少，特征图的维度太少，不能够有效的获得信息。</p>
+<p><img src="/2023/06/30/MobileNet/7ee519c66af94a6b9d3eb69cea3ce7bf.png" alt="img"></p>
+<p>逐点卷积就是$1<em>1$卷积，主要作用就是对特征图进行升维和降维。在深度卷积的过程中，我们得到了$8</em>8<em>3$的输出特征图，我们用256个$1</em>1<em>3$的卷积核对输入特征图进行卷积操作，输出的特征图和标准的卷积操作一样都是$8</em>8*256$了。如下图：</p>
+<p><img src="/2023/06/30/MobileNet/f750cdd5d58440e795006c3bee29c78c.png" alt="img"></p>
+<p>标准卷积与深度可分离卷积的过程对比如下：</p>
+<p><img src="/2023/06/30/MobileNet/721c0945ad57422da5c344f802e29d48.png" alt="img"></p>
+<h3 id="深度可分离卷积的优势"><a href="#深度可分离卷积的优势" class="headerlink" title="深度可分离卷积的优势"></a>深度可分离卷积的优势</h3><p>对于标准卷积来说，卷积核的尺寸是$D_k<em>D_k</em>M$，一共有$N$个，所以标准卷积的参数量是：</p>
+<p><img src="/2023/06/30/MobileNet/cd3017db342c44c5ae247f81d74e8413.png" alt="img"></p>
+<p>其计算量计算如下</p>
+<p><img src="/2023/06/30/MobileNet/6faa54a4ef7a4a4bb13c16196de618c8.png" alt="img"></p>
+<p>,深度可分离卷积的参数量由深度卷积和逐点卷积两部分组成。深度卷积的卷积核尺寸$D_k<em>D_k</em>M$；逐点卷积的卷积核尺寸为$1<em>1</em>M$，一共有$N$个，所以深度可分离卷积的参数量是：</p>
+<p><img src="/2023/06/30/MobileNet/3ad597ec791743ca9fbea1f78cf0bd8d.png" alt="img"></p>
+<p>其计算量计算如下</p>
+<p><img src="/2023/06/30/MobileNet/3e28ca45a556474ab109a013a6efb3c2.png" alt="img"></p>
+<h3 id="网络结构"><a href="#网络结构" class="headerlink" title="网络结构"></a>网络结构</h3><p><img src="/2023/06/30/MobileNet/099f6b5094204e1faf457ff6677f730e.png" alt="在这里插入图片描述"></p>
+<p>MobileNetV1 的结构如表 1 所示，下采样是使用步长为 2 的卷积实现的，共 28 层</p>
+<p><img src="/2023/06/30/MobileNet/f7310662dff144a79bce1bdccf5f90b2.png" alt="在这里插入图片描述"></p>
+<h2 id="MobileNetv2"><a href="#MobileNetv2" class="headerlink" title="MobileNetv2"></a>MobileNetv2</h2><p>贡献：</p>
+<ul>
+<li>提出了倒残差结构：先 1x1 升维，使用 3x3 提取特征，最后再 1x1 降维，和残差结构的先降维后升维的结构是反的</li>
+<li>提出了线性瓶颈</li>
+</ul>
+<p>MobileNetV2中的核心思想是，瓶颈对模型的中间输入和输出进行编码，而内层则用于封装模型从较低级别概念（如：像素等）转换到较高级别描述符（如：图像类别等）的能力。最后，与传统的剩余连接一样，快捷方式能够实现更快地训练速度和更高的准确率。</p>
+<h3 id="倒残差结构"><a href="#倒残差结构" class="headerlink" title="倒残差结构"></a>倒残差结构</h3><p>实验发现在 MobileNetv1 中，深度卷积核的参数较多为 0，也就是其卷积核没有发挥提取特征作用。那么作者先通过 1x1 卷积将维度上升，再使用深度卷积，深度卷积的输入输出通道数更高，就能够提取更多的信息。</p>
+<p><img src="/2023/06/30/MobileNet/dfc1b9f5f1c7443e85b6190eb6a8422b.png" alt="在这里插入图片描述"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">残差模块：输入首先经过1*1的卷积进行压缩，然后使用3*3的卷积进行特征提取，最后在用1*1的卷积把通道数变换回去。整个过程是“压缩-卷积-扩张”。这样做的目的是减少3*3模块的计算量，提高残差模块的计算效率。</span><br><span class="line">倒残差模块：输入首先经过1*1的卷积进行通道扩张，然后使用3*3的depthwise卷积，最后使用1*1的pointwise卷积将通道数压缩回去。整个过程是“扩张-卷积-压缩”。为什么这么做呢？因为depthwise卷积不能改变通道数，因此特征提取受限于输入的通道数，所以将通道数先提升上去。文中的扩展因子为6。</span><br></pre></td></tr></table></figure>
+<h3 id="线性瓶颈"><a href="#线性瓶颈" class="headerlink" title="线性瓶颈"></a>线性瓶颈</h3><p>线性瓶颈结构，就是末层卷积使用线性激活的瓶颈结构（将 ReLU 函数替换为线性函数），因为 ReLU 激活函数对低维信息会造成很大损失。</p>
+<p>具体来说当低维信息映射到高维，然后经过Relu映射回低维时，若映射到的维度相对较高，则信息变换回去的损失较小；若映射到的维度相对较低，则信息变换回去后损失很大，如下图所示：</p>
+<p><img src="/2023/06/30/MobileNet/7abdcc43b7bb47c8937195e9a97f8ab3.png" alt="在这里插入图片描述"></p>
+<h2 id="MobileNetv3"><a href="#MobileNetv3" class="headerlink" title="MobileNetv3"></a>MobileNetv3</h2><p>贡献：</p>
+<ul>
+<li>使用 NAS 的方法搜寻更适合移动 CPU 的结构</li>
+<li>提出了 MobileNetV3-Large 和 MobileNetV3-Small，并引入了 h-swish 和 SE 等模块进行效果优化</li>
+</ul>
+<p>MobileNetV3 提出的目标就是为了实现移动设备上的模型的准确率和耗时的平衡。</p>
+<ul>
+<li>MobileNetV1 引入了深度可分离卷积，来代替传统卷积</li>
+<li>MobileNetV2 引入了线性瓶颈和反残差结构，来提升速度</li>
+<li>MobileNetV3 为了 NAS 来搜寻更合适的网络，并且引入了 Swish 非线性方法的优化版本 h-swish 和 SE 模块，建立更高效的网络</li>
+</ul>
+<h3 id="网络优化"><a href="#网络优化" class="headerlink" title="网络优化"></a>网络优化</h3><ul>
+<li><strong>修改初始卷积核的个数</strong><ul>
+<li>对于v2的输入层，通过3*3卷积将输入扩张成32维。作者发现，其实可以32再降低一点，所以这里改成了16，在保证了精度的前提下，降低了3ms的速度。关于这一点改变可以在最后给出的网络结构中看到</li>
+</ul>
+</li>
+<li><strong>更改网络末端计算量大的层</strong></li>
+<li><strong>引入了SE模块</strong></li>
+<li><strong>H-Swish激活函数</strong></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/06/30/ShuffleNet/" rel="prev" title="ShuffleNet">
+      <i class="fa fa-chevron-left"></i> ShuffleNet
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/06/30/VovNet/" rel="next" title="VovNet">
+      VovNet <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MobileNet%E7%B3%BB%E5%88%97"><span class="nav-number">1.</span> <span class="nav-text">MobileNet系列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#MobileNetv1"><span class="nav-number">1.1.</span> <span class="nav-text">MobileNetv1</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B1%E5%BA%A6%E5%8F%AF%E5%88%86%E7%A6%BB%E5%8D%B7%E7%A7%AF"><span class="nav-number">1.1.1.</span> <span class="nav-text">深度可分离卷积</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B1%E5%BA%A6%E5%8F%AF%E5%88%86%E7%A6%BB%E5%8D%B7%E7%A7%AF%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">1.1.2.</span> <span class="nav-text">深度可分离卷积的优势</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.3.</span> <span class="nav-text">网络结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MobileNetv2"><span class="nav-number">1.2.</span> <span class="nav-text">MobileNetv2</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%80%92%E6%AE%8B%E5%B7%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.2.1.</span> <span class="nav-text">倒残差结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E6%80%A7%E7%93%B6%E9%A2%88"><span class="nav-number">1.2.2.</span> <span class="nav-text">线性瓶颈</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MobileNetv3"><span class="nav-number">1.3.</span> <span class="nav-text">MobileNetv3</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E4%BC%98%E5%8C%96"><span class="nav-number">1.3.1.</span> <span class="nav-text">网络优化</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">凯</p>
+  <div class="site-description" itemprop="description">选择大于努力</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">凯</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
